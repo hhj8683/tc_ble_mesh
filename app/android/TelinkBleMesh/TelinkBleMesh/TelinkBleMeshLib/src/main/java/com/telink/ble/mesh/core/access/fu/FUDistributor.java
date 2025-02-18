@@ -369,6 +369,14 @@ class FUDistributor implements BlobTransferCallback {
         }
     }
 
+    public void onMulticastMessageComplete(int opcode) {
+        if (step != STEP_BLOB_TRANSFER) {
+            log("multi complete -> distributor -> not at blob transfer");
+            return;
+        }
+        transfer.onMulticastMessageComplete(opcode);
+    }
+
     private void onDeviceApplySuccess(MeshUpdatingDevice device) {
         log("device apply success");
         // should wait for recheck firmware

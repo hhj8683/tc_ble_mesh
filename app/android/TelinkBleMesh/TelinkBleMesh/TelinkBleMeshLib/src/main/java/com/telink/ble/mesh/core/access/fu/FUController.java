@@ -378,6 +378,16 @@ public class FUController implements FUActionHandler {
         }
     }
 
+    public void onMulticastMessageComplete(int opcode){
+        if (initiator.isRunning()) {
+            log("multicast msg complete -> initiator");
+            initiator.onMulticastMessageComplete(opcode);
+        } else if (distributor.isRunning()) {
+            log("multicast msg complete -> distributor");
+            distributor.onMulticastMessageComplete(opcode);
+        }
+    }
+
     /**
      * current action: distributing by device
      */

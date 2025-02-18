@@ -50,6 +50,7 @@ import com.telink.ble.mesh.core.message.firmwareupdate.UpdateStatus;
 import com.telink.ble.mesh.core.message.firmwareupdate.blobtransfer.TransferMode;
 import com.telink.ble.mesh.entity.FirmwareUpdateConfiguration;
 import com.telink.ble.mesh.entity.MeshUpdatingDevice;
+import com.telink.ble.mesh.foundation.MulticastMessageBroker;
 import com.telink.ble.mesh.util.MeshLogger;
 
 import java.util.ArrayList;
@@ -81,20 +82,21 @@ class FUInitiator implements BlobTransferCallback {
      */
     private static final int STEP_DST_CAP_GET = 1;
 
-    /**
-     * get firmware update info
-     */
-    private static final int STEP_UPDATE_INFO_GET = 2;
 
     /**
      * get update metadata check
      */
-    private static final int STEP_UPDATE_METADATA_CHECK = 3;
+    private static final int STEP_UPDATE_METADATA_CHECK = 2;
 
     /**
      * sub set (grouping)
      */
-    private static final int STEP_SUB_SET = 4;
+    private static final int STEP_SUB_SET = 3;
+
+    /**
+     * get firmware update info
+     */
+    private static final int STEP_UPDATE_INFO_GET = 4;
 
     /**
      * distribution receivers add
@@ -273,7 +275,6 @@ class FUInitiator implements BlobTransferCallback {
             /*
              * messages send to updating nodes
              */
-            case STEP_UPDATE_INFO_GET: //get firmware update info of updating nodes
             case STEP_UPDATE_METADATA_CHECK: // get update metadata check
             case STEP_SUB_SET: //sub set (grouping)
                 if (deviceIndex >= updatingDevices.size()) {
@@ -309,6 +310,17 @@ class FUInitiator implements BlobTransferCallback {
                                 eleAdr, groupAddress, modelId, true));
                     }
                 }
+                break;
+
+            case STEP_UPDATE_INFO_GET: //get firmware update info of updating nodes
+                // this message is send to group address
+                FirmwareUpdateInfoGetMessage infoGetMessage = FirmwareUpdateInfoGetMessage.getSimple(groupAddress, appKeyIndex);
+                List<Integer> nodeAdrList = new ArrayList<>();
+                for (MeshUpdatingDevice dev: updatingDevices) {
+                    nodeAdrList.add(dev.meshAddress);
+                }
+                infoGetMessage.setBrokerConfig(new MulticastMessageBroker.Config(nodeAdrList));
+                onMeshMessagePrepared(infoGetMessage);
                 break;
 
             case STEP_BLOB_TRANSFER:
@@ -464,7 +476,17 @@ class FUInitiator implements BlobTransferCallback {
         int companyId = firmwareInfoStatusMessage.getListCount();
         List<FirmwareUpdateInfoStatusMessage.FirmwareInformationEntry> firmwareInformationList
                 = firmwareInfoStatusMessage.getFirmwareInformationList();
-        deviceIndex++;
+
+        //
+//        deviceIndex++;
+//        nextAction();
+    }
+
+    public void onMulticastMessageComplete(int opcode){
+        if (step != STEP_UPDATE_INFO_GET) {
+            log("multi complete -> not at STEP_GET_FIRMWARE_INFO");
+            return;
+        }
         nextAction();
     }
 

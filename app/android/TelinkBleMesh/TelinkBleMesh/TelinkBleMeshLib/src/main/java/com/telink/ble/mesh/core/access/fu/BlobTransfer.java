@@ -48,6 +48,7 @@ import com.telink.ble.mesh.core.networking.ExtendBearerMode;
 import com.telink.ble.mesh.core.networking.NetworkingController;
 import com.telink.ble.mesh.entity.FirmwareUpdateConfiguration;
 import com.telink.ble.mesh.entity.MeshUpdatingDevice;
+import com.telink.ble.mesh.foundation.MulticastMessageBroker;
 import com.telink.ble.mesh.util.MeshLogger;
 
 import java.util.ArrayList;
@@ -104,14 +105,23 @@ class BlobTransfer {
      *
      * @see Opcode#BLOB_BLOCK_STATUS
      */
-    private static final int STEP_GET_BLOB_BLOCK = 10;
+    private static final int STEP_BLOB_BLOCK_GET = 10;
 
     private int step = STEP_IDLE;
 
     /**
-     * operation index
+     * operation index for sending unicast message
      */
     private int nodeIndex;
+
+
+    /**
+     * 1. add all nodes to the list
+     * 2. remove the failed node
+     * 3. remove the no chunk missing node
+     * if the list is empty, it means all nodes have received data complete
+     */
+    private List<Integer> missingNodes = new ArrayList<>();
 
     /**
      * received missing chunk number
@@ -236,6 +246,28 @@ class BlobTransfer {
     private final Runnable ACTION_TASK = new Runnable() {
         @Override
         public void run() {
+            if (step == STEP_BLOB_BLOCK_START) {
+                // send to group
+                if (firmwareParser.hasNextBlock()) {
+                    firmwareParser.nextBlock();
+                } else {
+                    log("all blocks sent complete at: block -- " + firmwareParser.currentBlockIndex());
+//                            step = STEP_UPDATE_GET;
+                    onTransferComplete(true, "success");
+                    return;
+                }
+                int blockNumber = firmwareParser.currentBlockIndex();
+                int chunkSize = firmwareParser.getChunkSize();
+                BlobBlockStartMessage startMessage = BlobBlockStartMessage.getSimple(groupAddress, appKeyIndex,
+                        blockNumber, chunkSize);
+                List<Integer> nodeAdrList = new ArrayList<>();
+                for (BlobTransfer.TargetDevice dev : targetDevices) {
+                    nodeAdrList.add(dev.address);
+                }
+                startMessage.setBrokerConfig(new MulticastMessageBroker.Config(nodeAdrList));
+                onTransferMessagePrepared(startMessage);
+                return;
+            }
             if (nodeIndex >= targetDevices.size()) {
                 // all nodes executed
                 log("current step complete: " + getStepDesc(step));
@@ -243,7 +275,7 @@ class BlobTransfer {
                 // check if has available nodes
                 if (targetDevices.size() != 0) {
                     nodeIndex = 0;
-                    if (step == STEP_GET_BLOB_BLOCK) {
+                    if (step == STEP_BLOB_BLOCK_GET) {
                         onGetBlobBlockComplete();
                     } else {
                         log("next step: " + getStepDesc(step + 1));
@@ -280,22 +312,22 @@ class BlobTransfer {
                         onTransferMessagePrepared(BlobTransferGetMessage.getSimple(meshAddress, appKeyIndex));
                         break;
 
-                    case STEP_BLOB_BLOCK_START:
-                        if (nodeIndex == 0) {
-                            if (firmwareParser.hasNextBlock()) {
-                                firmwareParser.nextBlock();
-                            } else {
-                                log("all blocks sent complete at: block -- " + firmwareParser.currentBlockIndex());
-//                            step = STEP_UPDATE_GET;
-                                onTransferComplete(true, "success");
-                                return;
-                            }
-                        }
-                        int blockNumber = firmwareParser.currentBlockIndex();
-                        int chunkSize = firmwareParser.getChunkSize();
-                        onTransferMessagePrepared(BlobBlockStartMessage.getSimple(meshAddress, appKeyIndex,
-                                blockNumber, chunkSize));
-                        break;
+//                    case STEP_BLOB_BLOCK_START:
+//                        if (nodeIndex == 0) {
+//                            if (firmwareParser.hasNextBlock()) {
+//                                firmwareParser.nextBlock();
+//                            } else {
+//                                log("all blocks sent complete at: block -- " + firmwareParser.currentBlockIndex());
+////                            step = STEP_UPDATE_GET;
+//                                onTransferComplete(true, "success");
+//                                return;
+//                            }
+//                        }
+//                        int blockNumber = firmwareParser.currentBlockIndex();
+//                        int chunkSize = firmwareParser.getChunkSize();
+//                        onTransferMessagePrepared(BlobBlockStartMessage.getSimple(meshAddress, appKeyIndex,
+//                                blockNumber, chunkSize));
+//                        break;
 
                     case STEP_BLOB_CHUNK_SENDING:
                         if (transferMode == TransferMode.PUSH) {
@@ -307,7 +339,7 @@ class BlobTransfer {
 
                         break;
 
-                    case STEP_GET_BLOB_BLOCK:
+                    case STEP_BLOB_BLOCK_GET:
                         onTransferMessagePrepared(BlobBlockGetMessage.getSimple(meshAddress, appKeyIndex));
                         break;
 
@@ -475,7 +507,7 @@ class BlobTransfer {
                 || (step == STEP_GET_BLOB_INFO && opcode == Opcode.BLOB_INFORMATION_GET.value)
                 || (step == STEP_BLOB_TRANSFER_START && opcode == Opcode.BLOB_TRANSFER_START.value)
                 || (step == STEP_BLOB_BLOCK_START && opcode == Opcode.BLOB_BLOCK_START.value)
-                || (step == STEP_GET_BLOB_BLOCK && opcode == Opcode.BLOB_BLOCK_GET.value);
+                || (step == STEP_BLOB_BLOCK_GET && opcode == Opcode.BLOB_BLOCK_GET.value);
         if (fail) {
             onDeviceFail(targetDevices.get(nodeIndex), "device transfer command send fail");
             nodeIndex++;
@@ -495,6 +527,14 @@ class BlobTransfer {
                 onTransferComplete(false, "chunk send fail -- segment message send fail");
             }
         }
+    }
+
+    public void onMulticastMessageComplete(int opcode) {
+        if (step != STEP_BLOB_BLOCK_START) {
+            log("multi complete -> distributor -> blob transfer -> not at blob transfer start");
+            return;
+        }
+        nextAction();
     }
 
     public void onTransferNotification(NotificationMessage message) {
@@ -609,9 +649,19 @@ class BlobTransfer {
         log("check missing chunks (get blob block)", MeshLogger.LEVEL_WARN);
         missingChunks.clear();
         mixFormat = -1;
-        step = STEP_GET_BLOB_BLOCK;
+        step = STEP_BLOB_BLOCK_GET;
         nodeIndex = 0;
         nextAction();
+    }
+
+    /**
+     * @return -1 for no missing node, other value for the node address
+     */
+    private int getMissingNodeAdr() {
+        if (missingNodes.size() == 0) {
+            return -1;
+        }
+        return missingNodes.get(0);
     }
 
 
@@ -773,7 +823,7 @@ class BlobTransfer {
      * {@link BlobBlockStartMessage}
      */
     private void onBlobBlockStatus(NotificationMessage message) {
-        if (step != STEP_GET_BLOB_BLOCK && step != STEP_BLOB_BLOCK_START) {
+        if (step != STEP_BLOB_BLOCK_GET && step != STEP_BLOB_BLOCK_START) {
             return;
         }
         BlobBlockStatusMessage blobBlockStatusMessage = (BlobBlockStatusMessage) message.getStatusMessage();
@@ -784,7 +834,7 @@ class BlobTransfer {
             onDeviceFail(targetDevices.get(nodeIndex), "block status err");
         } else {
             // only check chunk missing when STEP_GET_BLOB_BLOCK
-            if (step == STEP_GET_BLOB_BLOCK || (step == STEP_BLOB_BLOCK_START && transferMode == TransferMode.PULL)) {
+            if (step == STEP_BLOB_BLOCK_GET || (step == STEP_BLOB_BLOCK_START && transferMode == TransferMode.PULL)) {
                 int format = blobBlockStatusMessage.getFormat();
 
                 mixFormat(format);
@@ -906,7 +956,7 @@ class BlobTransfer {
             case STEP_BLOB_CHUNK_SENDING:
                 return "blob-chunk-sending";
 
-            case STEP_GET_BLOB_BLOCK:
+            case STEP_BLOB_BLOCK_GET:
                 return "get-blob-block";
         }
         return "unknown";

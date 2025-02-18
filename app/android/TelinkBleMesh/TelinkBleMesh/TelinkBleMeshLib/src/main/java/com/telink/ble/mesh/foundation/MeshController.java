@@ -3089,6 +3089,11 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
     private void onMulticastMsgBrokerStateChanged(int state, String desc, Object obj) {
         if (state == MulticastMessageBroker.ACCESS_ST_NODE_LOST) {
             // post lost event
+        } else if (state == MulticastMessageBroker.ACCESS_ST_BRK_MSG_COMPLETE) {
+            int opcode = (int) obj;
+            if (actionMode == Mode.MESH_OTA) {
+                fuController.onMulticastMessageComplete(opcode);
+            }
         }
     }
 

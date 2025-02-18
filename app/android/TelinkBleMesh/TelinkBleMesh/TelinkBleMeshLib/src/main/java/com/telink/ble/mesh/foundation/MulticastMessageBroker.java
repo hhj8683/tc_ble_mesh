@@ -49,7 +49,7 @@ public class MulticastMessageBroker {
 
     public static final int ACCESS_ST_NODE_LOST = 3;
 
-    public static final int ACCESS_ST_BRK_MSG_COMPLETE = 3;
+    public static final int ACCESS_ST_BRK_MSG_COMPLETE = 4;
 
     private int state = BRK_ST_IDLE;
 
@@ -111,6 +111,8 @@ public class MulticastMessageBroker {
         boolean isMessageSent = accessBridge.onAccessMessagePrepared(meshMessage, AccessBridge.MODE_MSG_BROKER);
         if (!isMessageSent) {
             log("message send error");
+        } else {
+            onComplete("send message err");
         }
         return isMessageSent;
     }
@@ -169,7 +171,7 @@ public class MulticastMessageBroker {
                 int address = sendingMessage.getDestinationAddress();
                 if (!success) {
                     // remove the lost address
-                    remainingNodes.remove((Integer)address);
+                    remainingNodes.remove((Integer) address);
                     log("node lost");
                     updateAccessState(ACCESS_ST_NODE_LOST,
                             String.format("node lost at %04X", address), address);
@@ -198,7 +200,7 @@ public class MulticastMessageBroker {
 
     private void onComplete(String extraInfo) {
         log("onComplete - " + extraInfo);
-        updateAccessState(ACCESS_ST_BRK_MSG_COMPLETE, extraInfo, null);
+        updateAccessState(ACCESS_ST_BRK_MSG_COMPLETE, extraInfo, brokerMessage.getOpcode());
         clear();
     }
 
