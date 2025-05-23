@@ -242,10 +242,37 @@
 /// @returns return dictionary object.
 - (NSDictionary *)getDictionaryOfSchedulerModel {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    dict[@"schedulerID"] = @(self.schedulerID);
+    dict[@"year"] = @(self.year);
+    dict[@"month"] = @(self.month);
+    dict[@"day"] = @(self.day);
+    dict[@"hour"] = @(self.hour);
+    dict[@"minute"] = @(self.minute);
+    dict[@"second"] = @(self.second);
+    dict[@"week"] = @(self.week);
+    dict[@"action"] = @(self.action);
+    dict[@"transTime"] = @(self.transitionTime);
+    dict[@"index"] = @(self.schedulerID);
     dict[@"sceneId"] = @(_sceneId);
-    dict[@"schedulerData"] = [SigHelper.share getUint64String:_schedulerData];
+    dict[@"elementOffset"] = @(_elementOffset);
     return dict;
+}
+
+/// Set old dictionary before v4.1.0.1 to SchedulerModel object.
+/// @param oldDictionary Old SchedulerModel dictionary object before v4.1.0.1.
+- (void)setOldDictionaryToSchedulerModel:(NSDictionary *)oldDictionary {
+    if (oldDictionary == nil || oldDictionary.allKeys.count == 0) {
+        return;
+    }
+    NSArray *allKeys = oldDictionary.allKeys;
+    if ([allKeys containsObject:@"schedulerID"]) {
+        self.schedulerID = (UInt8)[oldDictionary[@"schedulerID"] intValue];
+    }
+    if ([allKeys containsObject:@"sceneId"]) {
+        _sceneId = (UInt64)[oldDictionary[@"sceneId"] integerValue];
+    }
+    if ([allKeys containsObject:@"schedulerData"]) {
+        _schedulerData = [LibTools uint64From16String:oldDictionary[@"schedulerData"]];
+    }
 }
 
 /// Set dictionary to SchedulerModel object.
@@ -255,14 +282,42 @@
         return;
     }
     NSArray *allKeys = dictionary.allKeys;
-    if ([allKeys containsObject:@"schedulerID"]) {
-        self.schedulerID = (UInt8)[dictionary[@"schedulerID"] intValue];
+    _schedulerData = 0;
+    if ([allKeys containsObject:@"year"]) {
+        [self setYear:[dictionary[@"year"] intValue]];
+    }
+    if ([allKeys containsObject:@"month"]) {
+        [self setMonth:[dictionary[@"month"] intValue]];
+    }
+    if ([allKeys containsObject:@"day"]) {
+        [self setDay:[dictionary[@"day"] intValue]];
+    }
+    if ([allKeys containsObject:@"hour"]) {
+        [self setHour:[dictionary[@"hour"] intValue]];
+    }
+    if ([allKeys containsObject:@"minute"]) {
+        [self setMinute:[dictionary[@"minute"] intValue]];
+    }
+    if ([allKeys containsObject:@"second"]) {
+        [self setSecond:[dictionary[@"second"] intValue]];
+    }
+    if ([allKeys containsObject:@"week"]) {
+        [self setWeek:[dictionary[@"week"] intValue]];
+    }
+    if ([allKeys containsObject:@"action"]) {
+        [self setAction:[dictionary[@"action"] intValue]];
+    }
+    if ([allKeys containsObject:@"transTime"]) {
+        [self setTransitionTime:[dictionary[@"transTime"] intValue]];
+    }
+    if ([allKeys containsObject:@"index"]) {
+        [self setSchedulerID:[dictionary[@"index"] intValue]];
     }
     if ([allKeys containsObject:@"sceneId"]) {
         _sceneId = (UInt64)[dictionary[@"sceneId"] integerValue];
     }
-    if ([allKeys containsObject:@"schedulerData"]) {
-        _schedulerData = [LibTools uint64From16String:dictionary[@"schedulerData"]];
+    if ([allKeys containsObject:@"elementOffset"]) {
+        _elementOffset = (UInt8)[dictionary[@"elementOffset"] integerValue];
     }
 }
 
@@ -369,6 +424,7 @@
         /// Initialize self.
         _schedulerData = 0;
         _sceneId = 0;
+        _elementOffset = 0;
         //set scheduler default time
         [self setSchedulerID:0];
         [self setYear:0x64];
@@ -3555,6 +3611,7 @@
         model.schedulerID = scheduler.schedulerID;
         model.schedulerData = scheduler.schedulerData;
         model.sceneId = scheduler.sceneId;
+        model.elementOffset = scheduler.elementOffset;
 
         if ([self.schedulerList containsObject:scheduler]) {
             NSInteger index = [self.schedulerList indexOfObject:scheduler];
@@ -3879,7 +3936,7 @@
             NSDictionary *schedulerDict = [model getDictionaryOfSchedulerModel];
             [array addObject:schedulerDict];
         }
-        dict[@"schedulerList"] = array;
+        dict[@"schedulers"] = array;
     }
     if (_subnetBridgeList) {
         NSMutableArray *array = [NSMutableArray array];
@@ -4057,12 +4114,23 @@
         }
         _appKeys = appKeys;
     }
-    if ([allKeys containsObject:@"schedulerList"]) {
+    if ([allKeys containsObject:@"schedulers"]) {
+        // key:"schedulers" is a new key after v4.1.0.4, Android uses the same key.
+        NSMutableArray *schedulerList = [NSMutableArray array];
+        NSArray *array = dictionary[@"schedulers"];
+        for (NSDictionary *schedulerDict in array) {
+            SchedulerModel *model = [[SchedulerModel alloc] init];
+            [model setDictionaryToSchedulerModel:schedulerDict];
+            [schedulerList addObject:model];
+        }
+        _schedulerList = schedulerList;
+    } else if ([allKeys containsObject:@"schedulerList"]) {
+        // key:"schedulerList" is a old key before v4.1.0.3, need change old dictionary to new dictionary.
         NSMutableArray *schedulerList = [NSMutableArray array];
         NSArray *array = dictionary[@"schedulerList"];
         for (NSDictionary *schedulerDict in array) {
             SchedulerModel *model = [[SchedulerModel alloc] init];
-            [model setDictionaryToSchedulerModel:schedulerDict];
+            [model setOldDictionaryToSchedulerModel:schedulerDict];
             [schedulerList addObject:model];
         }
         _schedulerList = schedulerList;
@@ -4231,6 +4299,15 @@
             [array addObject:appkeyDict];
         }
         dict[@"appKeys"] = array;
+    }
+    if (_schedulerList && _schedulerList.count > 0) {
+        NSMutableArray *array = [NSMutableArray array];
+        NSArray *schedulerList = [NSArray arrayWithArray:_schedulerList];
+        for (SchedulerModel *model in schedulerList) {
+            NSDictionary *schedulerDict = [model getDictionaryOfSchedulerModel];
+            [array addObject:schedulerDict];
+        }
+        dict[@"schedulers"] = array;
     }
     return dict;
 }
