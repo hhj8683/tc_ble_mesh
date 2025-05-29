@@ -1023,7 +1023,8 @@ public class MeshStorageService {
                 .setWeek((byte) nodeScheduler.week)
                 .setAction((byte) nodeScheduler.action)
                 .setTransTime((byte) nodeScheduler.transTime)
-                .setSceneId((short) nodeScheduler.sceneId).build();
+                .setSceneId((short) nodeScheduler.sceneId)
+                .setElementOffset(nodeScheduler.elementOffset).build();
     }
 
 }
