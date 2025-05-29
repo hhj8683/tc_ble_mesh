@@ -318,6 +318,8 @@ typedef void(^openChannelResultCallback)(CBPeripheral *peripheral,CBL2CAPChannel
 /// add since v4.1.0.0
 /// when response from 5.2.3.3 Scheduler Action Get, YES means this Scheduler data is Invalid.
 @property (nonatomic,assign) BOOL isInvalidScheduler;
+/// element index of the scheduler, default is 0.
+@property (nonatomic,assign) UInt8 elementOffset;
 
 - (instancetype)initWithSchedulerDataAndSceneIdData:(NSData *)data;
 
@@ -1884,12 +1886,11 @@ static Byte LPNByte[] = {(Byte) 0x11, (Byte) 0x02, (Byte) 0x01, (Byte) 0x02, (By
 @property (nonatomic, strong, nullable) SigHeartbeatSubModel *heartbeatSub;
 
 @property (nonatomic, copy, nullable) NSString *macAddress;//new add the mac to json, get mac from scanResponse's Manufacturer Data.
-
-//暂时添加到json数据中
+// add schedulers to export json
 @property (nonatomic,strong) NSMutableArray <SchedulerModel *>*schedulerList;
+// cache in local json, not share to other provisioner.
 @property (nonatomic,assign) BOOL subnetBridgeEnable;
 @property (nonatomic,strong) NSMutableArray <SigSubnetBridgeModel *>*subnetBridgeList;
-//cache in local json, not share to other provisioner.
 @property (nonatomic,assign) BOOL lightControlModeEnable;
 @property (nonatomic,assign) BOOL lightControlOccupancyModeEnable;
 @property (nonatomic,assign) BOOL lightControlLightOnOffState;
