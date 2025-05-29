@@ -189,7 +189,7 @@ public class CompositionData implements Serializable, Parcelable {
      * @return The byte array representation of the CompositionData object.
      */
     public byte[] toBytes() {
-        if (raw != null) return raw;
+//        if (raw != null) return raw;
         byte[] re = ByteBuffer.allocate(10).order(ByteOrder.LITTLE_ENDIAN)
                 .putShort((short) cid)
                 .putShort((short) pid)

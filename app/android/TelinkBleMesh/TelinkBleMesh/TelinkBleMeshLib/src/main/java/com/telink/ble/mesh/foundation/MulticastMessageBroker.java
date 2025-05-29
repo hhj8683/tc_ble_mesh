@@ -82,7 +82,7 @@ public class MulticastMessageBroker {
     }
 
     public boolean sendMessage(MeshMessage meshMessage) {
-        log("send broker message");
+        log("send multicast broker message");
         this.brokerMessage = meshMessage.clone();
         Config config = meshMessage.getBrokerConfig();
         this.threshold = config.threshold;
@@ -110,8 +110,6 @@ public class MulticastMessageBroker {
         this.sendingMessage = meshMessage;
         boolean isMessageSent = accessBridge.onAccessMessagePrepared(meshMessage, AccessBridge.MODE_MSG_BROKER);
         if (!isMessageSent) {
-            log("message send error");
-        } else {
             onComplete("send message err");
         }
         return isMessageSent;
@@ -200,7 +198,10 @@ public class MulticastMessageBroker {
 
     private void onComplete(String extraInfo) {
         log("onComplete - " + extraInfo);
-        updateAccessState(ACCESS_ST_BRK_MSG_COMPLETE, extraInfo, brokerMessage.getOpcode());
+        Result result = new Result();
+        result.opcode = brokerMessage.getOpcode();
+        result.remainingNodes = new ArrayList<>(remainingNodes);
+        updateAccessState(ACCESS_ST_BRK_MSG_COMPLETE, extraInfo, result);
         clear();
     }
 
@@ -234,6 +235,11 @@ public class MulticastMessageBroker {
 
     private void log(String logMessage, int level) {
         MeshLogger.log(logMessage, LOG_TAG, level);
+    }
+
+    public static class Result {
+        public int opcode;
+        public List<Integer> remainingNodes;
     }
 
 }

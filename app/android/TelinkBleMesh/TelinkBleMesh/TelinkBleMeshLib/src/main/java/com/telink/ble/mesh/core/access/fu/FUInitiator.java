@@ -165,6 +165,8 @@ class FUInitiator implements BlobTransferCallback {
 
     private UpdatePolicy updatePolicy = UpdatePolicy.VerifyOnly;
 
+    private boolean isUpdatingLpn = false;
+
     private FUActionHandler actionHandler;
 
     private BlobTransfer transfer;
@@ -183,6 +185,9 @@ class FUInitiator implements BlobTransferCallback {
         this.metadata = configuration.getMetadata();
         this.groupAddress = configuration.getGroupAddress();
         this.appKeyIndex = configuration.getAppKeyIndex();
+        if (updatingDevices.size() != 0) {
+            this.isUpdatingLpn = updatingDevices.get(0).isLpn;
+        }
         this.blobId = configuration.getBlobId();
         if (!configuration.isContinue()) {
             this.firmwareSize = configuration.getFirmwareData().length;
@@ -230,12 +235,68 @@ class FUInitiator implements BlobTransferCallback {
      * if all devices executed, then next step
      */
     private void nextAction() {
+        if (this.step == STEP_UPDATE_METADATA_CHECK || this.step == STEP_SUB_SET || (this.step == STEP_UPDATE_INFO_GET && isUpdatingLpn)) {
+            /*
+             * messages send to updating nodes
+             * get update metadata check
+             * sub set (grouping)
+             */
+            if (deviceIndex >= updatingDevices.size()) {
+                // all nodes executed
 
+                log("current step complete: " + (step));
+
+                removeFailedDevices();
+
+                // check if has available nodes
+                if (updatingDevices.size() != 0) {
+                    deviceIndex = 0;
+                    log("next step: " + (step + 1));
+                    step++;
+                    nextAction();
+                } else {
+                    onInitComplete(false, "all device failed when initiate");
+                }
+            } else {
+                int meshAddress = updatingDevices.get(deviceIndex).meshAddress;
+                log(String.format("action executing: " + (step) + " -- %04X", meshAddress));
+//                    if (this.step == STEP_UPDATE_INFO_GET) {
+//                        log(String.format("node -> update info get %04X", meshAddress), MeshLogger.LEVEL_WARN);
+//                        onMeshMessagePrepared(FirmwareUpdateInfoGetMessage.getSimple(meshAddress, appKeyIndex));
+//                    } else
+                if (this.step == STEP_UPDATE_METADATA_CHECK) {
+                    log(String.format("node -> metadata check %04X", meshAddress), MeshLogger.LEVEL_WARN);
+                    onMeshMessagePrepared(FirmwareMetadataCheckMessage.getSimple(meshAddress, appKeyIndex,
+                            metadataIndex,
+                            metadata));
+                } else if (this.step == STEP_SUB_SET) {
+                    log(String.format("node -> sub set %04X", meshAddress), MeshLogger.LEVEL_WARN);
+                    int eleAdr = updatingDevices.get(deviceIndex).updatingEleAddress;
+                    int modelId = MeshSigModel.SIG_MD_OBJ_TRANSFER_S.modelId;
+                    onMeshMessagePrepared(ModelSubscriptionSetMessage.getSimple(meshAddress,
+                            ModelSubscriptionSetMessage.MODE_ADD,
+                            eleAdr, groupAddress, modelId, true));
+                } else if (this.step == STEP_UPDATE_INFO_GET) {
+                    // this message is send to group address
+                    log(String.format("node -> update info get %04X", meshAddress), MeshLogger.LEVEL_WARN);
+                    FirmwareUpdateInfoGetMessage infoGetMessage = FirmwareUpdateInfoGetMessage.getSimple(meshAddress, appKeyIndex);
+                    List<Integer> nodeAdrList = new ArrayList<>();
+                    for (MeshUpdatingDevice dev : updatingDevices) {
+                        nodeAdrList.add(dev.meshAddress);
+                    }
+                    infoGetMessage.setResponseMax(nodeAdrList.size());
+                    infoGetMessage.setBrokerConfig(new MulticastMessageBroker.Config(nodeAdrList));
+                    onMeshMessagePrepared(infoGetMessage);
+                }
+            }
+            return;
+        }
         switch (this.step) {
             /*
              * get firmware distribution capabilities
              */
             case STEP_DST_CAP_GET: {
+                log("distributor -> get capability", MeshLogger.LEVEL_WARN);
                 onMeshMessagePrepared(FDCapabilitiesGetMessage.getSimple(this.distributorAddress, appKeyIndex));
                 break;
             }
@@ -244,6 +305,8 @@ class FUInitiator implements BlobTransferCallback {
              * distribution receivers add
              */
             case STEP_DST_RECEIVERS_ADD:
+
+                log("distributor -> add receivers", MeshLogger.LEVEL_WARN);
                 List<FDReceiversAddMessage.ReceiverEntry> entryList = new ArrayList<>();
                 for (MeshUpdatingDevice updatingDevice : updatingDevices) {
                     entryList.add(new FDReceiversAddMessage.ReceiverEntry(updatingDevice.meshAddress,
@@ -260,6 +323,7 @@ class FUInitiator implements BlobTransferCallback {
              * distribution upload start
              */
             case STEP_DST_UPLOAD_START:
+                log("distributor -> upload start", MeshLogger.LEVEL_WARN);
                 FDUploadStartMessage uploadStartMessage = FDUploadStartMessage.getSimple(this.distributorAddress,
                         appKeyIndex);
                 uploadStartMessage.uploadTTL = 0xFF;
@@ -296,13 +360,17 @@ class FUInitiator implements BlobTransferCallback {
                 } else {
                     int meshAddress = updatingDevices.get(deviceIndex).meshAddress;
                     log(String.format("action executing: " + (step) + " -- %04X", meshAddress));
-                    if (this.step == STEP_UPDATE_INFO_GET) {
-                        onMeshMessagePrepared(FirmwareUpdateInfoGetMessage.getSimple(meshAddress, appKeyIndex));
-                    } else if (this.step == STEP_UPDATE_METADATA_CHECK) {
+//                    if (this.step == STEP_UPDATE_INFO_GET) {
+//                        log(String.format("node -> update info get %04X", meshAddress), MeshLogger.LEVEL_WARN);
+//                        onMeshMessagePrepared(FirmwareUpdateInfoGetMessage.getSimple(meshAddress, appKeyIndex));
+//                    } else
+                    if (this.step == STEP_UPDATE_METADATA_CHECK) {
+                        log(String.format("node -> metadata check %04X", meshAddress), MeshLogger.LEVEL_WARN);
                         onMeshMessagePrepared(FirmwareMetadataCheckMessage.getSimple(meshAddress, appKeyIndex,
                                 metadataIndex,
                                 metadata));
                     } else if (this.step == STEP_SUB_SET) {
+                        log(String.format("node -> sub set %04X", meshAddress), MeshLogger.LEVEL_WARN);
                         int eleAdr = updatingDevices.get(deviceIndex).updatingEleAddress;
                         int modelId = MeshSigModel.SIG_MD_OBJ_TRANSFER_S.modelId;
                         onMeshMessagePrepared(ModelSubscriptionSetMessage.getSimple(meshAddress,
@@ -313,22 +381,26 @@ class FUInitiator implements BlobTransferCallback {
                 break;
 
             case STEP_UPDATE_INFO_GET: //get firmware update info of updating nodes
+
                 // this message is send to group address
+                log(String.format("group -> update info get %04X", groupAddress), MeshLogger.LEVEL_WARN);
                 FirmwareUpdateInfoGetMessage infoGetMessage = FirmwareUpdateInfoGetMessage.getSimple(groupAddress, appKeyIndex);
                 List<Integer> nodeAdrList = new ArrayList<>();
-                for (MeshUpdatingDevice dev: updatingDevices) {
+                for (MeshUpdatingDevice dev : updatingDevices) {
                     nodeAdrList.add(dev.meshAddress);
                 }
+                infoGetMessage.setResponseMax(nodeAdrList.size());
                 infoGetMessage.setBrokerConfig(new MulticastMessageBroker.Config(nodeAdrList));
                 onMeshMessagePrepared(infoGetMessage);
                 break;
 
             case STEP_BLOB_TRANSFER:
-                log("start blob transfer from initiator to distributor");
+                log("start blob transfer from initiator to distributor", MeshLogger.LEVEL_WARN);
                 transfer.begin(false);
                 break;
 
             case STEP_DST_START:
+                log("distributor -> distribute start", MeshLogger.LEVEL_WARN);
                 FDStartMessage startMessage = FDStartMessage.getSimple(this.distributorAddress, appKeyIndex);
                 startMessage.distributionAppKeyIndex = appKeyIndex;
                 startMessage.distributionTTL = 0xFF;
@@ -477,16 +549,35 @@ class FUInitiator implements BlobTransferCallback {
         List<FirmwareUpdateInfoStatusMessage.FirmwareInformationEntry> firmwareInformationList
                 = firmwareInfoStatusMessage.getFirmwareInformationList();
 
-        //
-//        deviceIndex++;
-//        nextAction();
+        if (isUpdatingLpn) {
+            deviceIndex++;
+            nextAction();
+        }
+
     }
 
-    public void onMulticastMessageComplete(int opcode){
-        if (step != STEP_UPDATE_INFO_GET) {
-            log("multi complete -> not at STEP_GET_FIRMWARE_INFO");
+    public void onMulticastMessageComplete(int opcode, List<Integer> remainingNodes) {
+        if (step != STEP_UPDATE_INFO_GET || !isUpdatingLpn) {
+            log("multi complete -> not at STEP_GET_FIRMWARE_INFO or not updating lpn");
             return;
         }
+        if (remainingNodes.size() == 0) {
+            // all node receive
+            log("all nodes have responded the update info status");
+        } else {
+            Iterator<MeshUpdatingDevice> deviceIterator = updatingDevices.iterator();
+            while (deviceIterator.hasNext()) {
+                MeshUpdatingDevice device = deviceIterator.next();
+                if (remainingNodes.contains(device.meshAddress)) {
+                    device.state = (MeshUpdatingDevice.STATE_FAIL);
+                    if (actionHandler != null) {
+                        actionHandler.onDeviceUpdate(device, "update info status no reply from the device");
+                    }
+                    deviceIterator.remove();
+                }
+            }
+        }
+        step++;
         nextAction();
     }
 

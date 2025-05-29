@@ -369,7 +369,7 @@ class FUDistributor implements BlobTransferCallback {
         }
     }
 
-    public void onMulticastMessageComplete(int opcode) {
+    public void onMulticastMessageComplete(int opcode, List<Integer> remainingNodes) {
         if (step != STEP_BLOB_TRANSFER) {
             log("multi complete -> distributor -> not at blob transfer");
             return;

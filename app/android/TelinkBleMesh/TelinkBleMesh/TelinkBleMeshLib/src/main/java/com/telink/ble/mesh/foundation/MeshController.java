@@ -3090,9 +3090,9 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
         if (state == MulticastMessageBroker.ACCESS_ST_NODE_LOST) {
             // post lost event
         } else if (state == MulticastMessageBroker.ACCESS_ST_BRK_MSG_COMPLETE) {
-            int opcode = (int) obj;
+            MulticastMessageBroker.Result re = (MulticastMessageBroker.Result) obj;
             if (actionMode == Mode.MESH_OTA) {
-                fuController.onMulticastMessageComplete(opcode);
+                fuController.onMulticastMessageComplete(re.opcode, re.remainingNodes);
             }
         }
     }
@@ -3136,7 +3136,6 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
      * - MESH_OTA: Represents the mode for mesh firmware updating, specifically for mesh OTA updates.
      * - GATT_CONNECTION: Represents the mode for establishing a GATT connection with a target device.
      * <p>
-     * Please let me know if you need any further clarification.
      */
     public enum Mode {
 
