@@ -749,6 +749,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
 
     boolean continueProvision(int address) {
         if (actionMode != Mode.PROVISION) {
+            MeshLogger.d("continue provision fail : not in provision action -> " + actionMode );
             return false;
         }
         this.mProvisioningController.continueProvision(address);
@@ -3154,6 +3155,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
          * MODE_PROVISION: auto scan, connect, provision
          */
         PROVISION,
+
 
         /**
          * MODE_AUTO_CONNECT: auto scan, connect, get device state

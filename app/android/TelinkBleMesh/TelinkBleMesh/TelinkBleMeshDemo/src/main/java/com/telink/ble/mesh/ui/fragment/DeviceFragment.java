@@ -62,6 +62,7 @@ import com.telink.ble.mesh.ui.BaseActivity;
 import com.telink.ble.mesh.ui.CmdActivity;
 import com.telink.ble.mesh.ui.DeviceAutoProvisionActivity;
 import com.telink.ble.mesh.ui.DeviceProvisionActivity;
+import com.telink.ble.mesh.ui.DeviceProvisionConfirmModeActivity;
 import com.telink.ble.mesh.ui.DeviceSettingActivity;
 import com.telink.ble.mesh.ui.FastProvisionActivity;
 import com.telink.ble.mesh.ui.KeyBindActivity;
@@ -135,15 +136,25 @@ public class DeviceFragment extends BaseFragment implements View.OnClickListener
 //                toastMsg("");
                     return false;
                 }
-                if (SharedPreferenceHelper.isRemoteProvisionEnable(getActivity())) {
-                    startActivity(new Intent(getActivity(), RemoteProvisionActivity.class));
-                } else if (SharedPreferenceHelper.isFastProvisionEnable(getActivity())) {
-                    startActivity(new Intent(getActivity(), FastProvisionActivity.class));
-                } else if (SharedPreferenceHelper.isAutoPvEnable(getActivity())) {
-                    startActivity(new Intent(getActivity(), DeviceAutoProvisionActivity.class));
-                } else {
-                    startActivity(new Intent(getActivity(), DeviceProvisionActivity.class));
+                int provisionMode = SharedPreferenceHelper.getProvisionMode(getActivity());
+                switch (provisionMode){
+                    case SharedPreferenceHelper.PROVISION_MODE_NORMAL_SELECTABLE:
+                        startActivity(new Intent(getActivity(), DeviceProvisionActivity.class));
+                        break;
+                    case SharedPreferenceHelper.PROVISION_MODE_NORMAL_AUTO:
+                        startActivity(new Intent(getActivity(), DeviceAutoProvisionActivity.class));
+                        break;
+                    case SharedPreferenceHelper.PROVISION_MODE_REMOTE:
+                        startActivity(new Intent(getActivity(), RemoteProvisionActivity.class));
+                        break;
+                    case SharedPreferenceHelper.PROVISION_MODE_FAST:
+                        startActivity(new Intent(getActivity(), FastProvisionActivity.class));
+                        break;
+                    case SharedPreferenceHelper.PROVISION_MODE_NORMAL_CONFIRM:
+                        startActivity(new Intent(getActivity(), DeviceProvisionConfirmModeActivity.class));
+                        break;
                 }
+
             } else if (item.getItemId() == R.id.item_sort) {
                 showSortDialog();
             }

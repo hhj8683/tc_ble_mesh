@@ -557,8 +557,8 @@ class FUInitiator implements BlobTransferCallback {
     }
 
     public void onMulticastMessageComplete(int opcode, List<Integer> remainingNodes) {
-        if (step != STEP_UPDATE_INFO_GET || !isUpdatingLpn) {
-            log("multi complete -> not at STEP_GET_FIRMWARE_INFO or not updating lpn");
+        if (step != STEP_UPDATE_INFO_GET || isUpdatingLpn) {
+            log("multi complete -> not at STEP_GET_FIRMWARE_INFO or not updating lpn , state : " + step + " isUpdatingLpn : " + isUpdatingLpn);
             return;
         }
         if (remainingNodes.size() == 0) {

@@ -94,6 +94,8 @@ public class SharedPreferenceHelper {
 
     public static final int PROVISION_MODE_FAST = 3;
 
+    public static final int PROVISION_MODE_NORMAL_CONFIRM = 4;
+
     public static final int DEFAULT_PROVISION_MODE = PROVISION_MODE_NORMAL_SELECTABLE;
 
     public static final int IMPORT_COMPLETE_ACTION_DEFAULT = 0;

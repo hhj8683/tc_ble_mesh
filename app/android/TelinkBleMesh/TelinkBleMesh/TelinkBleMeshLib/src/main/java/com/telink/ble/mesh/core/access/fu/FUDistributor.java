@@ -198,7 +198,8 @@ class FUDistributor implements BlobTransferCallback {
 
     public void onDistributeCommandFailed(int opcode) {
         if ((step == STEP_UPDATE_START && opcode == Opcode.FIRMWARE_UPDATE_START.value)
-                || (step == STEP_UPDATE_APPLY && opcode == Opcode.FIRMWARE_UPDATE_APPLY.value)) {
+                || (step == STEP_UPDATE_APPLY && opcode == Opcode.FIRMWARE_UPDATE_APPLY.value)
+                || (step == STEP_UPDATE_GET && opcode == Opcode.FIRMWARE_UPDATE_GET.value)) {
             // to updating nodes
             onDeviceFail(nodes.get(nodeIndex), "command send to updating node fail");
             nodeIndex++;

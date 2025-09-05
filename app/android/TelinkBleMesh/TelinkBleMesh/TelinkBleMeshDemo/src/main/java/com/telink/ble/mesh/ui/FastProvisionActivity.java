@@ -178,7 +178,6 @@ public class FastProvisionActivity extends BaseActivity implements EventListener
         });
         bottomDialog = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_bottom_list, null);
-//        BottomSheetBehavior behavior = BottomSheetBehavior.from((View)dialog.getParent());
         bottomDialog.setContentView(view);
         logInfoAdapter = new LogInfoAdapter(this, logInfoList);
         rv_log = view.findViewById(R.id.rv_log_sheet);
