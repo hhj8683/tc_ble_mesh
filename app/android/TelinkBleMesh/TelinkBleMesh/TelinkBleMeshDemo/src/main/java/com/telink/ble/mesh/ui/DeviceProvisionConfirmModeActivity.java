@@ -28,7 +28,6 @@ import android.os.Handler;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -54,6 +53,7 @@ import com.telink.ble.mesh.foundation.Event;
 import com.telink.ble.mesh.foundation.EventListener;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.foundation.event.BindingEvent;
+import com.telink.ble.mesh.foundation.event.MeshEvent;
 import com.telink.ble.mesh.foundation.event.ProvisioningEvent;
 import com.telink.ble.mesh.foundation.event.ScanEvent;
 import com.telink.ble.mesh.foundation.event.StatusNotificationEvent;
@@ -68,7 +68,6 @@ import com.telink.ble.mesh.model.NodeInfo;
 import com.telink.ble.mesh.model.PrivateDevice;
 import com.telink.ble.mesh.model.db.MeshInfoService;
 import com.telink.ble.mesh.ui.adapter.DeviceConfirmProvisionListAdapter;
-import com.telink.ble.mesh.ui.adapter.DeviceProvisionListAdapter;
 import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
 
@@ -165,6 +164,7 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
         TelinkMeshApplication.getInstance().addEventListener(BindingEvent.EVENT_TYPE_BIND_FAIL, this);
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_SCAN_TIMEOUT, this);
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_DEVICE_FOUND, this);
+        TelinkMeshApplication.getInstance().addEventListener(MeshEvent.EVENT_TYPE_DISCONNECTED, this);
         TelinkMeshApplication.getInstance().addEventListener(ModelPublicationStatusMessage.class.getName(), this);
     }
 
@@ -307,6 +307,8 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
             enableUI(true);
             return;
         }
+
+        MeshLogger.d("provisionNext : " + waitingDevice.bluetoothDevice.getAddress());
         startProvision(waitingDevice);
     }
 
@@ -320,6 +322,10 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
             toastMsg("invalid time ! ");
             return;
         }
+        enableUI(false, true);
+
+        MeshLogger.d("identifyDevice : " + position);
+
         NetworkingDevice processingDevice = devices.get(position);
 
         byte[] deviceUUID = processingDevice.nodeInfo.deviceUUID;
@@ -376,8 +382,8 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
         return anyValid;
     }
 
-    private void enableUI(final boolean enable){
-        enableUI(true, true);
+    private void enableUI(final boolean enable) {
+        enableUI(enable, true);
     }
 
     private void enableUI(final boolean enable, boolean idle) {
@@ -388,7 +394,7 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
         runOnUiThread(() -> {
             enableBackNav(enable);
             updateRefreshItem(enable);
-            mListAdapter.setProvisioning(!enable);
+            mListAdapter.setProcessing(!enable);
         });
     }
 
@@ -433,28 +439,39 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
                         onTimePublishComplete(false, "time pub set status err: " + statusMessage.getStatus());
                         MeshLogger.log("publication err: " + statusMessage.getStatus());
                     }
+                }else if (event.getType().equals(MeshEvent.EVENT_TYPE_DISCONNECTED)){
+                    runOnUiThread(() -> mListAdapter.setIdentifyingPosition(-1));
                 }
             }
         });
-
     }
 
     private void onProvisionStart(ProvisioningEvent event) {
         NetworkingDevice pvDevice = getCurrentDevice(NetworkingState.PROVISIONING);
         if (pvDevice == null) return;
         pvDevice.addLog(NetworkingDevice.TAG_PROVISION, "begin");
-        mListAdapter.notifyDataSetChanged();
+        runOnUiThread(() -> mListAdapter.notifyDataSetChanged());
     }
 
     private void onProvisionFail(ProvisioningEvent event) {
 //        ProvisioningDevice deviceInfo = event.getProvisioningDevice();
 
         NetworkingDevice pvDevice = getCurrentDevice(NetworkingState.PROVISIONING);
-        if (pvDevice == null) {
+        if (pvDevice != null) {
+            pvDevice.state = NetworkingState.PROVISION_FAIL;
+        } else {
             MeshLogger.d("pv device not found when failed");
+            pvDevice = mListAdapter.getIdentifyingDevice();
+            if (pvDevice != null) {
+                pvDevice.state = NetworkingState.IDLE;
+                mListAdapter.setIdentifyingPosition(-1);
+            } else {
+                MeshLogger.d("not identifying");
+            }
+        }
+        if (pvDevice == null) {
             return;
         }
-        pvDevice.state = NetworkingState.PROVISION_FAIL;
         pvDevice.addLog(NetworkingDevice.TAG_PROVISION, event.getDesc());
         mListAdapter.notifyDataSetChanged();
     }
@@ -468,8 +485,10 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
             MeshLogger.d("identifying device not found when provision success");
             return;
         }
+
         identifyingDevice.addLog(NetworkingDevice.TAG_PROVISION, "identify success");
-        mListAdapter.notifyDataSetChanged();
+        enableUI(true, false);
+//        mListAdapter.notifyDataSetChanged();
     }
 
     private void onProvisionSuccess(ProvisioningEvent event) {
@@ -510,7 +529,8 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
 
         nodeInfo.setDefaultBind(defaultBound);
         pvDevice.addLog(NetworkingDevice.TAG_BIND, "action start");
-        mListAdapter.notifyDataSetChanged();
+        mListAdapter.setIdentifyingPosition(-1);
+//        mListAdapter.notifyDataSetChanged();
         int appKeyIndex = mesh.getDefaultAppKeyIndex();
 
         BindingDevice bindingDevice = new BindingDevice(nodeInfo.meshAddress, nodeInfo.deviceUUID, appKeyIndex);

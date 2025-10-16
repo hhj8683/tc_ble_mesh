@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.telink.ble.mesh.core.MeshUtils;
 import com.telink.ble.mesh.demo.R;
+import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.model.NetworkingDevice;
 import com.telink.ble.mesh.model.NetworkingState;
 import com.telink.ble.mesh.model.NodeInfo;
@@ -56,15 +57,15 @@ public class DeviceConfirmProvisionListAdapter extends BaseRecyclerViewAdapter<D
     private List<NetworkingDevice> mDevices;
     private Context mContext;
     int identifyingPosition = -1;
-    boolean isProvisioning = false;
+    boolean isProcessing = false; // identifying or provisioning
 
     public DeviceConfirmProvisionListAdapter(Context context, List<NetworkingDevice> devices) {
         mContext = context;
         mDevices = devices;
     }
 
-    public void setProvisioning(boolean provisioning) {
-        this.isProvisioning = provisioning;
+    public void setProcessing(boolean processing) {
+        this.isProcessing = processing;
         notifyDataSetChanged();
     }
 
@@ -125,17 +126,10 @@ public class DeviceConfirmProvisionListAdapter extends BaseRecyclerViewAdapter<D
 //        holder.pb_provision.setIndeterminate(false);
 
 
-        if (identifyingPosition == -1) {
-            holder.btn_action.setVisibility(!isProvisioning && device.state == NetworkingState.IDLE ? View.VISIBLE : View.INVISIBLE);
-        } else if (identifyingPosition == position) {
-
-        } else {
-
-        }
         boolean isActionVisible;
         boolean isCloseVisible;
         String action = "";
-        if (isProvisioning) {
+        if (isProcessing) {
             isActionVisible = false;
             isCloseVisible = false;
         } else {
@@ -225,6 +219,12 @@ public class DeviceConfirmProvisionListAdapter extends BaseRecyclerViewAdapter<D
                 }
             } else if (v.getId() == R.id.iv_close) {
                 mDevices.remove(position);
+                if (identifyingPosition == position){
+                    MeshService.getInstance().idle(true);
+                    identifyingPosition = -1;
+                }else if (identifyingPosition > position){
+                    identifyingPosition -= 1;
+                }
                 ((DeviceProvisionConfirmModeActivity) mContext).updateDeviceCountInfo(-1);
                 notifyDataSetChanged();
             }

@@ -372,7 +372,7 @@ public class ProvisioningController {
         delayHandler.postDelayed(provisioningTimeoutTask, TIMEOUT_PROVISIONING);
 
         final int oobInfo = device.getOobInfo();
-        if (!device.isAutoStart() && MeshUtils.isCertSupported(oobInfo) && MeshUtils.isPvRecordSupported(oobInfo)) {
+        if ( MeshUtils.isCertSupported(oobInfo) && MeshUtils.isPvRecordSupported(oobInfo)) {
             provisionRecordsGet();
         } else {
             provisionInvite();

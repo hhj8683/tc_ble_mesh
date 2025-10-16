@@ -752,6 +752,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
             MeshLogger.d("continue provision fail : not in provision action -> " + actionMode );
             return false;
         }
+        log(String.format("continue provision : %04X" , address));
         this.mProvisioningController.continueProvision(address);
         return true;
     }
@@ -1076,6 +1077,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
      */
     private boolean validateActionMode(Mode targetMode) {
         if (actionMode == targetMode) {
+            MeshLogger.w("mode not changed : " + actionMode);
             return false;
         } else {
             if (actionMode == Mode.REMOTE_PROVISION) {
