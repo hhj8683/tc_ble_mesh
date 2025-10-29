@@ -67,6 +67,7 @@ import com.telink.ble.mesh.entity.MeshUpdatingDevice;
 import com.telink.ble.mesh.foundation.Event;
 import com.telink.ble.mesh.foundation.EventListener;
 import com.telink.ble.mesh.foundation.MeshService;
+import com.telink.ble.mesh.foundation.event.AutoConnectEvent;
 import com.telink.ble.mesh.foundation.event.MeshEvent;
 import com.telink.ble.mesh.foundation.event.StatusNotificationEvent;
 import com.telink.ble.mesh.foundation.parameter.MeshOtaParameters;
@@ -488,6 +489,7 @@ public class FUActivity extends BaseActivity implements View.OnClickListener,
         // firmware info
         TelinkMeshApplication.getInstance().addEventListener(FirmwareUpdateInfoStatusMessage.class.getName(), this);
         TelinkMeshApplication.getInstance().addEventListener(NetworkTransmitStatusMessage.class.getName(), this);
+        TelinkMeshApplication.getInstance().addEventListener(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN, this);
 //        TelinkMeshApplication.getInstance().addEventListener(FirmwareMetadataStatusMessage.class.getName(), this);
 //        TelinkMeshApplication.getInstance().addEventListener(NodeStatusChangedEvent.EVENT_TYPE_NODE_STATUS_CHANGED, this);
         TelinkMeshApplication.getInstance().addEventListener(MeshEvent.EVENT_TYPE_DISCONNECTED, this);
@@ -675,7 +677,10 @@ public class FUActivity extends BaseActivity implements View.OnClickListener,
                 delayHandler.removeCallbacks(RECONNECT_TASK);
                 delayHandler.postDelayed(RECONNECT_TASK, 3 * 60 * 1000);
             }
+
             appendLog("GATT disconnected");
+        }else if(eventType.equals(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN)){
+            rb_device.setEnabled(isDistSpt());
         } else if (eventType.equals(NetworkTransmitStatusMessage.class.getName())) {
             final NotificationMessage notificationMessage = ((StatusNotificationEvent) event).getNotificationMessage();
             NetworkTransmitStatusMessage networkTransmitStatusMessage = (NetworkTransmitStatusMessage) notificationMessage.getStatusMessage();
@@ -721,7 +726,6 @@ public class FUActivity extends BaseActivity implements View.OnClickListener,
 
         }
     }
-
 
     /****************************************************************
      * events - end
