@@ -168,7 +168,7 @@ _attribute_ram_code_ void start_reboot(void)
 #if SLEEP_FUNCTION_DISABLE
 	REG_ADDR8(0x6f) = 0x20;  //reboot
 #else
-	cpu_sleep_wakeup(1, PM_WAKEUP_TIMER, clock_time() + 4*1000*sys_tick_per_us);//reboot // need greater than EARLYWAKEUP_TIME_MS_DEEP
+	cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 4*1000*sys_tick_per_us);//reboot // need greater than EARLYWAKEUP_TIME_MS_DEEP
 #endif
 	while (1);
 }

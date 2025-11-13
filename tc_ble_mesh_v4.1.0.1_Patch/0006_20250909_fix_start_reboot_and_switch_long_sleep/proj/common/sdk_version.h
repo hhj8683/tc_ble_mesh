@@ -39,7 +39,7 @@
 #define SDK_VER_MAJOR			(1)		// SDK version, don't change!!! 
 #define SDK_VER_MINOR			(0)		// SDK version, don't change!!! 
 #define SDK_VER_2ND_MINOR		(1)		// SDK version, don't change!!!	// second minor
-#define SDK_VER_PATCH           (5)
+#define SDK_VER_PATCH           (6)
 
 //#define SDK_VER_PATCH_EN		(0)		// SDK version, don't change!!!	// patch version, 0 or nothing means no patch.
 

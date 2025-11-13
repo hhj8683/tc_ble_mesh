@@ -3,13 +3,13 @@
 ### Dependency Updates
 
 * telink_b85m_ble_single_connection_sdk_v3.4.1
-* mesh ble library commit log: SHA-1: 8de37a59a75f858e9bb6084d26c8ff14c184181c
+* mesh ble library commit log: SHA-1: 255cfb89e163649bd35ea77414392a77ca509503
 
 ### Bug Fixes
 
-* fix the issue of long sleep mode for the switch.
-* fix the problem of starting and rebooting.
-* fix the issue with the stability detection of the B87 PLL.
+* Fix the long sleep time setting issue of mesh_switch in switch_check_and_enter_sleep().
+* Fix the incorrect reboot time issue caused by the start_reboot() introduced in Patch_0002.
+* The B87 PLL stability check criterion has been changed from a single detection to three consecutive detections.
 
 ### Features
 
@@ -44,13 +44,13 @@
 ### Dependency Updates
 
 * telink_b85m_ble_single_connection_sdk_v3.4.1
-* mesh library commit log: SHA-1: 8de37a59a75f858e9bb6084d26c8ff14c184181c
+* mesh library commit log: SHA-1: 255cfb89e163649bd35ea77414392a77ca509503
 
 ### Bug Fixes
 
-* 修复 switch 长休眠问题。
-* 修复 start reboot 问题。
-* 修复 b87 PLL 稳定性检测问题。
+* 修复 mesh_switch 函数switch_check_and_enter_sleep()中长休眠时间设置问题。
+* 修复 Patch_0002引入的start_reboot()重启时间不对问题。
+* B87 PLL 稳定性检测标准从检测一次改为连续检测3次。
 
 ### Features
 
