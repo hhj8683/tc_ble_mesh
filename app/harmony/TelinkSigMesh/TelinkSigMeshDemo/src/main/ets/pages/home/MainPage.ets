@@ -59,9 +59,11 @@ struct MainPage {
         MeshService.getInstance().sendMeshMessage(setMessage)
     }
 
-    onPageShow(): void {
+    async onPageShow(): Promise<void> {
         logd("main page # onPageShow")
-        MeshService.getInstance().autoConnect(new AutoConnectParameters())
+        if (await this.checkPermissionGrant('ohos.permission.ACCESS_BLUETOOTH') == abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
+            MeshService.getInstance().autoConnect(new AutoConnectParameters())
+        }
     }
 
     onPageHide(): void {
