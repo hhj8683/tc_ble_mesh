@@ -178,7 +178,8 @@ public class MainActivity extends BaseActivity implements BottomNavigationView.O
         if (mesh.nodes != null) {
             for (NodeInfo deviceInfo : mesh.nodes) {
                 deviceInfo.setOnlineState(OnlineState.OFFLINE);
-                deviceInfo.lum = 0;
+                deviceInfo.color = 0xFFFFFF;
+                deviceInfo.lum = 100;
                 deviceInfo.temp = 0;
             }
         }

@@ -25,7 +25,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="4dp"
-            android:digits="@string/hex_input"
             android:hint="input name"
             android:textSize="@dimen/msg_input_size" />
 

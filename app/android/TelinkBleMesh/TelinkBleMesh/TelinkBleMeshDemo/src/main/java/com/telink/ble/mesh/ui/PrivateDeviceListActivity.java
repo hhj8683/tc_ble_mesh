@@ -197,7 +197,7 @@ public class PrivateDeviceListActivity extends BaseActivity {
                 [name] [cpsData]
                 example: ct xxxx
                  */
-                if (rawPair.length != 2 || rawPair[0].length() != 32 || (rawPair[1].length() != 32 && rawPair[1].length() != 64)) {
+                if (rawPair.length != 2) {
                     continue;
                 }
                 String name = rawPair[0];

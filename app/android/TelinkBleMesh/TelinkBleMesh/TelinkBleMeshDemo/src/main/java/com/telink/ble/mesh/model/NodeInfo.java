@@ -111,10 +111,14 @@ public class NodeInfo implements Serializable {
     public List<String> subList = new ArrayList<>();
 
     // device lightness
+    @Transient
     public int lum = 100;
 
     // device temperature
+    @Transient
     public int temp = 0;
+    @Transient
+    public int color = 0xFFFFFF;
 
     /**
      * device on off state
@@ -691,7 +695,7 @@ public class NodeInfo implements Serializable {
     }
 
 
-    public boolean isIdEquals(NodeInfo node){
+    public boolean isIdEquals(NodeInfo node) {
         return this.id == node.id;
     }
 

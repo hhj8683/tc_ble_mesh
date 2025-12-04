@@ -26,6 +26,8 @@ import android.util.SparseIntArray;
 
 import androidx.annotation.NonNull;
 
+import com.telink.ble.mesh.util.MeshLogger;
+
 
 /**
  * This class represents the configuration for fast provisioning.
@@ -146,6 +148,7 @@ public class FastProvisioningConfiguration {
      * @return The element count for the given PID, or 0 if not found.
      */
     public int getElementCount(int pid) {
+        MeshLogger.d(String.format("getElementCount : %04X", pid));
         if (elementPidMap != null) {
             return elementPidMap.get(pid);
         }

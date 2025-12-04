@@ -229,6 +229,8 @@ public class DeviceControlFragment extends BaseFragment implements EventListener
 //            ll_lum_level.setVisibility(View.GONE);
 //            ll_temp.setVisibility(View.GONE);
 //            ll_temp_level.setVisibility(View.GONE);
+//            MeshLogger.d("set device color : " + Integer.toHexString(deviceInfo.color));
+            cps_color.resetColor(deviceInfo.color);
         }
 
         if (lumEleInfo == null) {
@@ -274,7 +276,9 @@ public class DeviceControlFragment extends BaseFragment implements EventListener
         TelinkMeshApplication.getInstance().removeEventListener(this);
     }
 
-    private void sendHslSetMessage(float[] hslValue) {
+    private void sendHslSetMessage(int color, float[] hslValue) {
+        deviceInfo.color = color;
+//        MeshLogger.d("update device color : " + Integer.toHexString(color));
         int hue = Math.round(hslValue[0] * 65535 / 360);
         int sat = Math.round(hslValue[1] * 65535);
         int lightness = Math.round(hslValue[2] * 65535);
@@ -295,7 +299,7 @@ public class DeviceControlFragment extends BaseFragment implements EventListener
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             if (seekBar == sb_lum) {
-                if (cps_color.getVisibility() == View.VISIBLE) {
+                if (cps_color.getVisibility() == View.VISIBLE && fromUser) {
                     cps_color.updateLightness(progress);
                 }
             }

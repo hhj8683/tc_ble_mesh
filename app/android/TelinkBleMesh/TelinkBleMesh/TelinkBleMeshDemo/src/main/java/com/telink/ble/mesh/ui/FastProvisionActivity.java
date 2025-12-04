@@ -200,7 +200,8 @@ public class FastProvisionActivity extends BaseActivity implements EventListener
         CompositionData compositionData;
         for (PrivateDevice privateDevice : targetDevices) {
             compositionData = CompositionData.from(privateDevice.getCpsData());
-            targetDevicePid.put(privateDevice.getPid(), compositionData.elements.size());
+//            MeshLogger.d(String.format("add pid : %04x", privateDevice.getPid()));
+            targetDevicePid.put(privateDevice.getPid() & 0xFFF, compositionData.elements.size());
         }
         MeshService.getInstance().startFastProvision(new FastProvisioningParameters(FastProvisioningConfiguration.getDefault(
                 provisionIndex,

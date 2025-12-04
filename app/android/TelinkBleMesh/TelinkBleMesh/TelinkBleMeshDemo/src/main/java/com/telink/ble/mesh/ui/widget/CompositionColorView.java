@@ -131,7 +131,7 @@ public class CompositionColorView extends FrameLayout {
             long currentTime = System.currentTimeMillis();
             if ((currentTime - preTime) >= DELAY_TIME || touchStopped) {
                 preTime = currentTime;
-                sendHslSetMessage(hslValue);
+                sendHslSetMessage(color, hslValue);
             } else {
                 MeshLogger.log("CMD reject : color set", MeshLogger.LEVEL_INFO);
             }
@@ -192,7 +192,7 @@ public class CompositionColorView extends FrameLayout {
 
                 if ((currentTime - preTime) >= DELAY_TIME || immediate) {
                     preTime = currentTime;
-                    sendHslSetMessage(hslValue);
+                    sendHslSetMessage(color, hslValue);
                 }
             } else if (seekBar == sb_hue || seekBar == sb_sat || seekBar == sb_lit) {
                 long currentTime = System.currentTimeMillis();
@@ -210,7 +210,7 @@ public class CompositionColorView extends FrameLayout {
 
                 if ((currentTime - preTime) >= DELAY_TIME || immediate) {
                     preTime = currentTime;
-                    sendHslSetMessage(hslVal);
+                    sendHslSetMessage(color, hslVal);
                 }
 
             }
@@ -234,10 +234,20 @@ public class CompositionColorView extends FrameLayout {
         }
     }
 
-    private void sendHslSetMessage(float[] hslValue) {
+    private void sendHslSetMessage(int color, float[] hslValue) {
         if (messageDelegate != null) {
-            messageDelegate.onHSLMessage(hslValue);
+            messageDelegate.onHSLMessage(color, hslValue);
         }
+    }
+
+    public void resetColor(int rgb) {
+        int color = 0xFF000000 | rgb;
+        float[] hsv = new float[3];
+        Color.colorToHSV(color, hsv);
+
+        float[] hslValue = new float[3];
+        ColorUtils.colorToHSL(color, hslValue);
+        refreshDesc(hslValue, color, (int) (hsv[2] * 100));
     }
 
     private void refreshDesc(float[] hslValue, int color, int value100) {
@@ -266,7 +276,6 @@ public class CompositionColorView extends FrameLayout {
         );
         tv_hsl.setText(hsl);
 
-
         int hue = (int) hslValue[0];
         int sat = (int) (hslValue[1] * 100);
         int lit = (int) (hslValue[2] * 100);
@@ -280,7 +289,7 @@ public class CompositionColorView extends FrameLayout {
     }
 
     public interface ColorMessageDelegate {
-        void onHSLMessage(float[] hsl);
+        void onHSLMessage(int color, float[] hsl);
     }
 
 }

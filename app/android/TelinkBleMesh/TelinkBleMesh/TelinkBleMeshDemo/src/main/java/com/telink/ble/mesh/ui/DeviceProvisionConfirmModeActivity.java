@@ -439,8 +439,8 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
                         onTimePublishComplete(false, "time pub set status err: " + statusMessage.getStatus());
                         MeshLogger.log("publication err: " + statusMessage.getStatus());
                     }
-                }else if (event.getType().equals(MeshEvent.EVENT_TYPE_DISCONNECTED)){
-                    runOnUiThread(() -> mListAdapter.setIdentifyingPosition(-1));
+                } else if (event.getType().equals(MeshEvent.EVENT_TYPE_DISCONNECTED)) {
+//                    runOnUiThread(() -> mListAdapter.setIdentifyingPosition(-1));
                 }
             }
         });
@@ -477,12 +477,10 @@ public class DeviceProvisionConfirmModeActivity extends BaseActivity implements 
     }
 
     private void onCapabilityReceived(ProvisioningEvent event) {
-
         ProvisioningDevice remote = event.getProvisioningDevice();
-
         NetworkingDevice identifyingDevice = mListAdapter.getIdentifyingDevice();
         if (identifyingDevice == null) {
-            MeshLogger.d("identifying device not found when provision success");
+            MeshLogger.d("identifying device not found when provision success : position = " + mListAdapter.getIdentifyingPosition());
             return;
         }
 
