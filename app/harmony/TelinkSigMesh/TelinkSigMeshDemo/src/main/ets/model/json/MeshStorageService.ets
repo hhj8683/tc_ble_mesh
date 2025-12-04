@@ -67,17 +67,17 @@ import { MeshSecurity } from "./MeshSecurity";
 import { MeshInfoService } from "../MeshInfoService";
 
 export class MeshStorageService {
-    private static instance: MeshStorageService;
-
-    private constructor() {
-    }
-
-    static getInstance(): MeshStorageService {
-        if (!MeshStorageService.instance) {
-            MeshStorageService.instance = new MeshStorageService();
-        }
-        return MeshStorageService.instance;
-    }
+    // private static instance: MeshStorageService;
+    //
+    // private constructor() {
+    // }
+    //
+    // static getInstance(): MeshStorageService {
+    //     if (!MeshStorageService.instance) {
+    //         MeshStorageService.instance = new MeshStorageService();
+    //     }
+    //     return MeshStorageService.instance;
+    // }
 
 
     public static readonly JSON_FILE = "mesh.json";
@@ -110,10 +110,10 @@ export class MeshStorageService {
      * @return new mesh info
      */
     // , BaseActivity activity
-    public async importExternal(jsonStr: string): Promise<MeshInfo | undefined> {
+    public static async importExternal(jsonStr: string): Promise<MeshInfo | undefined> {
         let newMesh: MeshInfo | undefined;
         try {
-            newMesh = await this.importFromJson(jsonStr);
+            newMesh = await MeshStorageService.importFromJson(jsonStr);
         } catch (e) {
             loge(`import failed : ${e.code} -> ${e.message}`)
             return undefined;
@@ -131,11 +131,11 @@ export class MeshStorageService {
      * @return
      * @throws Exception
      */
-    public async importFromJson(jsonStr: string): Promise<MeshInfo | undefined> {
+    private static async importFromJson(jsonStr: string): Promise<MeshInfo | undefined> {
 
         let tempStorage: MeshStorage = JSON.parse(jsonStr) as MeshStorage
 
-        if (!this.validStorageData(tempStorage)) {
+        if (!MeshStorageService.validStorageData(tempStorage)) {
             return undefined;
         }
 
@@ -180,7 +180,7 @@ export class MeshStorageService {
     }
 
 
-    private validStorageData(meshStorage: MeshStorage): boolean {
+    private static validStorageData(meshStorage: MeshStorage): boolean {
         return meshStorage && meshStorage.provisioners && meshStorage.provisioners.length != 0;
     }
 
@@ -199,8 +199,8 @@ export class MeshStorageService {
     /**
      * @return json string
      */
-    public meshToJsonString(meshInfo: MeshInfo, selectedNetKeys: Array<MeshNetKey>): string {
-        let meshStorage = this.convertMeshToJson(meshInfo, selectedNetKeys);
+    public static meshToJsonString(meshInfo: MeshInfo, selectedNetKeys: Array<MeshNetKey>): string {
+        let meshStorage = MeshStorageService.convertMeshToJson(meshInfo, selectedNetKeys);
         return JSON.stringify(meshStorage)
     }
 
@@ -210,7 +210,7 @@ export class MeshStorageService {
      * @param mesh            target meshInfo
      * @param selectedNetKeys selected network key
      */
-    private convertMeshToJson(mesh: MeshInfo, selectedNetKeys: Array<MeshNetKey>): MeshStorage {
+    private static convertMeshToJson(mesh: MeshInfo, selectedNetKeys: Array<MeshNetKey>): MeshStorage {
         let meshStorage = new MeshStorage();
         meshStorage.meshUUID = mesh.meshUUID;
         meshStorage.meshName = mesh.meshName;
@@ -272,17 +272,17 @@ export class MeshStorageService {
         }
 
         for (let node of mesh.nodes) {
-            meshStorage.nodes.push(this.convertDeviceInfoToNode(node, mesh.getDefaultAppKeyIndex()));
+            meshStorage.nodes.push(MeshStorageService.convertDeviceInfoToNode(node, mesh.getDefaultAppKeyIndex()));
         }
 
         for (let node of mesh.excludedNodes) {
-            let nd = this.convertDeviceInfoToNode(node, mesh.getDefaultAppKeyIndex());
+            let nd = MeshStorageService.convertDeviceInfoToNode(node, mesh.getDefaultAppKeyIndex());
             nd.excluded = true;
             meshStorage.nodes.push(nd);
         }
 
         for (let node of mesh.provisionerNodes) {
-            meshStorage.nodes.push(this.convertDeviceInfoToNode(node, mesh.getDefaultAppKeyIndex()));
+            meshStorage.nodes.push(MeshStorageService.convertDeviceInfoToNode(node, mesh.getDefaultAppKeyIndex()));
         }
 
         /*
@@ -306,7 +306,7 @@ export class MeshStorageService {
 
 
     // convert nodeInfo(mesh.java) to node(json)
-    public convertDeviceInfoToNode(deviceInfo: NodeInfo, appKeyIndex: number): Node {
+    public static convertDeviceInfoToNode(deviceInfo: NodeInfo, appKeyIndex: number): Node {
         let node = new Node();
         let levelServiceEnable = PreferencesHelper.isLevelServiceEnable(TelinkSigMeshDemoAbility.getContext());
         node.UUID = hexToUuid(deviceInfo.deviceUUID);
@@ -372,7 +372,7 @@ export class MeshStorageService {
                             model.subscribe = [];
 
                             // for default sub models
-                            if (this.inDefaultSubModel(modelId)) {
+                            if (MeshStorageService.inDefaultSubModel(modelId)) {
                                 for (let subAdr of deviceInfo.subList) {
                                     model.subscribe.push(subAdr)
                                 }
@@ -456,7 +456,7 @@ export class MeshStorageService {
 
 
     //
-    private inDefaultSubModel(modelId: number): boolean {
+    private static inDefaultSubModel(modelId: number): boolean {
         let models = DEFAULT_SUB_LIST
         for (let model of models) {
             if (model == modelId) {
@@ -473,7 +473,7 @@ export class MeshStorageService {
 
 
     // check if node is provisioner
-    private isProvisionerNode(meshStorage: MeshStorage, node: Node): boolean {
+    private static isProvisionerNode(meshStorage: MeshStorage, node: Node): boolean {
         for (let provisioner of meshStorage.provisioners) {
             if (provisioner.UUID.toUpperCase() == node.UUID.toUpperCase()) {
                 return true;

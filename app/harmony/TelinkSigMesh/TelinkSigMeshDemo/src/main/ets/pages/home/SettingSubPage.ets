@@ -14,7 +14,7 @@ interface SettingAction {
 const SETTING_ACTIONS: SettingAction[] = [
     {
         icon: $r("app.media.ic_list"),
-        title: "Manage Network - todo",
+        title: "Manage Network",
         subTitle: "Switch, Create/Delete, Import/Export...",
         pagePath: "pages/manage-network/NetworkListPage"
     },

@@ -15,7 +15,7 @@ const NETWORK_ACTIONS: NetworkAction[] = [
         icon: $r("app.media.ic_network"),
         title: "Mesh Info - todo",
         subTitle: "Default Mesh",
-        pagePath: ""
+        pagePath: "pages/manage-network/NetworkInfoPage"
     },
     {
         icon: $r("app.media.ic_multi_node"),

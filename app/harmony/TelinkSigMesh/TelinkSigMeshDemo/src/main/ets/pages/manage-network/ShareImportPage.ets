@@ -17,6 +17,7 @@ import { picker, ReadTextOptions } from '@kit.CoreFileKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 
 import { fileIo as fs } from '@kit.CoreFileKit'
+import { MeshStorageService } from '../../model/json/MeshStorageService';
 
 const IMPORT_SRC_QRCODE = 0
 const IMPORT_SRC_JSON = 1
@@ -46,7 +47,6 @@ struct ShareImportPage {
         getCommonIcon($r("app.media.ic_arrow_left"), () => {
             router.back()
         })
-
     }
 
     async readBinaryFile(path: string): Promise<Uint8Array | undefined> {
@@ -69,10 +69,8 @@ struct ShareImportPage {
     }
 
     private selectJsonFile() {
-
-        let context: common.Context = getContext(this)
         try {
-            let documentPicker = new picker.DocumentViewPicker(context);
+            let documentPicker = new picker.DocumentViewPicker(getContext(this));
             documentPicker.select({ maxSelectNumber: 1 },
                 async (err: BusinessError, documentSelectResult: Array<string>) => {
                     if (err) {
@@ -82,12 +80,17 @@ struct ShareImportPage {
                     let path = documentSelectResult[0];
                     logd('select file success, uri: ' + path);
 
-                    readTextFile(path).then((data) => {
+                    readTextFile(path).then(async (data) => {
                         if (!data) {
                             toastMessage(this.getUIContext(), "parse data err")
+                            return
+                        }
+                        logd('readTextFile success : ' + data)
+                        let mesh = await MeshStorageService.importExternal(data)
+                        if (mesh) {
+                            toastMessage(this.getUIContext(), "import success")
                         } else {
-                            logd('readTextFile success : ' + data)
-
+                            toastMessage(this.getUIContext(), "import fail")
                         }
                     })
                 });
@@ -152,6 +155,8 @@ struct ShareImportPage {
                 getNormalButton("IMPORT", () => {
                     if (this.srcType == IMPORT_SRC_JSON) {
                         this.selectJsonFile()
+                    } else {
+                        toastMessage(this.getUIContext(), 'qrcode todo')
                     }
                     logd("selected : " + this.srcType)
                 })

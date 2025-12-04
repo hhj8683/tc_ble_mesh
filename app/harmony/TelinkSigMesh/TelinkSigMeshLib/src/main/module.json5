@@ -19,7 +19,7 @@
         }
       },
       {
-        "name" : "ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY",
+        "name" : "ohos.permission.READ_MEDIA",
         "reason": "$string:reason_permission_read_doc",
         "usedScene": {
           "abilities": [
@@ -29,7 +29,7 @@
         }
       },
       {
-        "name" : "ohos.permission.READ_MEDIA",
+        "name" : "ohos.permission.WRITE_MEDIA",
         "reason": "$string:reason_permission_read_doc",
         "usedScene": {
           "abilities": [

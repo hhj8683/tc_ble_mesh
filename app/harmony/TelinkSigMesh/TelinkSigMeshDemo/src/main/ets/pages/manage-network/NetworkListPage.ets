@@ -33,6 +33,7 @@ import { ArrayList } from '@kit.ArkTS';
 import TelinkSigMeshDemoAbility from '../../abilities/TelinkSigMeshDemoAbility';
 import { showConfirmDialog } from '../../components/Dialogs';
 import { PreferencesHelper } from '../../utils/PreferencesHelper';
+import { MeshInfoParams } from '../PageParams';
 
 
 @Entry
@@ -45,7 +46,6 @@ struct NetworkListPage {
     private networkActionDialogId = 0
 
     async aboutToAppear() {
-        this.refreshData()
     }
 
     private refreshData() {
@@ -58,6 +58,10 @@ struct NetworkListPage {
         switch (type) {
 
         }
+    }
+
+    onPageShow(): void {
+        this.refreshData()
     }
 
     aboutToDisappear(): void {
@@ -130,13 +134,21 @@ struct NetworkListPage {
                 getCommonIcon($r('app.media.ic_detail'), undefined, $r('app.color.primary'), 36, 36)
                 Text("Show Detail").fontColor($r('app.color.primary')).layoutWeight(1).fontSize(12)
                 getCommonIcon($r('app.media.ic_arrow_right'), undefined, $r('app.color.primary'), 36, 36)
-            }
+            }.onClick(() => {
+                this.getUIContext().getPromptAction().closeCustomDialog(this.networkActionDialogId)
+                let params: MeshInfoParams = { id: meshInfo.id }
+                router.push({ url: "pages/manage-network/NetworkInfoPage", params: params })
+            })
 
             Row() {
                 getCommonIcon($r('app.media.ic_share'), undefined, $r('app.color.primary'), 36, 36)
                 Text("Share Export").fontColor($r('app.color.primary')).layoutWeight(1).fontSize(12)
                 getCommonIcon($r('app.media.ic_arrow_right'), undefined, $r('app.color.primary'), 36, 36)
-            }
+            }.onClick(()=>{
+                this.getUIContext().getPromptAction().closeCustomDialog(this.networkActionDialogId)
+                let params: MeshInfoParams = { id: meshInfo.id }
+                router.push({ url: "pages/manage-network/ShareImportPage", params: params })
+            })
 
             Row() {
                 // Image($r('app.media.ic_share')).fillColor($r('app.color.primary')).width('40').height('40')
