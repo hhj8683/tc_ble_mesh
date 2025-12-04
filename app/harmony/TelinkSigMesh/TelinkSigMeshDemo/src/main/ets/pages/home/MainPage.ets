@@ -16,7 +16,7 @@ import {
 import NetworkSubPage from './NetworkSubPage';
 import SettingSubPage from './SettingSubPage';
 import { MeshInfoService } from '../../model/MeshInfoService';
-import { WaitingDialog } from '../../components/Dialogs';
+import { showConfirmDialog, WaitingDialog } from '../../components/Dialogs';
 
 const TAB_TITLES: Array<string> = [
     "Device",
@@ -33,8 +33,9 @@ const TAB_ICONS: Array<Resource> = [
 ]
 
 const APP_PERMISSIONS: Permissions[] =
-    ['ohos.permission.ACCESS_BLUETOOTH', 'ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY',
-        'ohos.permission.READ_MEDIA'];
+    ['ohos.permission.ACCESS_BLUETOOTH',
+        'ohos.permission.READ_MEDIA',
+        'ohos.permission.WRITE_MEDIA'];
 
 @Entry
 @Component
@@ -45,6 +46,7 @@ struct MainPage {
     @State currentIndex: number = 0
     @State selectedIndex: number = 0
     private controller: TabsController = new TabsController()
+    private isPermissionChecked = false
 
     aboutToAppear(): void {
         this.checkPermissions();
@@ -61,11 +63,22 @@ struct MainPage {
 
     onPageShow(): void {
         logd("main page # onPageShow")
-        MeshService.getInstance().autoConnect(new AutoConnectParameters())
+        if (this.isPermissionChecked) {
+            MeshService.getInstance().autoConnect(new AutoConnectParameters())
+        }
     }
 
     onPageHide(): void {
         logd("main page # onPageHide")
+    }
+
+    onPermissionChecked() {
+        this.isPermissionChecked = true
+    }
+
+    onPermissionDenied() {
+        this.isPermissionChecked = false
+        showConfirmDialog(this.getUIContext(), 'permission check err')
     }
 
     async checkPermissionGrant(permission: Permissions): Promise<abilityAccessCtrl.GrantStatus> {
@@ -101,15 +114,12 @@ struct MainPage {
             }
         }
 
-
-        // let blePermSt: boolean = await this.checkPermissionGrant('ohos.permission.ACCESS_BLUETOOTH') ===
-        // abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
-        // let mediaPermSt =  await this.checkPermissionGrant('ohos.permission.READ_MEDIA') ===
-        // abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
         console.log("permission status ", permissionChecked)
         if (!permissionChecked) {
             this.reqPermissionsFromUser(APP_PERMISSIONS);
+            return
         }
+        this.onPermissionChecked()
     }
 
     // 使用UIExtensionAbility：将common.UIAbilityContext 替换为common.UIExtensionContext
@@ -128,6 +138,7 @@ struct MainPage {
                     // 用户拒绝授权，提示用户必须授权才能访问当前页面的功能，并引导用户到系统设置中打开相应的权限
                 }
             }
+            this.onPermissionChecked()
             // 授权成功
         }).catch((err: BusinessError) => {
             console.error(`Failed to request permissions from user. Code is ${err.code}, message is ${err.message}`);
