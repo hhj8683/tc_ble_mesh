@@ -61,7 +61,7 @@ struct MainPage {
         MeshService.getInstance().sendMeshMessage(setMessage)
     }
 
-    onPageShow(): void {
+    async onPageShow(): Promise<void> {
         logd("main page # onPageShow")
         if (this.isPermissionChecked) {
             MeshService.getInstance().autoConnect(new AutoConnectParameters())
