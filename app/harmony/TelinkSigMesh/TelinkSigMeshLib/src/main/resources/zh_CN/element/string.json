@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "page_show",
+      "value": "page from package"
+    },
+    {
+      "name": "reason_ble_permission_lib",
+      "value": "for ble ota"
+    },
+    {
+      "name": "reason_permission_read_doc",
+      "value": "for file selection"
+    }
+  ]
+}

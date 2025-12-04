@@ -1,0 +1,10 @@
+{
+  "src": [
+    "pages/Splash",
+    "pages/home/MainPage",
+    "pages/node/NodeMainPage",
+    "pages/manage-network/NetworkListPage",
+    "pages/manage-network/ShareImportPage",
+    "pages/provision/SelectableProvisionPage"
+  ]
+}

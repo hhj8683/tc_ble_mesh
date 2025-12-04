@@ -1,0 +1,36 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "text_color_normal",
+      "value": "#FF646464"
+    },
+    {
+      "name": "nav_btn_normal",
+      "value": "#FF514D4D"
+    },
+    {
+      "name": "nav_btn_selected",
+      "value": "#FF53C858"
+    },
+    {
+      "name": "primary",
+      "value": "#4A87EE"
+    },
+    {
+      "name": "accent",
+      "value": "#907acf"
+    },
+    {
+      "name": "red",
+      "value": "#FF0000"
+    },
+    {
+      "name": "white",
+      "value": "#FFFFFF"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\admin\\.ohos\\config\\default_TelinkSigMesh_vSFRHxmJkkh7Tsns4qpmQpdTDMR4PSw_yT3N4hYnezc=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BEDC0032DD2C7EE3932273032F5F1D4F5082940EB65B76C22B7AE446D050C816B36ABD66442FE56",
+          "profile": "C:\\Users\\admin\\.ohos\\config\\default_TelinkSigMesh_vSFRHxmJkkh7Tsns4qpmQpdTDMR4PSw_yT3N4hYnezc=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\admin\\.ohos\\config\\default_TelinkSigMesh_vSFRHxmJkkh7Tsns4qpmQpdTDMR4PSw_yT3N4hYnezc=.p12",
+          "storePassword": "0000001B22018E3DCF438E2C538AF0BE7F62D2A8E33E18CED493F3A3C4ECECF1F9008077F9DAE31B71A5B8"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compatibleSdkVersion": "5.0.0(12)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "TelinkSigMeshDemo",
+      "srcPath": "./TelinkSigMeshDemo",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TelinkSigMeshLib",
+      "srcPath": "./TelinkSigMeshLib",
+    }
+  ]
+}

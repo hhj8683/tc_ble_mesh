@@ -1,0 +1,43 @@
+{
+  "module": {
+    "name": "TelinkSigMeshLib",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet",
+      "2in1"
+    ],
+    "requestPermissions": [
+      {
+        "name" : "ohos.permission.ACCESS_BLUETOOTH",
+        "reason": "$string:reason_ble_permission_lib",
+        "usedScene": {
+          "abilities": [
+            "FormAbility"
+          ],
+          "when":"inuse"
+        }
+      },
+      {
+        "name" : "ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY",
+        "reason": "$string:reason_permission_read_doc",
+        "usedScene": {
+          "abilities": [
+            "FormAbility"
+          ],
+          "when":"inuse"
+        }
+      },
+      {
+        "name" : "ohos.permission.READ_MEDIA",
+        "reason": "$string:reason_permission_read_doc",
+        "usedScene": {
+          "abilities": [
+            "FormAbility"
+          ],
+          "when":"inuse"
+        }
+      }
+    ]
+  }
+}
