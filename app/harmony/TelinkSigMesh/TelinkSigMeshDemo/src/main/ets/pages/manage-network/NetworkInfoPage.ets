@@ -1,47 +1,20 @@
-import { TitleBar } from '../../components/TitleBar';
-import { getCommonIcon, getWarnButton, toastMessage } from '../../components/Widgets';
-import {
-    BindingBearer,
-    BindingDevice,
-    BindingEvent,
-    BindingParameters,
-    bytesToHexString,
-    Event,
-    EventBus,
-    hexToBytes,
-    logd,
-    logw,
-    MeshConfiguration,
-    MeshScanRecord,
-    MeshService,
-    num2Hex,
-    OnOffSetMessage,
-    ProvisioningDevice,
-    ProvisioningEvent,
-    ProvisioningParameters,
-    ScanEvent,
-    ScanParameters
-} from 'telinksigmeshlib';
-import { UiStateEvent } from '../../model/UiStateEvent';
-import { router } from '@kit.ArkUI';
-import { ble } from '@kit.ConnectivityKit';
-import { MeshInfo } from '../../model/MeshInfo';
-import { MeshInfoService } from '../../model/MeshInfoService';
-import { NodeInfo } from '../../model/NodeInfo';
-import { CardView } from '../../components/CardView';
-import { ArrayList } from '@kit.ArkTS';
-import TelinkSigMeshDemoAbility from '../../abilities/TelinkSigMeshDemoAbility';
-import { showConfirmDialog } from '../../components/Dialogs';
-import { PreferencesHelper } from '../../utils/PreferencesHelper';
-import { MeshNetKey } from '../../model/MeshNetKey';
-import { MeshAppKey } from '../../model/MeshAppKey';
-import { MeshInfoParams } from '../PageParams';
+import { TitleBar } from '../../components/TitleBar'
+import { getCommonIcon, toastMessage } from '../../components/Widgets'
+import { num2Hex } from 'telinksigmeshlib'
+import { router } from '@kit.ArkUI'
+import { MeshInfo } from '../../model/MeshInfo'
+import { MeshInfoService } from '../../model/MeshInfoService'
+import { MeshNetKey } from '../../model/MeshNetKey'
+import { MeshAppKey } from '../../model/MeshAppKey'
+import { MeshInfoParams } from '../PageParams'
+import { pasteboard } from '@kit.BasicServicesKit'
 
 
 @Entry
 @Component
 struct NetworkInfoPage {
-    @State networkName: string = ""
+    // @State networkName: string = ""
+    @State meshNameInput: string = ""
     @State meshInfo: MeshInfo | undefined = undefined
     private nameInputDialogId = 0
 
@@ -52,28 +25,29 @@ struct NetworkInfoPage {
         } else {
             this.meshInfo = MeshInfoService.getInstance().getCurrentMesh()
         }
-        this.networkName = this.meshInfo?.meshName ?? ""
     }
 
     @Builder
     nameInputDialogContent() {
         Column({ space: 8 }) {
             Text("Update Mesh Name").fontSize(15).fontWeight(FontWeight.Bold)
-            TextInput({ text: $$this.networkName })
+            TextInput({ text: $$this.meshNameInput })
             Button("CONFIRM").onClick(() => {
-                if (this.networkName == '') {
+                if (this.meshNameInput == '') {
                     toastMessage(this.getUIContext(), "name input err")
                     return
                 }
-                this.meshInfo!.meshName = this.networkName
+                this.meshInfo!.meshName = this.meshNameInput
                 MeshInfoService.getInstance().updateMeshInfo(this.meshInfo!)
                 toastMessage(this.getUIContext(), "update mesh name success")
+                this.getUIContext().getPromptAction().closeCustomDialog(this.nameInputDialogId)
             })
         }
         .width('80%').alignItems(HorizontalAlign.Center).padding(8)
     }
 
     private showUpdateNameDialog() {
+        this.meshNameInput = this.meshInfo!.meshName
         this.getUIContext().getPromptAction().openCustomDialog({
             builder: () => {
                 this.nameInputDialogContent()
@@ -86,36 +60,49 @@ struct NetworkInfoPage {
     }
 
     @Builder
-    getTitleText(title: string) {
-        Text(title)
-            .fontSize(11)
-            .fontColor(Color.Gray)
-            .textAlign(TextAlign.Start)
-    }
-
-    @Builder
-    getContentText(content: string) {
-        Text(content)
-            .fontSize(13)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Color.Gray)
-            .textAlign(TextAlign.Start)
-    }
-
-    @Builder
-    getInfoItem(icon: Resource, title: string, content: string, titleFontSize: number = 13, leftPadding: number = 0) {
+    getInfoItem(icon: Resource, title: string, content: string) {
         Row() {
             getCommonIcon(icon, undefined, Color.Gray)
             Column() {
                 Text(title)
-                    .fontSize(titleFontSize)
+                    .fontSize(13)
                     .fontWeight(FontWeight.Bold)
                     .fontColor(Color.Gray)
                     .textAlign(TextAlign.Start)
 
                 Text(content).fontSize(11).fontColor(Color.Gray).textAlign(TextAlign.Start)
             }.alignItems(HorizontalAlign.Start)
-        }.padding({ left: leftPadding })
+        }
+    }
+
+    @Builder
+    getKeyItem(icon: Resource, title: string, content: string, isKey: boolean = false) {
+        Row() {
+            getCommonIcon(icon, undefined, Color.Gray, 36, 36)
+            Column() {
+                Text(title)
+                    .fontSize(12)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor(Color.Gray)
+                    .textAlign(TextAlign.Start)
+
+                Text(content).fontSize(11).fontColor(Color.Gray).textAlign(TextAlign.Start)
+            }.alignItems(HorizontalAlign.Start).layoutWeight(1)
+
+            if (isKey) {
+                getCommonIcon($r('app.media.ic_copy'), () => {
+                    let pasteData: pasteboard.PasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, content)
+                    let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard()
+                    systemPasteboard.setData(pasteData, (err) => {
+                        if (err) {
+                            toastMessage(this.getUIContext(), "copy key fail")
+                            return
+                        }
+                        toastMessage(this.getUIContext(), "key copied")
+                    })
+                }, Color.Gray, 36, 36)
+            }
+        }.padding({ left: 16, right: 16 })
     }
 
     @Builder
@@ -130,21 +117,10 @@ struct NetworkInfoPage {
         }
 
         ForEach(this.meshInfo!.meshNetKeyList, (item: MeshNetKey, index: number) => {
-            this.getInfoItem($r('app.media.ic_name'), 'Name', item.name, 12, 16)
-            this.getInfoItem($r('app.media.ic_id'), 'Index', `0x${num2Hex(item.index, 2)}`, 12, 16)
-            Row() {
-                getCommonIcon($r('app.media.ic_key_value'), undefined, Color.Gray)
-                Column() {
-                    Text('Key')
-                        .fontSize(12)
-                        .fontWeight(FontWeight.Bold)
-                        .fontColor(Color.Gray)
-                        .textAlign(TextAlign.Start)
-
-                    Text(item.key).fontSize(11).fontColor(Color.Gray).textAlign(TextAlign.Start)
-                }.alignItems(HorizontalAlign.Start)
-            }.padding({ left: 16 })
-        });
+            this.getKeyItem($r('app.media.ic_name'), 'Name', item.name,)
+            this.getKeyItem($r('app.media.ic_id'), 'Index', `0x${num2Hex(item.index, 2)}`)
+            this.getKeyItem($r('app.media.ic_key_value'), 'Key', item.key, true)
+        })
     }
 
     @Builder
@@ -159,42 +135,49 @@ struct NetworkInfoPage {
         }
 
         ForEach(this.meshInfo!.appKeyList, (item: MeshAppKey, index: number) => {
-            this.getInfoItem($r('app.media.ic_name'), 'Name', item.name, 12, 16)
-            this.getInfoItem($r('app.media.ic_id'), 'Index', `0x${num2Hex(item.index, 2)}`, 12, 16)
-            Row() {
-                getCommonIcon($r('app.media.ic_key_value'), undefined, Color.Gray)
-                Column() {
-                    Text('Key')
-                        .fontSize(12)
-                        .fontWeight(FontWeight.Bold)
-                        .fontColor(Color.Gray)
-                        .textAlign(TextAlign.Start)
+            this.getKeyItem($r('app.media.ic_name'), 'Name', item.name)
+            this.getKeyItem($r('app.media.ic_id'), 'Index', `0x${num2Hex(item.index, 2)}`)
+            this.getKeyItem($r('app.media.ic_key_value'), 'Key', item.key, true)
+            this.getKeyItem($r('app.media.ic_bound_key'), 'Bond Net Key', `0x${num2Hex(item.boundNetKeyIndex, 2)}`)
+        })
+    }
 
-                    Text(item.key).fontSize(11).fontColor(Color.Gray).textAlign(TextAlign.Start)
-                }.alignItems(HorizontalAlign.Start)
-            }.padding({ left: 16 })
-
-            this.getInfoItem($r('app.media.ic_bound_key'), 'Bond Net Key', `0x${num2Hex(item.boundNetKeyIndex, 2)}`, 12,
-                16)
-        });
+    @Builder
+    getActionView() {
+        getCommonIcon($r("app.media.ic_edit"), () => {
+            this.showUpdateNameDialog()
+        })
     }
 
     build() {
         Column() {
             TitleBar({
                 title: "MeshInfo",
-                subTitle: this.networkName,
+                subTitle: this.meshInfo!.meshName,
+                showNavigation: true,
                 showAction: true,
                 actionView: () => {
-                    getCommonIcon($r("app.media.ic_edit"), () => {
-                        this.showUpdateNameDialog()
-                    })
+                    this.getActionView()
                 }
             })
 
             Scroll() {
                 Column({ space: 4 }) {
-                    this.getInfoItem($r('app.media.ic_name'), 'Mesh Name', this.networkName)
+                    // this.getInfoItem($r('app.media.ic_name'), 'Mesh Name', this.meshInfo!.meshName)
+
+                    Row() {
+                        getCommonIcon($r('app.media.ic_name'), undefined, Color.Gray)
+                        Column() {
+                            Text('Mesh Name')
+                                .fontSize(13)
+                                .fontWeight(FontWeight.Bold)
+                                .fontColor(Color.Gray)
+                                .textAlign(TextAlign.Start)
+
+                            Text(this.meshInfo!.meshName).fontSize(11).fontColor(Color.Gray).textAlign(TextAlign.Start)
+                        }.alignItems(HorizontalAlign.Start)
+                    }.padding({ left: 0 })
+
                     this.getInfoItem($r('app.media.ic_id'), 'Mesh UUID', this.meshInfo!.meshUUID)
                     this.getInfoItem($r('app.media.ic_iv_index'), 'IV Index', "0x" + num2Hex(this.meshInfo!.ivIndex, 8))
                     this.getInfoItem($r('app.media.ic_sequence_number'), 'Sequence Number',
@@ -202,6 +185,7 @@ struct NetworkInfoPage {
                     this.getInfoItem($r('app.media.ic_local_address'), 'Local Address',
                         "0x" + num2Hex(this.meshInfo!.localAddress, 4))
                     this.getNetKeysView()
+                    this.getAppKeysView()
                 }.height('auto').width('100%').alignItems(HorizontalAlign.Start)
             }.layoutWeight(1)
             .align(Alignment.TopStart)
