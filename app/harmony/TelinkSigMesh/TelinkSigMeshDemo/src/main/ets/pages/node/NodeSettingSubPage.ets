@@ -98,6 +98,10 @@ export default struct NodeSettingSubPage {
             Text("Input New Name").fontSize(15).fontWeight(FontWeight.Bold)
             TextInput({ text: $$this.nameInput })
             Button("CONFIRM").onClick(() => {
+                if (this.nameInput.includes('&')) {
+                    toastMessage(this.getUIContext(), 'can not contains \'&\'')
+                    return
+                }
                 this.node!.name = this.nameInput
                 MeshInfoService.getInstance().updateNodeInfo(this.node!)
                 this.getUIContext().getPromptAction().closeCustomDialog(this.nameInputDialogId)

@@ -13,7 +13,6 @@ import { pasteboard } from '@kit.BasicServicesKit'
 @Entry
 @Component
 struct NetworkInfoPage {
-    // @State networkName: string = ""
     @State meshNameInput: string = ""
     @State meshInfo: MeshInfo | undefined = undefined
     private nameInputDialogId = 0
@@ -35,6 +34,10 @@ struct NetworkInfoPage {
             Button("CONFIRM").onClick(() => {
                 if (this.meshNameInput == '') {
                     toastMessage(this.getUIContext(), "name input err")
+                    return
+                }
+                if (this.meshNameInput.includes('&')) {
+                    toastMessage(this.getUIContext(), 'can not contains \'&\'')
                     return
                 }
                 this.meshInfo!.meshName = this.meshNameInput

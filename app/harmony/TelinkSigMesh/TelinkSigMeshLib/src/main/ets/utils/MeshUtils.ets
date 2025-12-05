@@ -101,7 +101,6 @@ export function currentTimeMillis() {
 }
 
 
-
 /**
  * Mesh V1.0 3.7.3.1 Operation codes
  * Opcode Format
@@ -390,9 +389,11 @@ export function aggregateMessages(elementAddress: number, meshMessages: ArrayLis
  * @return A list of StatusMessage objects generated from the OpcodeAggregatorStatusMessage.
  * Returns null if the statusItems list is empty or null.
  */
-export function   parseOpcodeAggregatorStatus(opAggStsMsg: OpcodeAggregatorStatusMessage): ArrayList<StatusMessage> | undefined{
-   let items = opAggStsMsg.statusItems;
-    if (items.length == 0) return undefined;
+export function parseOpcodeAggregatorStatus(opAggStsMsg: OpcodeAggregatorStatusMessage): ArrayList<StatusMessage> | undefined {
+    let items = opAggStsMsg.statusItems;
+    if (items.length == 0) {
+        return undefined;
+    }
     let msgList: ArrayList<StatusMessage> = new ArrayList();
     let msg: StatusMessage | undefined;
     for (let item of items) {
@@ -418,28 +419,7 @@ export function getUnicastRange(start: number, len: number): Uint8Array {
     }
 }
 
-/**
- * get the description of a GATT connection state based on the given connection state value.
- *
- * @param connectionState state int value
- * @return desc
- */
-// public static String getGattConnectionDesc(int connectionState) {
-//     switch (connectionState) {
-//         case BluetoothGatt.STATE_DISCONNECTED:
-//             return "disconnected";
-//
-//         case BluetoothGatt.STATE_CONNECTING:
-//             return "connecting...";
-//
-//         case BluetoothGatt.STATE_CONNECTED:
-//             return "connected";
-//
-//         case BluetoothGatt.STATE_DISCONNECTING:
-//             return "disconnecting...";
-//
-//         default:
-//             return "unknown";
-//     }
-// }
-
+export function isUuid(input: string) {
+    const uuidRegex: RegExp = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    return uuidRegex.test(input);
+}
