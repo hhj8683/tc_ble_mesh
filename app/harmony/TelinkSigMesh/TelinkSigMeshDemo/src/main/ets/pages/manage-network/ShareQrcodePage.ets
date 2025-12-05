@@ -1,32 +1,7 @@
 import { TitleBar } from '../../components/TitleBar';
-import environment from '@ohos.file.environment';
-import { getCommonIcon, getNormalButton, toastMessage } from '../../components/Widgets';
-import {
-    bufferToHex,
-    bytesToHexString,
-    bytesToString,
-    Event,
-    EventBus,
-    logd,
-    loge,
-    num2Hex,
-    readTextFile
-} from 'telinksigmeshlib';
-import { UiStateEvent } from '../../model/UiStateEvent';
 import { router } from '@kit.ArkUI';
-import { common } from '@kit.AbilityKit';
-import { picker, ReadTextOptions } from '@kit.CoreFileKit';
-import { BusinessError } from '@kit.BasicServicesKit';
 
-import { fileIo as fs } from '@kit.CoreFileKit'
-import { MeshStorageService } from '../../model/json/MeshStorageService';
-import { MeshInfoParams, QrcodeUuidParams } from '../PageParams';
-import { MeshInfo } from '../../model/MeshInfo';
-import { MeshInfoService } from '../../model/MeshInfoService';
-import { MeshNetKey } from '../../model/MeshNetKey';
-import TelinkSigMeshDemoAbility from '../../abilities/TelinkSigMeshDemoAbility';
-import { http } from '@kit.NetworkKit';
-import { HttpClient } from '../../utils/HttpClient';
+import { QrcodeUuidParams } from '../PageParams';
 import { showConfirmDialog } from '../../components/Dialogs';
 
 
