@@ -1,6 +1,5 @@
 // import fileIO from "@ohos.fileio";
-import { fileIo as fs } from '@kit.CoreFileKit'
-import fileUri from '@ohos.file.fileuri'
+import { fileIo as fs } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 
 export async function copyToInternal(uri: string) {

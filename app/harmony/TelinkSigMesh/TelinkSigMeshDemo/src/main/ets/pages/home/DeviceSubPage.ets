@@ -127,7 +127,6 @@ export default struct DeviceSubPage {
             })
             Row({ space: 8 }) {
                 getNormalButton('ALL ON', () => {
-                    toastMessage(this.getUIContext(), "ALL ON TEST")
                     this.setAllOnOff(OnOffSetMessage.ON)
                 })
                 getNormalButton('ALL OFF', () => {

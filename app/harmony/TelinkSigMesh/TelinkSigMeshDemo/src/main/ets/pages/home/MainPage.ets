@@ -32,10 +32,12 @@ const TAB_ICONS: Array<Resource> = [
     $r("app.media.ic_setting"),
 ]
 
-const APP_PERMISSIONS: Permissions[] =
-    ['ohos.permission.ACCESS_BLUETOOTH',
-        'ohos.permission.READ_MEDIA',
-        'ohos.permission.WRITE_MEDIA'];
+const APP_PERMISSIONS: Permissions[] = [
+    'ohos.permission.ACCESS_BLUETOOTH',
+    'ohos.permission.READ_MEDIA',
+    'ohos.permission.WRITE_MEDIA',
+    'ohos.permission.INTERNET'
+]
 
 @Entry
 @Component

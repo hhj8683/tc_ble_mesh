@@ -7,6 +7,7 @@
     "pages/manage-network/NetworkInfoPage",
     "pages/manage-network/ShareImportPage",
     "pages/manage-network/ShareExportPage",
+    "pages/manage-network/ShareQrcodePage",
     "pages/provision/SelectableProvisionPage"
   ]
 }

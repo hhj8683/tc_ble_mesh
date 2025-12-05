@@ -1,22 +1,10 @@
 import { TitleBar } from '../../components/TitleBar';
 import { getCommonIcon, getNormalButton, toastMessage } from '../../components/Widgets';
-import {
-    bufferToHex,
-    bytesToHexString,
-    bytesToString,
-    Event,
-    EventBus,
-    logd,
-    loge,
-    readTextFile
-} from 'telinksigmeshlib';
+import { Event, EventBus, logd, loge, readTextFile } from 'telinksigmeshlib';
 import { UiStateEvent } from '../../model/UiStateEvent';
 import { router } from '@kit.ArkUI';
-import { common } from '@kit.AbilityKit';
-import { picker, ReadTextOptions } from '@kit.CoreFileKit';
+import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-
-import { fileIo as fs } from '@kit.CoreFileKit'
 import { MeshStorageService } from '../../model/json/MeshStorageService';
 
 const IMPORT_SRC_QRCODE = 0
@@ -158,7 +146,6 @@ struct ShareImportPage {
                     } else {
                         toastMessage(this.getUIContext(), 'qrcode todo')
                     }
-                    logd("selected : " + this.srcType)
                 })
             }.width('100%')
 

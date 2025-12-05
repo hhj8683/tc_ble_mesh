@@ -7,3 +7,7 @@ export interface NodeParams {
 export interface MeshInfoParams{
     id: number
 }
+
+export interface QrcodeUuidParams{
+    uuid: string
+}

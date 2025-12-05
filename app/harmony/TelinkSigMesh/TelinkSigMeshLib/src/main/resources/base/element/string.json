@@ -11,6 +11,10 @@
     {
       "name": "reason_permission_read_doc",
       "value": "for file selection"
+    },
+    {
+      "name": "reason_permission_internet",
+      "value": "for sharing network"
     }
   ]
 }

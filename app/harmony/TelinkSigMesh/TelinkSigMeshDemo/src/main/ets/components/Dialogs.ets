@@ -58,7 +58,8 @@ export class WaitingDialog {
 /**
  * confirm dialog
  */
-export function showConfirmDialog(context: UIContext, title: string, message?: string, onConfirm?: Function) {
+export function showConfirmDialog(context: UIContext, title: string, message?: string, onConfirm?: Function,
+    onCancel?: Function) {
     context.getPromptAction().showDialog({
         title: title,
         message: message,
@@ -77,10 +78,10 @@ export function showConfirmDialog(context: UIContext, title: string, message?: s
             console.error('showDialog err: ' + err);
             return;
         }
-        if (data.index == 1) {
-            if (onConfirm) {
-                onConfirm()
-            }
+        if (data.index == 0 && onCancel) {
+            onCancel()
+        } else if (data.index == 1 && onConfirm) {
+            onConfirm()
         }
     })
 }

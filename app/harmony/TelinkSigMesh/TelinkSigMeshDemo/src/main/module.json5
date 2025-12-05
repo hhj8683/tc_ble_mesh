@@ -78,6 +78,16 @@
           ],
           "when":"inuse"
         }
+      },
+      {
+        "name" : "ohos.permission.INTERNET",
+        "reason": "$string:reason_permission_internet",
+        "usedScene": {
+          "abilities": [
+            "FormAbility"
+          ],
+          "when":"inuse"
+        }
       }
     ]
   }

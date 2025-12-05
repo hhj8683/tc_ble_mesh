@@ -20,7 +20,7 @@ import { NodeStatusChangedEvent } from '../model/NodeStatusChangedEvent';
 import { OnlineState } from '../model/OnlineState';
 
 export default class TelinkSigMeshDemoAbility extends UIAbility {
-    static globalContext: common.Context
+    private static globalContext: common.Context
 
     async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
         this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);

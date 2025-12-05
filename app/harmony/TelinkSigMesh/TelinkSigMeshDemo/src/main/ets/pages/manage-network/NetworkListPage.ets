@@ -147,7 +147,7 @@ struct NetworkListPage {
             }.onClick(()=>{
                 this.getUIContext().getPromptAction().closeCustomDialog(this.networkActionDialogId)
                 let params: MeshInfoParams = { id: meshInfo.id }
-                router.push({ url: "pages/manage-network/ShareImportPage", params: params })
+                router.push({ url: "pages/manage-network/ShareExportPage", params: params })
             })
 
             Row() {
@@ -263,7 +263,6 @@ struct NetworkListPage {
         .margin(8)
         .padding(8)
         .onClick(() => {
-            logd("network : " + item.meshName)
             this.showNetworkActionDialog(item)
         })
     }
