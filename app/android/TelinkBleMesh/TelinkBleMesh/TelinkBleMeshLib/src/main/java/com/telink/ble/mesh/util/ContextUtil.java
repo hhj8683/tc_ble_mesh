@@ -122,4 +122,10 @@ public class ContextUtil {
             return activeNetworkInfo != null && activeNetworkInfo.isConnected();
         }
     }
+
+    public static boolean isHarmonyOS() {
+        return Build.MANUFACTURER.toUpperCase().contains("HUAWEI");
+//        String osName = System.getProperty("os.name");
+//        return osName != null && osName.contains("HarmonyOS");
+    }
 }

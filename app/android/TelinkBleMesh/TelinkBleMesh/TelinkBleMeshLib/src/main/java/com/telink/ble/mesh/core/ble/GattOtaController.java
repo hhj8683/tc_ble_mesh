@@ -25,6 +25,7 @@ package com.telink.ble.mesh.core.ble;
 import android.os.Build;
 import android.os.Handler;
 
+import com.telink.ble.mesh.util.ContextUtil;
 import com.telink.ble.mesh.util.MeshLogger;
 import com.telink.ble.mesh.util.OtaPacketParser;
 
@@ -193,7 +194,7 @@ public class GattOtaController {
 
     private boolean validateOta() {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) return false;
+        if (!ContextUtil.isHarmonyOS() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) return false;
 
         if (readInterval <= 0) return false;
 
