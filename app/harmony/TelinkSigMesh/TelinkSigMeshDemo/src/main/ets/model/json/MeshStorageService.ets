@@ -21,25 +21,20 @@
  *          limitations under the License.
  *******************************************************************************************************/
 import {
-    bytesToHexString,
-    bytesToUuid,
     DEFAULT_SUB_LIST,
-    hexToBytes,
     hexToIntB,
     hexToUuid,
     LEVEL_ASSOCIATED_LIST,
     logd,
     loge,
     MeshSigModel,
-    Mode,
     num2Hex,
-    TransitionTime,
-    UNICAST_ADDRESS_MAX,
-    uuidToByteArray
-} from "telinksigmeshlib";
-import { MeshInfo } from "../MeshInfo";
+    TransitionTime
+} from 'telinksigmeshlib';
+import { MeshInfo } from '../MeshInfo';
 import {
     ApplicationKey,
+    convertToMeshInfo,
     Element,
     Features,
     Group,
@@ -52,33 +47,17 @@ import {
     PublishPeriod,
     Scene,
     Transmit
-} from "./MeshStorage";
-import { common } from "@kit.AbilityKit";
-import { MeshNetKey } from "../MeshNetKey";
-import { formatDateToISOString } from "../../utils/ContextUtils";
-import { GroupInfo } from "../GroupInfo";
-import { PreferencesHelper } from "../../utils/PreferencesHelper";
-import { Provisioner } from "../Provisioner";
-import { NodeInfo } from "../NodeInfo";
-import { PublishModel } from "../PublishModel";
-import TelinkSigMeshDemoAbility from "../../abilities/TelinkSigMeshDemoAbility";
-import { util } from "@kit.ArkTS";
-import { MeshSecurity } from "./MeshSecurity";
-import { MeshInfoService } from "../MeshInfoService";
+} from './MeshStorage';
+import { MeshNetKey } from '../MeshNetKey';
+import { formatDateToISOString } from '../../utils/ContextUtils';
+import { GroupInfo } from '../GroupInfo';
+import { PreferencesHelper } from '../../utils/PreferencesHelper';
+import { NodeInfo } from '../NodeInfo';
+import TelinkSigMeshDemoAbility from '../../abilities/TelinkSigMeshDemoAbility';
+import { MeshSecurity } from './MeshSecurity';
+import { MeshInfoService } from '../MeshInfoService';
 
 export class MeshStorageService {
-    // private static instance: MeshStorageService;
-    //
-    // private constructor() {
-    // }
-    //
-    // static getInstance(): MeshStorageService {
-    //     if (!MeshStorageService.instance) {
-    //         MeshStorageService.instance = new MeshStorageService();
-    //     }
-    //     return MeshStorageService.instance;
-    // }
-
 
     public static readonly JSON_FILE = "mesh.json";
     public static readonly VC_TOOL_CPS = new Uint8Array([
@@ -139,7 +118,7 @@ export class MeshStorageService {
             return undefined;
         }
 
-        let targetMesh = tempStorage.convertToMeshInfo();
+        let targetMesh = convertToMeshInfo(tempStorage);
         let targetMeshUUID = targetMesh.meshUUID;
 
         // mesh in db

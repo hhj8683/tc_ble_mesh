@@ -56,7 +56,7 @@ export class HttpClient {
     public static async upload(json: string): Promise<string | undefined> {
         // let url = `${BASE_URL + URL_UPLOAD}?data=${json}&timeout=${DEFAULT_TIMEOUT}`
         let url = `${BASE_URL + URL_UPLOAD}`
-        logd('url : ' + url)
+        logd('[upload] url : ' + url)
         const httpRequest = http.createHttp()
         try {
             const rsp = await httpRequest.request(url, {
@@ -65,74 +65,78 @@ export class HttpClient {
                 extraData: `data=${json}&timeout=${DEFAULT_TIMEOUT}`
             })
             if (!rsp || !rsp.result) {
-                loge("rsp err")
+                loge("[upload] rsp err")
                 httpRequest.destroy()
                 return
             }
-            logd("http rsp : " + JSON.stringify(rsp))
+            logd("[upload] http rsp : " + JSON.stringify(rsp))
             if (typeof rsp.result != 'string') {
-                loge('http rsp result type err : ' + (typeof rsp.result))
+                loge('[upload] http rsp result type err : ' + (typeof rsp.result))
                 httpRequest.destroy()
                 return
             }
             let httpRsp: HttpResponse = JSON.parse(rsp.result) as HttpResponse
             if (!httpRsp || !httpRsp.isSuccess) {
-                loge("http rsp err : " + JSON.stringify(rsp))
+                loge("[upload] http rsp err : " + JSON.stringify(rsp))
                 httpRequest.destroy()
                 return
             }
             let uuid: string = httpRsp.data as string
             if (!uuid) {
-                loge("rsp data err : " + JSON.stringify(httpRsp))
+                loge("[upload] rsp data err : " + JSON.stringify(httpRsp))
                 httpRequest.destroy()
                 return
             }
-            logd("upload success : " + uuid)
+            logd("[upload] upload success : " + uuid)
             httpRequest.destroy()
             return uuid
         } catch (e) {
-            loge('upload fail：', JSON.stringify(e))
+            loge('[upload] upload fail：', JSON.stringify(e))
         }
         return
     }
 
     public static async download(uuid: string): Promise<string | undefined> {
-        let url = `${BASE_URL + URL_DOWNLOAD}?uuid=${uuid}`
-        logd('url : ' + url)
+        // let url = `${BASE_URL + URL_DOWNLOAD}?uuid=${uuid}`
+        let url = BASE_URL + URL_DOWNLOAD
+        logd('[download] url : ' + url)
         const httpRequest = http.createHttp()
         try {
+
             const rsp = await httpRequest.request(url, {
                 expectDataType: http.HttpDataType.STRING,
-                method: http.RequestMethod.GET,
+                method: http.RequestMethod.POST,
+                extraData: `uuid=${uuid}`
             })
+
             if (!rsp || !rsp.result) {
-                loge("rsp err")
+                loge("[download] rsp err")
                 httpRequest.destroy()
                 return
             }
-            logd("http rsp : " + JSON.stringify(rsp))
+            logd("[download] http rsp : " + JSON.stringify(rsp))
             if (typeof rsp.result != 'string') {
-                loge('http rsp result type err : ' + (typeof rsp.result))
+                loge('[download] http rsp result type err : ' + (typeof rsp.result))
                 httpRequest.destroy()
                 return
             }
             let httpRsp: HttpResponse = JSON.parse(rsp.result) as HttpResponse
             if (!httpRsp || !httpRsp.isSuccess) {
-                loge("http rsp err : " + JSON.stringify(rsp))
+                loge("[download] http rsp err : " + JSON.stringify(rsp))
                 httpRequest.destroy()
                 return
             }
             let meshJson: string = httpRsp.data as string
             if (!meshJson) {
-                loge("rsp data err : " + JSON.stringify(httpRsp))
+                loge("[download] rsp data err : " + JSON.stringify(httpRsp))
                 httpRequest.destroy()
                 return
             }
-            logd("download success : " + meshJson)
+            logd("[download] download success : " + meshJson)
             httpRequest.destroy()
             return meshJson
         } catch (e) {
-            loge('upload fail：', JSON.stringify(e))
+            loge('[download] upload fail：', JSON.stringify(e))
         }
         return
     }

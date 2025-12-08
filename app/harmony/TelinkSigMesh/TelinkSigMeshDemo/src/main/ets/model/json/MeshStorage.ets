@@ -80,260 +80,6 @@ export class MeshStorage {
     public groups: Array<Group> = []
     public scenes: Array<Scene> = []
 
-    /**
-     * convert json to MeshInfo {@link MeshInfo}
-     * all provisioners will be saved in provisioner list {@link MeshInfo#allProvisioners},
-     * nodes will be save in three list:
-     * 1. {@link MeshInfo#provisionerNodes} for all provisioner nodes
-     * 2. {@link MeshInfo#excludedNodes} for all excluded nodes, that are kickout
-     * 3. others nodes {@link MeshInfo#nodes}
-     */
-    public convertToMeshInfo(): MeshInfo {
-        let meshInfo = new MeshInfo();
-        meshInfo.meshUUID = this.meshUUID;
-        meshInfo.meshName = this.meshName;
-        meshInfo.timestamp = this.timestamp;
-        /*
-         * convert all provisioners
-         */
-        meshInfo.allProvisioners.push(...this.provisioners)
-
-        /*
-         * convert all network keys
-         */
-        for (let networkKey of this.netKeys) {
-            meshInfo.meshNetKeyList.push({
-                name: networkKey.name,
-                index: networkKey.index,
-                key: networkKey.key
-            });
-        }
-
-        /*
-         * convert all application keys
-         */
-        for (let applicationKey of this.appKeys) {
-            meshInfo.appKeyList.push({
-                name: applicationKey.name,
-                index: applicationKey.index,
-                key: applicationKey.key,
-                boundNetKeyIndex: applicationKey.boundNetKey
-            });
-        }
-
-
-        /*
-         * convert all groups
-         */
-        let group: GroupInfo;
-        for (let gp of this.groups) {
-            group = new GroupInfo();
-            group.name = gp.name;
-            group.address = hexToIntB(gp.address);
-            if (group.name.includes("subgroup")) {
-                meshInfo.extendGroups.push(group);
-            } else {
-                meshInfo.groups.push(group);
-            }
-        }
-
-
-        /*
-         * convert all groups
-         */
-        let scene: MScene;
-        for (let outerScene of this.scenes) {
-            scene = new MScene()
-            scene.sceneId = hexToIntB(outerScene.number);
-            scene.name = outerScene.name;
-            for (let adr of outerScene.addresses) {
-                scene.addressList.push(adr)
-            }
-            meshInfo.scenes.push(scene);
-        }
-
-        /**
-         * convert all nodes,
-         * the exclude nodes will be saved in meshInfo.excludedNodes,
-         * other will be saved in
-         * ignore provisioner nodes
-         */
-        for (let node of this.nodes) {
-            let nodeInfo: NodeInfo = this.nodeToNodeInfo(node);
-            //            nodeInfo.save();
-            if (this.isProvisionerNode(node)) {
-                meshInfo.provisionerNodes.push(nodeInfo);
-            } else if (node.excluded) {
-                meshInfo.excludedNodes.push(nodeInfo);
-            } else {
-                meshInfo.nodes.push(nodeInfo);
-            }
-        }
-
-        return meshInfo;
-
-    }
-
-    /**
-     * convert node to {@link NodeInfo}
-     */
-    private nodeToNodeInfo(node: Node): NodeInfo {
-        let nodeInfo = new NodeInfo();
-        nodeInfo.meshAddress = hexToIntB(node.unicastAddress);
-        //                    deviceInfo.deviceUUID =  Arrays.hexToBytes(node.UUID.replace(":", "").replace("-", ""));
-        nodeInfo.deviceUUID = uuidToRawHex(node.UUID);
-        nodeInfo.name = node.name;
-        nodeInfo.elementCnt = node.elements == null ? 0 : node.elements.length;
-        nodeInfo.deviceKey = node.deviceKey
-
-        let subList: Array<string> = []
-        let publishModel: PublishModel;
-        if (node.elements != null) {
-            for (let element of node.elements) {
-                if (element.models == null) {
-                    continue;
-                }
-                for (let model of element.models) {
-
-                    if (model.subscribe != null) {
-                        for (let sub of model.subscribe) {
-                            let subAdr = parseInt(sub, 16);
-                            if (subAdr >= 0xD000) {
-                                continue;
-                            }
-                            if (!hexListContains(subList, sub)) {
-                                subList.push(sub);
-                            }
-                        }
-                    }
-                    if (model.publish != null) {
-                        let publish = model.publish;
-                        let pubAddress = hexToIntB(publish.address);
-                        // pub address from vc-tool， default is 0
-                        if (pubAddress != 0 && publish.period != null) {
-                            let elementAddress = element.index + hexToIntB(node.unicastAddress);
-                            let interval = (publish.retransmit.interval / 50) - 1;
-                            let transmit = publish.retransmit.count | (interval << 3);
-                            let periodTime = publish.period.numberOfSteps * publish.period.resolution;
-                            publishModel = new PublishModel();
-                            publishModel.elementAddress = elementAddress
-                            publishModel.modelId = hexToIntB(model.modelId)
-                            publishModel.address = hexToIntB(publish.address)
-                            publishModel.period = periodTime
-                            publishModel.ttl = publish.ttl
-                            publishModel.credential = publish.credentials
-                            publishModel.transmit = transmit
-                            nodeInfo.setPublishModel(publishModel)
-                        }
-                    }
-                }
-            }
-        }
-
-        for (let subAdr of subList) {
-            nodeInfo.subList.push(subAdr)
-        }
-        nodeInfo.bound = node.appKeys.length != 0
-
-        nodeInfo.compositionData = this.nodeToCompositionData(node);
-
-        if (node.schedulers && node.schedulers.length != 0) {
-            for (let nodeScheduler of node.schedulers) {
-                nodeInfo.schedulers.push(nodeScheduler);
-            }
-        }
-        return nodeInfo;
-    }
-
-    /**
-     * convert node
-     *
-     * @param node
-     * @return
-     */
-    public nodeToCompositionData(node: Node): CompositionData {
-
-        let compositionData = new CompositionData();
-
-        compositionData.cid = node.cid == "" ? 0 : hexToIntB(node.cid);
-        compositionData.pid = node.pid == "" ? 0 : hexToIntB(node.pid);
-        compositionData.vid = node.vid == "" ? 0 : hexToIntB(node.vid);
-        compositionData.crpl = node.crpl == "" ? 0 : hexToIntB(node.crpl);
-
-        //value 2 : unsupported
-        let relaySpt = 0, proxySpt = 0, friendSpt = 0, lowPowerSpt = 0;
-        if (node.features != null) {
-            relaySpt = node.features.relay == 1 ? 0b0001 : 0;
-            proxySpt = node.features.proxy == 1 ? 0b0010 : 0;
-            friendSpt = node.features.friend == 1 ? 0b0100 : 0;
-            lowPowerSpt = node.features.lowPower == 1 ? 0b1000 : 0;
-        }
-        compositionData.features = relaySpt | proxySpt | friendSpt | lowPowerSpt;
-
-        compositionData.elements = []
-
-        if (node.elements != null) {
-            let infoEle: MElement;
-            for (let element of node.elements) {
-                infoEle = new MElement();
-                let sigModels: Array<number> = []
-                let vendorModels: Array<number> = []
-                if (element.models.length != 0) {
-                    let modelId: number;
-                    for (let model of element.models) {
-
-                        // check if is vendor model
-                        if (model.modelId != "") {
-                            modelId = hexToIntB(model.modelId);
-                            // Integer.valueOf(model.modelId, 16);
-                            if (model.modelId.length > 4) {
-                                vendorModels.push(modelId);
-                            } else {
-                                sigModels.push(modelId);
-                            }
-                        }
-                    }
-                    infoEle.sigNum = sigModels.length;
-                    infoEle.vendorNum = vendorModels.length;
-
-                    infoEle.sigModels = new Array(sigModels.length)
-                    for (let i = 0; i < sigModels.length; i++) {
-                        infoEle.sigModels[i] = sigModels[i]
-                    }
-
-                    infoEle.vendorModels = new Array(vendorModels.length)
-                    for (let i = 0; i < vendorModels.length; i++) {
-                        infoEle.vendorModels[i] = vendorModels[i]
-                    }
-
-                } else {
-                    infoEle.sigNum = 0;
-                    infoEle.vendorNum = 0;
-                }
-
-
-                infoEle.location = element.location == "" ? 0 : hexToIntB(element.location);
-                compositionData.elements.push(infoEle);
-            }
-        }
-        return compositionData;
-    }
-
-
-    /**
-     * check
-     *
-     * @param node
-     * @return
-     */
-    private isProvisionerNode(node: Node): boolean {
-        for (let provisioner of this.provisioners) {
-            if (provisioner.UUID.toUpperCase() == node.UUID.toUpperCase()) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
 
 
@@ -523,3 +269,263 @@ export class Scene {
     public addresses: Array<string> = []
     public number = "";
 }
+
+// convert - start
+
+/**
+ * convert json to MeshInfo {@link MeshInfo}
+ * all provisioners will be saved in provisioner list {@link MeshInfo#allProvisioners},
+ * nodes will be save in three list:
+ * 1. {@link MeshInfo#provisionerNodes} for all provisioner nodes
+ * 2. {@link MeshInfo#excludedNodes} for all excluded nodes, that are kickout
+ * 3. others nodes {@link MeshInfo#nodes}
+ */
+export function convertToMeshInfo(meshStorage: MeshStorage): MeshInfo {
+    let meshInfo = new MeshInfo();
+    meshInfo.meshUUID = meshStorage.meshUUID;
+    meshInfo.meshName = meshStorage.meshName;
+    meshInfo.timestamp = meshStorage.timestamp;
+    /*
+     * convert all provisioners
+     */
+    meshInfo.allProvisioners.push(...meshStorage.provisioners)
+
+    /*
+     * convert all network keys
+     */
+    for (let networkKey of meshStorage.netKeys) {
+        meshInfo.meshNetKeyList.push({
+            name: networkKey.name,
+            index: networkKey.index,
+            key: networkKey.key
+        });
+    }
+
+    /*
+     * convert all application keys
+     */
+    for (let applicationKey of meshStorage.appKeys) {
+        meshInfo.appKeyList.push({
+            name: applicationKey.name,
+            index: applicationKey.index,
+            key: applicationKey.key,
+            boundNetKeyIndex: applicationKey.boundNetKey
+        });
+    }
+
+
+    /*
+     * convert all groups
+     */
+    let group: GroupInfo;
+    for (let gp of meshStorage.groups) {
+        group = new GroupInfo();
+        group.name = gp.name;
+        group.address = hexToIntB(gp.address);
+        if (group.name.includes("subgroup")) {
+            meshInfo.extendGroups.push(group);
+        } else {
+            meshInfo.groups.push(group);
+        }
+    }
+
+
+    /*
+     * convert all groups
+     */
+    let scene: MScene;
+    for (let outerScene of meshStorage.scenes) {
+        scene = new MScene()
+        scene.sceneId = hexToIntB(outerScene.number);
+        scene.name = outerScene.name;
+        for (let adr of outerScene.addresses) {
+            scene.addressList.push(adr)
+        }
+        meshInfo.scenes.push(scene);
+    }
+
+    /**
+     * convert all nodes,
+     * the exclude nodes will be saved in meshInfo.excludedNodes,
+     * other will be saved in
+     * ignore provisioner nodes
+     */
+    for (let node of meshStorage.nodes) {
+        let nodeInfo: NodeInfo = nodeToNodeInfo(node);
+        //            nodeInfo.save();
+        if (isProvisionerNode(meshStorage, node)) {
+            meshInfo.provisionerNodes.push(nodeInfo);
+        } else if (node.excluded) {
+            meshInfo.excludedNodes.push(nodeInfo);
+        } else {
+            meshInfo.nodes.push(nodeInfo);
+        }
+    }
+
+    return meshInfo;
+
+}
+
+/**
+ * convert node to {@link NodeInfo}
+ */
+export function nodeToNodeInfo( node: Node): NodeInfo {
+    let nodeInfo = new NodeInfo();
+    nodeInfo.meshAddress = hexToIntB(node.unicastAddress);
+    //                    deviceInfo.deviceUUID =  Arrays.hexToBytes(node.UUID.replace(":", "").replace("-", ""));
+    nodeInfo.deviceUUID = uuidToRawHex(node.UUID);
+    nodeInfo.name = node.name;
+    nodeInfo.elementCnt = node.elements == null ? 0 : node.elements.length;
+    nodeInfo.deviceKey = node.deviceKey
+
+    let subList: Array<string> = []
+    let publishModel: PublishModel;
+    if (node.elements != null) {
+        for (let element of node.elements) {
+            if (element.models == null) {
+                continue;
+            }
+            for (let model of element.models) {
+
+                if (model.subscribe != null) {
+                    for (let sub of model.subscribe) {
+                        let subAdr = parseInt(sub, 16);
+                        if (subAdr >= 0xD000) {
+                            continue;
+                        }
+                        if (!hexListContains(subList, sub)) {
+                            subList.push(sub);
+                        }
+                    }
+                }
+                if (model.publish != null) {
+                    let publish = model.publish;
+                    let pubAddress = hexToIntB(publish.address);
+                    // pub address from vc-tool， default is 0
+                    if (pubAddress != 0 && publish.period != null) {
+                        let elementAddress = element.index + hexToIntB(node.unicastAddress);
+                        let interval = (publish.retransmit.interval / 50) - 1;
+                        let transmit = publish.retransmit.count | (interval << 3);
+                        let periodTime = publish.period.numberOfSteps * publish.period.resolution;
+                        publishModel = new PublishModel();
+                        publishModel.elementAddress = elementAddress
+                        publishModel.modelId = hexToIntB(model.modelId)
+                        publishModel.address = hexToIntB(publish.address)
+                        publishModel.period = periodTime
+                        publishModel.ttl = publish.ttl
+                        publishModel.credential = publish.credentials
+                        publishModel.transmit = transmit
+                        nodeInfo.setPublishModel(publishModel)
+                    }
+                }
+            }
+        }
+    }
+
+    for (let subAdr of subList) {
+        nodeInfo.subList.push(subAdr)
+    }
+    nodeInfo.bound = node.appKeys.length != 0
+
+    nodeInfo.compositionData = nodeToCompositionData(node);
+
+    if (node.schedulers && node.schedulers.length != 0) {
+        for (let nodeScheduler of node.schedulers) {
+            nodeInfo.schedulers.push(nodeScheduler);
+        }
+    }
+    return nodeInfo;
+}
+
+/**
+ * convert node
+ *
+ * @param node
+ * @return
+ */
+export function nodeToCompositionData(node: Node): CompositionData {
+
+    let compositionData = new CompositionData();
+
+    compositionData.cid = node.cid == "" ? 0 : hexToIntB(node.cid);
+    compositionData.pid = node.pid == "" ? 0 : hexToIntB(node.pid);
+    compositionData.vid = node.vid == "" ? 0 : hexToIntB(node.vid);
+    compositionData.crpl = node.crpl == "" ? 0 : hexToIntB(node.crpl);
+
+    //value 2 : unsupported
+    let relaySpt = 0, proxySpt = 0, friendSpt = 0, lowPowerSpt = 0;
+    if (node.features != null) {
+        relaySpt = node.features.relay == 1 ? 0b0001 : 0;
+        proxySpt = node.features.proxy == 1 ? 0b0010 : 0;
+        friendSpt = node.features.friend == 1 ? 0b0100 : 0;
+        lowPowerSpt = node.features.lowPower == 1 ? 0b1000 : 0;
+    }
+    compositionData.features = relaySpt | proxySpt | friendSpt | lowPowerSpt;
+
+    compositionData.elements = []
+
+    if (node.elements != null) {
+        let infoEle: MElement;
+        for (let element of node.elements) {
+            infoEle = new MElement();
+            let sigModels: Array<number> = []
+            let vendorModels: Array<number> = []
+            if (element.models.length != 0) {
+                let modelId: number;
+                for (let model of element.models) {
+
+                    // check if is vendor model
+                    if (model.modelId != "") {
+                        modelId = hexToIntB(model.modelId);
+                        // Integer.valueOf(model.modelId, 16);
+                        if (model.modelId.length > 4) {
+                            vendorModels.push(modelId);
+                        } else {
+                            sigModels.push(modelId);
+                        }
+                    }
+                }
+                infoEle.sigNum = sigModels.length;
+                infoEle.vendorNum = vendorModels.length;
+
+                infoEle.sigModels = new Array(sigModels.length)
+                for (let i = 0; i < sigModels.length; i++) {
+                    infoEle.sigModels[i] = sigModels[i]
+                }
+
+                infoEle.vendorModels = new Array(vendorModels.length)
+                for (let i = 0; i < vendorModels.length; i++) {
+                    infoEle.vendorModels[i] = vendorModels[i]
+                }
+
+            } else {
+                infoEle.sigNum = 0;
+                infoEle.vendorNum = 0;
+            }
+
+
+            infoEle.location = element.location == "" ? 0 : hexToIntB(element.location);
+            compositionData.elements.push(infoEle);
+        }
+    }
+    return compositionData;
+}
+
+
+/**
+ * check
+ *
+ * @param node
+ * @return
+ */
+export function  isProvisionerNode(meshStorage: MeshStorage, node: Node): boolean {
+    for (let provisioner of meshStorage.provisioners) {
+        if (provisioner.UUID.toUpperCase() == node.UUID.toUpperCase()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+// convert - end

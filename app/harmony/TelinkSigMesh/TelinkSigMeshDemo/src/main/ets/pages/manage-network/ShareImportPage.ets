@@ -1,12 +1,14 @@
-import { TitleBar } from '../../components/TitleBar';
-import { getCommonIcon, getNormalButton, toastMessage } from '../../components/Widgets';
-import { Event, EventBus, isUuid, logd, loge, readTextFile } from 'telinksigmeshlib';
-import { UiStateEvent } from '../../model/UiStateEvent';
-import { router } from '@kit.ArkUI';
-import { fileIo as fs, picker } from '@kit.CoreFileKit';
-import { BusinessError } from '@kit.BasicServicesKit';
-import { MeshStorageService } from '../../model/json/MeshStorageService';
-import { scanBarcode, scanCore } from '@kit.ScanKit';
+import { TitleBar } from '../../components/TitleBar'
+import { getCommonIcon, getNormalButton, toastMessage } from '../../components/Widgets'
+import { Event, EventBus, isUuid, logd, loge, readTextFile } from 'telinksigmeshlib'
+import { UiStateEvent } from '../../model/UiStateEvent'
+import { router } from '@kit.ArkUI'
+import { fileIo as fs, picker } from '@kit.CoreFileKit'
+import { BusinessError } from '@kit.BasicServicesKit'
+import { MeshStorageService } from '../../model/json/MeshStorageService'
+import { scanBarcode, scanCore } from '@kit.ScanKit'
+import { HttpClient } from '../../utils/HttpClient'
+import { showConfirmDialog } from '../../components/Dialogs'
 
 const IMPORT_SRC_QRCODE = 0
 const IMPORT_SRC_JSON = 1
@@ -42,32 +44,32 @@ struct ShareImportPage {
         try {
             console.log("readBinaryFile : " + path)
             const file = fs.openSync(path, fs.OpenMode.READ_ONLY & fs.OpenMode.WRITE_ONLY)
-            const stat = fs.statSync(file.fd);
-            const buffer = new ArrayBuffer(stat.size);
+            const stat = fs.statSync(file.fd)
+            const buffer = new ArrayBuffer(stat.size)
             fs.readSync(file.fd, buffer, {
                 offset: 0,
                 length: stat.size
-            });
+            })
             console.log("read file complete : " + buffer.byteLength)
-            await fs.close(file.fd);
-            return new Uint8Array(buffer);
+            await fs.close(file.fd)
+            return new Uint8Array(buffer)
         } catch (err) {
-            console.error('read bin error :', JSON.stringify(err));
+            console.error('read bin error :', JSON.stringify(err))
             return undefined
         }
     }
 
     private selectJsonFile() {
         try {
-            let documentPicker = new picker.DocumentViewPicker(getContext(this));
+            let documentPicker = new picker.DocumentViewPicker(getContext(this))
             documentPicker.select({ maxSelectNumber: 1 },
                 async (err: BusinessError, documentSelectResult: Array<string>) => {
                     if (err) {
-                        loge('select file failed : ' + JSON.stringify(err));
-                        return;
+                        loge('select file failed : ' + JSON.stringify(err))
+                        return
                     }
-                    let path = documentSelectResult[0];
-                    logd('select file success, uri: ' + path);
+                    let path = documentSelectResult[0]
+                    logd('select file success, uri: ' + path)
 
                     readTextFile(path).then(async (data) => {
                         if (!data) {
@@ -84,8 +86,8 @@ struct ShareImportPage {
                     })
                 })
         } catch (error) {
-            let err: BusinessError = error as BusinessError;
-            loge('DocumentViewPicker failed with err: ' + JSON.stringify(err));
+            let err: BusinessError = error as BusinessError
+            loge('DocumentViewPicker failed with err: ' + JSON.stringify(err))
         }
     }
 
@@ -94,16 +96,16 @@ struct ShareImportPage {
             scanTypes: [scanCore.ScanType.QR_CODE],
             enableMultiMode: true,
             enableAlbum: true
-        };
+        }
         try {
             scanBarcode.startScanForResult(getContext(), options,
-                (error: BusinessError, result: scanBarcode.ScanResult) => {
+                async (error: BusinessError, result: scanBarcode.ScanResult) => {
                     if (error) {
                         loge(`scan callback err : Code=${error.code}, message=${error.message}`)
-                        return;
+                        return
                     }
 
-                    logd(`scan result is ${JSON.stringify(result)}`);
+                    logd(`scan result is ${JSON.stringify(result)}`)
                     if (result.scanType != scanCore.ScanType.QR_CODE) {
                         toastMessage(this.getUIContext(), "not qrcode")
                         return
@@ -119,15 +121,28 @@ struct ShareImportPage {
                         toastMessage(this.getUIContext(), "data format err")
                         return
                     }
-
-                    // todo download mesh json from cloud, and import
-
-
+                    let json = await HttpClient.download(uuid)
+                    if (json) {
+                        this.onDownloadJsonSuccess(json)
+                    } else {
+                        toastMessage(this.getUIContext(), 'download fail')
+                    }
                 })
         } catch (error) {
-            loge(`start scanning service err. Code=${error.code}, message=${error.message}`);
+            loge(`start scanning service err. Code=${error.code}, message=${error.message}`)
         }
+    }
 
+    private onDownloadJsonSuccess(json: string) {
+        showConfirmDialog(this.getUIContext(), 'Warning', "Mesh JSON receive complete, import data?",
+            async () => {
+                let mesh = await MeshStorageService.importExternal(json)
+                if (mesh) {
+                    toastMessage(this.getUIContext(), "import success")
+                } else {
+                    toastMessage(this.getUIContext(), "import fail")
+                }
+            })
     }
 
     build() {
@@ -186,7 +201,7 @@ struct ShareImportPage {
                     if (this.srcType == IMPORT_SRC_JSON) {
                         this.selectJsonFile()
                     } else {
-                        this.scanQrcode();
+                        this.scanQrcode()
                     }
                 })
             }.width('100%')
