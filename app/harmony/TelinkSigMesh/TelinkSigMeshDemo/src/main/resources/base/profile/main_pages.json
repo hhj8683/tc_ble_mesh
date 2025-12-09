@@ -3,6 +3,7 @@
     "pages/Splash",
     "pages/home/MainPage",
     "pages/node/NodeMainPage",
+    "pages/node/CompositionDataPage",
     "pages/manage-network/NetworkListPage",
     "pages/manage-network/NetworkInfoPage",
     "pages/manage-network/ShareImportPage",

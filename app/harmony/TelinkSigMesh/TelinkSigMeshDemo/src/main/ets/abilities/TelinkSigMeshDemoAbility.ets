@@ -23,7 +23,7 @@ export default class TelinkSigMeshDemoAbility extends UIAbility {
     private static globalContext: common.Context
 
     async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
-        this.context.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
+        this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
         logd('Ability onCreate')
         TelinkSigMeshDemoAbility.globalContext = this.context
     }

@@ -21,6 +21,10 @@ export * from './config/ModelSubscriptionSetMessage'
 
 export * from './config/ModelSubscriptionStatusMessage'
 
+export * from './config/CompositionDataStatusMessage'
+
+export * from './config/CompositionDataGetMessage'
+
 export * from './config/ConfigStatus'
 
 export * from './lighting/LightnessSetMessage'

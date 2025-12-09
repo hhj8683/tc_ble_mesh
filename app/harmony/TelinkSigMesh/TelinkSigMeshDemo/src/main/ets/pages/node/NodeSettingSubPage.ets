@@ -15,6 +15,7 @@ import { UiStateEvent } from '../../model/UiStateEvent';
 import { MeshInfoService } from '../../model/MeshInfoService';
 import { showConfirmDialog, WaitingDialog } from '../../components/Dialogs';
 import { CardView } from '../../components/CardView';
+import { NodeParams } from '../PageParams';
 
 interface NodeSettingAction {
     icon: Resource
@@ -24,7 +25,7 @@ interface NodeSettingAction {
 
 const NODE_SETTING_ACTIONS: NodeSettingAction[] = [
     { icon: $r("app.media.ic_config"), title: "Device Config - todo", pagePath: "" },
-    { icon: $r("app.media.ic_composition"), title: "Composition Data - todo", pagePath: "" },
+    { icon: $r("app.media.ic_composition"), title: "Composition Data", pagePath: "pages/node/CompositionDataPage" },
     { icon: $r("app.media.ic_keys"), title: "Network Keys - todo", pagePath: "" },
     { icon: $r("app.media.ic_bridge"), title: "Subnet Bridge Setting - todo", pagePath: "" },
     { icon: $r("app.media.ic_alarm"), title: "Scheduler Setting - todo", pagePath: "" },
@@ -166,7 +167,10 @@ export default struct NodeSettingSubPage {
             cdMargin: { left: 16, right: 16 },
             cdClick: () => {
                 if (NODE_SETTING_ACTIONS[actionIndex].pagePath != '') {
-                    router.push({ url: NODE_SETTING_ACTIONS[actionIndex].pagePath })
+                    router.push({
+                        url: NODE_SETTING_ACTIONS[actionIndex].pagePath,
+                        params: { deviceUuid: this.node!.deviceUUID }
+                    })
                 }
             }
         }) {
