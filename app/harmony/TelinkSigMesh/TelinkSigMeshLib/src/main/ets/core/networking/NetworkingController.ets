@@ -740,7 +740,7 @@ export class NetworkingController {
         }
 
 
-        logd("post access pdu: " + bytesToHexString(accessPDU.toByteArray(), ""));
+        logd("post access pdu: " + bytesToHexString(accessPDU.toByteArray()));
 
         let ivIndex = this.getTransmitIvIndex();
 
@@ -755,7 +755,7 @@ export class NetworkingController {
             logw("create upper transport pdu err: encrypt err");
             return false;
         }
-        logd("upper transport pdu: " + bytesToHexString(upperPDU.encryptedPayload, ""));
+        logd("upper transport pdu: " + bytesToHexString(upperPDU.encryptedPayload));
 
         // check message reliable
         let reliable = meshMessage.isReliable();
@@ -1078,7 +1078,7 @@ export class NetworkingController {
     private sendNetworkPduList(networkPduList: ArrayList<NetworkLayerPDU>) {
         for (let networkLayerPDU of networkPduList) {
             let networkPduPayload: Uint8Array = networkLayerPDU.generateEncryptedPayload();
-            logd("multi network pdu: " + bytesToHexString(networkPduPayload, ":"));
+            logd("multi network pdu: " + bytesToHexString(networkPduPayload));
             this.onNetworkingPduPrepared(networkPduPayload, networkLayerPDU.dst);
         }
     }
@@ -1090,7 +1090,7 @@ export class NetworkingController {
      */
     private sendNetworkPdu(networkPdu: NetworkLayerPDU) {
         let networkPduPayload = networkPdu.generateEncryptedPayload();
-        logd("single network pdu: " + bytesToHexString(networkPduPayload, ":"));
+        logd("single network pdu: " + bytesToHexString(networkPduPayload));
         this.onNetworkingPduPrepared(networkPduPayload, networkPdu.dst);
     }
 
@@ -1101,7 +1101,7 @@ export class NetworkingController {
      */
     private sendProxyNetworkPdu(networkPdu: ProxyConfigurationPDU) {
         let networkPduPayload = networkPdu.generateEncryptedPayload();
-        logd("proxy network pdu: " + bytesToHexString(networkPduPayload, ":"));
+        logd("proxy network pdu: " + bytesToHexString(networkPduPayload));
         this.mNetworkingBridge.onCommandPrepared(ProxyPDU.TYPE_PROXY_CONFIGURATION, networkPduPayload);
     }
 
@@ -1121,7 +1121,7 @@ export class NetworkingController {
      * to start sending the networking PDUs from the queue.
      */
     private async onNetworkingPduPrepared(payload: Uint8Array, dstAddress: number) {
-        logd("networking pdu prepared: " + bytesToHexString(payload, ":") + " busy?-" + this.networkingBusy);
+        logd("networking pdu prepared: " + bytesToHexString(payload) + " busy?-" + this.networkingBusy);
         let err: boolean = false
         await this.mNetworkBusyLock.lockAsync(() => {
             if (!this.networkingBusy) {
@@ -1164,7 +1164,7 @@ export class NetworkingController {
             payload = this.mNetworkingQueue.pop()
         })
         if (payload) {
-            logd("networking pdu poll: " + bytesToHexString(payload, ":"));
+            logd("networking pdu poll: " + bytesToHexString(payload));
             this.mNetworkingBridge.onCommandPrepared(ProxyPDU.TYPE_NETWORK_PDU, payload);
             clearTimeout(this.networkingSendingTask)
             this.networkingSendingTask = setTimeout(() => {
@@ -1340,7 +1340,7 @@ export class NetworkingController {
      * @param src                source address
      */
     private onProxyConfigurationNotify(proxyConfigMessage: Uint8Array, src: number) {
-        logd("onProxyConfigurationNotify: "+ bytesToHexString(proxyConfigMessage, ":"));
+        logd("onProxyConfigurationNotify: "+ bytesToHexString(proxyConfigMessage));
         let proxyFilterStatusMessage = ProxyFilterStatusMessage.fromBytes(proxyConfigMessage);
         if (proxyFilterStatusMessage) {
             // target Filter type is whitelist
@@ -1411,7 +1411,7 @@ export class NetworkingController {
             this.saveSequenceCache(src, pduSequenceNumber, pduIvIndex);
         } else {
             let deviceIvIndex = this.getIvIndexInCache(valueInCache);
-            // logw(`check ivIndex : deviceIvIndex=${deviceIvIndex} , pduIvIndex=${pduIvIndex}`)
+            logw(`check ivIndex : deviceIvIndex=${deviceIvIndex} , pduIvIndex=${pduIvIndex}`)
             if (pduIvIndex > deviceIvIndex) {
                 logd("network pdu - larger ivIndex received, save the new ivIndex");
                 this.saveSequenceCache(src, pduSequenceNumber, pduIvIndex);
@@ -1501,7 +1501,7 @@ export class NetworkingController {
      * @param transportPdu The transport PDU containing the heartbeat message.
      */
     private onHeartbeatNotify(src: number, dst: number, transportPdu: Uint8Array) {
-        logd("on heart beat notify: " + bytesToHexString(transportPdu, ":"));
+        logd("on heart beat notify: " + bytesToHexString(transportPdu));
         this.mNetworkingBridge.onHeartbeatMessageReceived(src, dst, transportPdu);
     }
 
@@ -1939,7 +1939,7 @@ export class NetworkingController {
      */
     private sendUnsegmentedControlMessage(controlMessagePDU: UnsegmentedControlMessagePDU, dst: number) {
         let data = controlMessagePDU.toByteArray();
-        logd("send control message: " + bytesToHexString(data, ""));
+        logd("send control message: " + bytesToHexString(data));
         let ctl = MeshMessage.CTL_CONTROL;
         let ttl = 5;
         let src = this.localAddress;
@@ -2117,7 +2117,7 @@ export class NetworkingController {
 
                 let completeTransportPdu = upperTransportAccessPDU.decryptedPayload;
 
-                logd("decrypted upper: " + bytesToHexString(completeTransportPdu, ""));
+                logd("decrypted upper: " + bytesToHexString(completeTransportPdu));
                 if (completeTransportPdu != null) {
                     accessPDU = AccessLayerPDU.parse(completeTransportPdu);
                 } else {

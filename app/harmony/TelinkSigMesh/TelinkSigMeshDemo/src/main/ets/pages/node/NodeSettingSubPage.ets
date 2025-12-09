@@ -29,7 +29,7 @@ const NODE_SETTING_ACTIONS: NodeSettingAction[] = [
     { icon: $r("app.media.ic_keys"), title: "Network Keys - todo", pagePath: "" },
     { icon: $r("app.media.ic_bridge"), title: "Subnet Bridge Setting - todo", pagePath: "" },
     { icon: $r("app.media.ic_alarm"), title: "Scheduler Setting - todo", pagePath: "" },
-    { icon: $r("app.media.ic_model"), title: "Subscription Models - todo", pagePath: "" },
+    { icon: $r("app.media.ic_model"), title: "Subscription Models", pagePath: "pages/node/SubscriptionModelsPage" },
     { icon: $r("app.media.ic_update"), title: "Device OTA - todo", pagePath: "" },
     { icon: $r("app.media.ic_private_beacon"), title: "Private Beacon - todo", pagePath: "" },
 ]
