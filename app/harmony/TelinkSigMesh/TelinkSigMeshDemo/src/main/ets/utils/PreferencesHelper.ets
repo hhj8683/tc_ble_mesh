@@ -132,8 +132,11 @@ export class PreferencesHelper {
 
     public static async getSelectedMeshId(context: common.Context) {
         let preferences = await dataPreferences.getPreferences(context, { name: PREFERENCES_NAME });
-        let all = preferences.getAllSync();
-        return preferences.getSync(KEY_SELECTED_MESH_ID, -1) as number
+        // let all = preferences.getAllSync();
+        let meshId = preferences.getSync(KEY_SELECTED_MESH_ID, -1) as number
+
+        logd("getSelectedMeshId # " + meshId)
+        return meshId
     }
 
     /**
@@ -143,9 +146,12 @@ export class PreferencesHelper {
         try {
             logd("setSelectedMeshId # " + meshId)
             let preferences = await dataPreferences.getPreferences(context, { name: PREFERENCES_NAME });
-            preferences.put(KEY_SELECTED_MESH_ID, meshId).then(()=>{
-                preferences.flush()
-            })
+            preferences.putSync(KEY_SELECTED_MESH_ID, meshId)
+            // let all = preferences.getAllSync()
+            preferences.flushSync()
+            // preferences.put(KEY_SELECTED_MESH_ID, meshId).then(()=>{
+            //     preferences.flush()
+            // })
         } catch (e) {
             loge(`setSelectedMeshId error : ${e.code} => ${e.message}`)
         }

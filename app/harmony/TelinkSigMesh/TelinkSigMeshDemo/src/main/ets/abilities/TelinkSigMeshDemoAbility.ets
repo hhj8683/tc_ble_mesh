@@ -23,15 +23,15 @@ export default class TelinkSigMeshDemoAbility extends UIAbility {
     private static globalContext: common.Context
 
     async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
-        this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
+        this.context.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
         logd('Ability onCreate')
-        TelinkSigMeshDemoAbility.globalContext = this.context.getApplicationContext()
+        TelinkSigMeshDemoAbility.globalContext = this.context
     }
 
     private async loadMeshInfo() {
         MeshInfoService.getInstance().loadAll()
         let allMeshList = MeshInfoService.getInstance().getAll()
-        logd(`all mesh : count = ${allMeshList.length}`)
+        logd(`all mesh count = ${allMeshList.length}`)
         let id = await PreferencesHelper.getSelectedMeshId(this.context);
         logd(`current mesh id = ${id}`)
         let meshInfo = MeshInfoService.getInstance().getById(id)

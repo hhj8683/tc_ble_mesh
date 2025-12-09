@@ -156,12 +156,7 @@ struct NetworkListPage {
                 Text("Switch To This Network").fontColor($r('app.color.primary')).layoutWeight(1).fontSize(12)
                 getCommonIcon($r('app.media.ic_arrow_right'), undefined, $r('app.color.primary'), 36, 36)
             }.onClick(() => {
-                this.getUIContext().getPromptAction().closeCustomDialog(this.networkActionDialogId)
-                MeshInfoService.getInstance().resetCurrentMesh(meshInfo)
-                this.refreshData()
-                this.getUIContext()
-                    .getPromptAction()
-                    .showToast({ message: "switch success" })
+                this.switchMesh(meshInfo)
             })
 
             Row() {
