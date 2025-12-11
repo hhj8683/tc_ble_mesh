@@ -360,6 +360,7 @@ public class MainActivity extends BaseActivity implements BottomNavigationView.O
             final int address = 0xFFFF;
             MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
             TimeSetMessage timeSetMessage = TimeSetMessage.getSimple(address, meshInfo.getDefaultAppKeyIndex(), time, offset, 1);
+            timeSetMessage.setTtl(0);
             timeSetMessage.setAck(false);
             MeshService.getInstance().sendMeshMessage(timeSetMessage);
         }, 1500);
