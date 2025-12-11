@@ -113,7 +113,7 @@ export default struct NodeGroupingSubPage {
         message.mode = mode
         message.address = group.address
         message.modelIdentifier = modelId
-        message.elementAddress = this.node!.getTargetEleAdr(modelId)
+        message.elementAddress = this.node!.getElementByModel(modelId)
         message.isSig = true
         MeshService.getInstance().sendMeshMessage(message)
     }

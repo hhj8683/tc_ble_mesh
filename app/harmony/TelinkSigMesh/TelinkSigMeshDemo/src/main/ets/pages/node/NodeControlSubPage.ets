@@ -48,16 +48,16 @@ export default struct NodeControlSubPage {
     async aboutToAppear() {
         logd("NodeControlSubPage # aboutToAppear")
         if (this.node) {
-            let elements = this.node.getEleListByModel(MeshSigModel.SIG_MD_G_ONOFF_S)
+            let elements = this.node.getElementsByModel(MeshSigModel.SIG_MD_G_ONOFF_S)
             logd("on off elements : " + elements?.length)
             if (elements) {
                 this.elements = elements
             } else {
                 this.elements = []
             }
-            this.lumEleAdr = this.node.getTargetEleAdr(MeshSigModel.SIG_MD_LIGHTNESS_S)
-            this.ctEleAdr = this.node.getTargetEleAdr(MeshSigModel.SIG_MD_LIGHT_CTL_S)
-            this.hslEleAdr = this.node.getTargetEleAdr(MeshSigModel.SIG_MD_LIGHT_HSL_S)
+            this.lumEleAdr = this.node.getElementByModel(MeshSigModel.SIG_MD_LIGHTNESS_S)
+            this.ctEleAdr = this.node.getElementByModel(MeshSigModel.SIG_MD_LIGHT_CTL_S)
+            this.hslEleAdr = this.node.getElementByModel(MeshSigModel.SIG_MD_LIGHT_HSL_S)
         }
         this.appKeyIndex = MeshInfoService.getInstance().getCurrentMesh().getDefaultAppKeyIndex()
         this.delta = Math.ceil(0xFFFF / 10);

@@ -109,10 +109,7 @@ struct CompositionDataPage {
                 }
             })
             Scroll() {
-                // Column() {
                     Text(this.cpsInfo).fontStyle(FontStyle.Italic).fontSize(13).height('auto').align(Alignment.TopStart)
-                        // .backgroundColor(Color.Red)
-                // }.height('auto').justifyContent(FlexAlign.Start)
             }.layoutWeight(1).align(Alignment.TopStart).padding(8)
             // .backgroundColor(Color.Blue)
         }.width('100%').height("100%")

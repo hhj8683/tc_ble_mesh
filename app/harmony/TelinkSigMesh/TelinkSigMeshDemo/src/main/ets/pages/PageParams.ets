@@ -4,10 +4,16 @@ export interface NodeParams {
     deviceUuid: string
 }
 
-export interface MeshInfoParams{
+export interface MeshInfoParams {
     id: number
 }
 
-export interface QrcodeUuidParams{
+export interface QrcodeUuidParams {
     uuid: string
+}
+
+
+export interface SchedulerSettingParams {
+    deviceUuid: string
+    schedulerIndex: number
 }

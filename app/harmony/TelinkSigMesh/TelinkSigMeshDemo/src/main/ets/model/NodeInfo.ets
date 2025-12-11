@@ -270,7 +270,7 @@ export class NodeInfo {
         this.schedulers.push(scheduler)
     }
 
-    // 0 - 15/0x0f
+    // 0 - 15/0x0f, -1 err
     public allocSchedulerIndex(): number {
         if (this.schedulers == null || this.schedulers.length == 0) {
             return 0;
@@ -290,40 +290,11 @@ export class NodeInfo {
     }
 
     /**
-     * get on/off model element info
-     * in panel , multi on/off may exist in different element
-     *
-     * @return element adr list
-     */
-    public getEleListByModel(targetModelId: number): Array<number> | undefined {
-        if (!this.compositionData) {
-            return undefined;
-        }
-        let addressList: Array<number> = []
-
-        // element address is based on primary address and increase in loop
-        let eleAdr = this.meshAddress;
-        outer:
-            for (let element of this.compositionData.elements) {
-                if (element.sigModels != null) {
-                    for (let modelId of element.sigModels) {
-                        if (modelId == targetModelId) {
-                            addressList.push(eleAdr++);
-                            continue outer;
-                        }
-                    }
-                }
-                eleAdr++;
-            }
-
-        return addressList;
-    }
-
-    /**
+     * find the first element that contains target model id
      * @param tarModelId target model id
      * @return element address: -1 err
      */
-    public getTargetEleAdr(tarModelId: number): number {
+    public getElementByModel(tarModelId: number): number {
         if (!this.compositionData) {
             return -1;
         }
@@ -350,6 +321,35 @@ export class NodeInfo {
         return -1;
     }
 
+    /**
+     * find all elements that contains target model id
+     * such as multi on/off model may exist in different element
+     *
+     * @return element adr list
+     */
+    public getElementsByModel(targetModelId: number): Array<number> | undefined {
+        if (!this.compositionData) {
+            return undefined;
+        }
+        let addressList: Array<number> = []
+
+        // element address is based on primary address and increase in loop
+        let eleAdr = this.meshAddress;
+        outer:
+            for (let element of this.compositionData.elements) {
+                if (element.sigModels != null) {
+                    for (let modelId of element.sigModels) {
+                        if (modelId == targetModelId) {
+                            addressList.push(eleAdr++);
+                            continue outer;
+                        }
+                    }
+                }
+                eleAdr++;
+            }
+
+        return addressList;
+    }
 
     /**
      * @param associatedModelId target model id {@link MeshSigModel#getLevelAssociatedList()}
@@ -526,8 +526,8 @@ export class NodeInfo {
      * @return
      */
     public isSensor() {
-        return this.getTargetEleAdr(MeshSigModel.SIG_MD_SENSOR_S) != -1
-            && this.getTargetEleAdr(MeshSigModel.SIG_MD_LIGHTNESS_S) == -1;
+        return this.getElementByModel(MeshSigModel.SIG_MD_SENSOR_S) != -1
+            && this.getElementByModel(MeshSigModel.SIG_MD_LIGHTNESS_S) == -1;
     }
 
     /**
@@ -537,7 +537,7 @@ export class NodeInfo {
      * @return
      */
     public isGateway() {
-        return this.getTargetEleAdr(MeshSigModel.SIG_MD_SENSOR_S) != -1
-            && this.getTargetEleAdr(MeshSigModel.SIG_MD_LIGHTNESS_S) != -1;
+        return this.getElementByModel(MeshSigModel.SIG_MD_SENSOR_S) != -1
+            && this.getElementByModel(MeshSigModel.SIG_MD_LIGHTNESS_S) != -1;
     }
 }

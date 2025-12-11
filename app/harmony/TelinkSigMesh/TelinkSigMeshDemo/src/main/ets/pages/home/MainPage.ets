@@ -66,7 +66,7 @@ struct MainPage {
     async onPageShow(): Promise<void> {
         logd("main page # onPageShow")
         if (this.isPermissionChecked) {
-            MeshService.getInstance().autoConnect(new AutoConnectParameters())
+            // MeshService.getInstance().autoConnect(new AutoConnectParameters())
         }
     }
 
@@ -76,7 +76,7 @@ struct MainPage {
 
     onPermissionChecked() {
         this.isPermissionChecked = true
-        MeshService.getInstance().autoConnect(new AutoConnectParameters())
+        // MeshService.getInstance().autoConnect(new AutoConnectParameters())
     }
 
     onPermissionDenied() {
