@@ -201,7 +201,7 @@ public enum MeshSigModel implements Serializable {
     public static MeshSigModel[] getDefaultSubList() {
         return new MeshSigModel[]{SIG_MD_G_ONOFF_S, SIG_MD_LIGHTNESS_S, SIG_MD_LIGHT_CTL_S,
                 SIG_MD_LIGHT_CTL_TEMP_S, SIG_MD_LIGHT_HSL_S,
-                SIG_MD_LIGHT_LC_S}; //  add SIG_MD_LIGHT_LC_S for lc support
+                SIG_MD_LIGHT_LC_S, SIG_MD_G_LEVEL_S}; //  add SIG_MD_LIGHT_LC_S for lc support
     }
 
     public static MeshSigModel[] getLevelAssociatedList() {
