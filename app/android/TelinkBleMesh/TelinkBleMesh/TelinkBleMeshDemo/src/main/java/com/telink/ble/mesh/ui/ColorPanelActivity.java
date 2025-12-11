@@ -52,7 +52,17 @@ public class ColorPanelActivity extends BaseActivity {
         setTitle("Color Setting");
         address = getIntent().getIntExtra("address", 0);
         cps_color = findViewById(R.id.cps_color);
-        cps_color.setMessageDelegate((color, hsl) -> sendHslSetMessage(hsl));
+        cps_color.setMessageDelegate(new CompositionColorView.ColorViewDelegate() {
+            @Override
+            public void onHSLMessage(float[] hsl) {
+                sendHslSetMessage(hsl);
+            }
+
+            @Override
+            public void onColorChanged(int color) {
+
+            }
+        });
     }
 
     private void sendHslSetMessage(float[] hslValue) {

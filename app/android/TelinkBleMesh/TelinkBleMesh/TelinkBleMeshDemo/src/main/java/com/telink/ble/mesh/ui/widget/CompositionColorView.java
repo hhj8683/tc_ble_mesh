@@ -61,7 +61,7 @@ public class CompositionColorView extends FrameLayout {
 
     private SeekBar sb_hue, sb_sat, sb_lit;
     private TextView tv_hue, tv_sat, tv_lit;
-    private ColorMessageDelegate messageDelegate;
+    private ColorViewDelegate messageDelegate;
 
     public CompositionColorView(@NonNull Context context) {
         super(context);
@@ -73,7 +73,7 @@ public class CompositionColorView extends FrameLayout {
         initView(context);
     }
 
-    public void setMessageDelegate(ColorMessageDelegate messageDelegate) {
+    public void setMessageDelegate(ColorViewDelegate messageDelegate) {
         this.messageDelegate = messageDelegate;
     }
 
@@ -131,7 +131,7 @@ public class CompositionColorView extends FrameLayout {
             long currentTime = System.currentTimeMillis();
             if ((currentTime - preTime) >= DELAY_TIME || touchStopped) {
                 preTime = currentTime;
-                sendHslSetMessage(color, hslValue);
+                sendHslSetMessage(hslValue);
             } else {
                 MeshLogger.log("CMD reject : color set", MeshLogger.LEVEL_INFO);
             }
@@ -192,7 +192,7 @@ public class CompositionColorView extends FrameLayout {
 
                 if ((currentTime - preTime) >= DELAY_TIME || immediate) {
                     preTime = currentTime;
-                    sendHslSetMessage(color, hslValue);
+                    sendHslSetMessage(hslValue);
                 }
             } else if (seekBar == sb_hue || seekBar == sb_sat || seekBar == sb_lit) {
                 long currentTime = System.currentTimeMillis();
@@ -210,7 +210,7 @@ public class CompositionColorView extends FrameLayout {
 
                 if ((currentTime - preTime) >= DELAY_TIME || immediate) {
                     preTime = currentTime;
-                    sendHslSetMessage(color, hslVal);
+                    sendHslSetMessage(hslVal);
                 }
 
             }
@@ -234,9 +234,15 @@ public class CompositionColorView extends FrameLayout {
         }
     }
 
-    private void sendHslSetMessage(int color, float[] hslValue) {
+    private void onColorChanged(int color){
         if (messageDelegate != null) {
-            messageDelegate.onHSLMessage(color, hslValue);
+            messageDelegate.onColorChanged(color);
+        }
+    }
+
+    private void sendHslSetMessage(float[] hslValue) {
+        if (messageDelegate != null) {
+            messageDelegate.onHSLMessage(hslValue);
         }
     }
 
@@ -286,10 +292,14 @@ public class CompositionColorView extends FrameLayout {
         tv_hue.setText("H: " + hue);
         tv_sat.setText("S: " + sat);
         tv_lit.setText("L: " + lit);
+
+        this.onColorChanged(color);
     }
 
-    public interface ColorMessageDelegate {
-        void onHSLMessage(int color, float[] hsl);
+    public interface ColorViewDelegate {
+        void onHSLMessage(float[] hsl);
+
+        void onColorChanged(int color);
     }
 
 }

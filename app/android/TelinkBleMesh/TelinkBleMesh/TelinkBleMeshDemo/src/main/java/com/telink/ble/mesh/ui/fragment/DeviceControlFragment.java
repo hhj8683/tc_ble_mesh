@@ -153,7 +153,17 @@ public class DeviceControlFragment extends BaseFragment implements EventListener
         }
 
         cps_color = view.findViewById(R.id.cps_color);
-        cps_color.setMessageDelegate(this::sendHslSetMessage);
+        cps_color.setMessageDelegate(new CompositionColorView.ColorViewDelegate() {
+            @Override
+            public void onHSLMessage(float[] hsl) {
+                sendHslSetMessage(hsl);
+            }
+
+            @Override
+            public void onColorChanged(int color) {
+                deviceInfo.color = color;
+            }
+        });
         ll_lum = view.findViewById(R.id.ll_lum);
         ll_lum_level = view.findViewById(R.id.ll_lum_level);
         ll_temp = view.findViewById(R.id.ll_temp);
@@ -276,8 +286,8 @@ public class DeviceControlFragment extends BaseFragment implements EventListener
         TelinkMeshApplication.getInstance().removeEventListener(this);
     }
 
-    private void sendHslSetMessage(int color, float[] hslValue) {
-        deviceInfo.color = color;
+    private void sendHslSetMessage(float[] hslValue) {
+
 //        MeshLogger.d("update device color : " + Integer.toHexString(color));
         int hue = Math.round(hslValue[0] * 65535 / 360);
         int sat = Math.round(hslValue[1] * 65535);
