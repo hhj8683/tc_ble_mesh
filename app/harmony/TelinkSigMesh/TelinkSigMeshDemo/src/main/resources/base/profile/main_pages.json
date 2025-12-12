@@ -12,6 +12,7 @@
     "pages/manage-network/ShareImportPage",
     "pages/manage-network/ShareExportPage",
     "pages/manage-network/ShareQrcodePage",
+    "pages/scene/SceneListPage",
     "pages/provision/SelectableProvisionPage"
   ]
 }

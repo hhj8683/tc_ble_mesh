@@ -1,25 +1,10 @@
-import {
-    CompositionDataGetMessage,
-    CompositionDataStatusMessage,
-    Event,
-    EventBus,
-    getModelName,
-    logd,
-    MeshService,
-    MeshSigModel,
-    num2Hex,
-    StatusNotificationEvent
-} from 'telinksigmeshlib';
-import { router, ToolBarOptions } from '@kit.ArkUI';
+import { CompositionDataGetMessage, Event, MeshService, num2Hex } from 'telinksigmeshlib';
+import { router } from '@kit.ArkUI';
 import { MeshInfoService } from '../../model/MeshInfoService';
 import { NodeInfo } from '../../model/NodeInfo';
 import { NodeParams, SchedulerSettingParams } from '../PageParams';
-import { NodeStatusChangedEvent } from '../../model/NodeStatusChangedEvent';
 import { TitleBar } from '../../components/TitleBar';
-import { getCommonIcon, toastMessage } from '../../components/Widgets';
-import NodeControlSubPage from './NodeControlSubPage';
-import NodeGroupingSubPage from './NodeGroupingSubPage';
-import NodeSettingSubPage from './NodeSettingSubPage';
+import { getCommonIcon } from '../../components/Widgets';
 import { Scheduler } from '../../model/Scheduler';
 import { CardView } from '../../components/CardView';
 import { SchedulerRegister } from '../../model/SchedulerRegister';
@@ -56,10 +41,15 @@ struct SchedulerListPage {
     aboutToDisappear(): void {
     }
 
+    private addScheduler() {
+        let params: SchedulerSettingParams = { deviceUuid: this.node!.deviceUUID, schedulerIndex: -1 }
+        router.push({ url: "pages/node/SchedulerSettingPage", params })
+    }
+
     @Builder
     getActionView() {
         getCommonIcon($r("app.media.ic_plus"), () => {
-            MeshService.getInstance().sendMeshMessage(new CompositionDataGetMessage(this.node!.meshAddress))
+            this.addScheduler()
         })
     }
 
@@ -181,9 +171,8 @@ struct SchedulerListPage {
         Column() {
             getCommonIcon($r('app.media.ic_sad', undefined, $r('app.color.primary')))
             Text('List Empty')
-            Button('ADD').buttonStyle(ButtonStyleMode.TEXTUAL).onClick(()=>{
-                let params: SchedulerSettingParams = {deviceUuid: this.node!.deviceUUID, schedulerIndex: -1}
-                router.push({url: "pages/node/SchedulerSettingPage", params})
+            Button('ADD').buttonStyle(ButtonStyleMode.TEXTUAL).onClick(() => {
+                this.addScheduler()
             })
         }.alignItems(HorizontalAlign.Center).justifyContent(FlexAlign.Center)
     }

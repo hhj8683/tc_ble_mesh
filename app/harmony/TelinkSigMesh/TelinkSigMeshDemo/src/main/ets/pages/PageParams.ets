@@ -12,8 +12,11 @@ export interface QrcodeUuidParams {
     uuid: string
 }
 
-
 export interface SchedulerSettingParams {
     deviceUuid: string
     schedulerIndex: number
+}
+
+export interface SceneSettingParams {
+    sceneId: number
 }

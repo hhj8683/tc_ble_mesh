@@ -27,7 +27,7 @@ const NETWORK_ACTIONS: NetworkAction[] = [
         icon: $r("app.media.ic_scene"),
         title: "Scenes - todo",
         subTitle: undefined,
-        pagePath: ""
+        pagePath: "pages/scene/SceneListPage",
     },
     {
         icon: $r("app.media.ic_motion_sensor_on"),

@@ -1,35 +1,10 @@
 import { TitleBar } from '../../components/TitleBar';
 import { getCommonIcon, getWarnButton, toastMessage } from '../../components/Widgets';
-import {
-    BindingBearer,
-    BindingDevice,
-    BindingEvent,
-    BindingParameters,
-    bytesToHexString,
-    Event,
-    EventBus,
-    hexToBytes,
-    logd,
-    logw,
-    MeshConfiguration,
-    MeshScanRecord,
-    MeshService,
-    num2Hex,
-    OnOffSetMessage,
-    ProvisioningDevice,
-    ProvisioningEvent,
-    ProvisioningParameters,
-    ScanEvent,
-    ScanParameters
-} from 'telinksigmeshlib';
+import { Event, EventBus } from 'telinksigmeshlib';
 import { UiStateEvent } from '../../model/UiStateEvent';
 import { router } from '@kit.ArkUI';
-import { ble } from '@kit.ConnectivityKit';
 import { MeshInfo } from '../../model/MeshInfo';
 import { MeshInfoService } from '../../model/MeshInfoService';
-import { NodeInfo } from '../../model/NodeInfo';
-import { CardView } from '../../components/CardView';
-import { ArrayList } from '@kit.ArkTS';
 import TelinkSigMeshDemoAbility from '../../abilities/TelinkSigMeshDemoAbility';
 import { showConfirmDialog } from '../../components/Dialogs';
 import { PreferencesHelper } from '../../utils/PreferencesHelper';

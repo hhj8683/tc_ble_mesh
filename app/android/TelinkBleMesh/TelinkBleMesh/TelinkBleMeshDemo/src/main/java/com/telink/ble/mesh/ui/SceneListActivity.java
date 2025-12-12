@@ -139,7 +139,6 @@ public class SceneListActivity extends BaseActivity implements EventListener<Str
         MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
         int sceneId = meshInfo.allocSceneId();
         if (sceneId == -1) {
-            finish();
             Toast.makeText(getApplicationContext(), "no available scene id", Toast.LENGTH_SHORT).show();
             return;
         }

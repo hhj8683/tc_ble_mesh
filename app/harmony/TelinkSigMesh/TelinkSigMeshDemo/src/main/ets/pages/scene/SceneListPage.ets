@@ -1,0 +1,149 @@
+import { Event, MeshService, num2Hex, SceneRecallMessage } from 'telinksigmeshlib';
+import { router } from '@kit.ArkUI';
+import { MeshInfoService } from '../../model/MeshInfoService';
+import { NodeInfo } from '../../model/NodeInfo';
+import { NodeParams, SchedulerSettingParams } from '../PageParams';
+import { TitleBar } from '../../components/TitleBar';
+import { getCommonIcon, toastMessage } from '../../components/Widgets';
+import { CardView } from '../../components/CardView';
+import { Scene } from '../../model/Scene';
+import { MeshInfo } from '../../model/MeshInfo';
+
+@Entry
+@Component
+struct SceneListPage {
+    @State scenes: Scene[] = []
+    @State sceneNameInput: string = ''
+    private meshInfo?: MeshInfo
+    private nameInputDialogId = 0
+
+    async aboutToAppear() {
+        this.meshInfo = MeshInfoService.getInstance().getCurrentMesh()
+        this.resetData()
+    }
+
+    private resetData() {
+        this.scenes = this.meshInfo!.scenes
+    }
+
+    nodeCpsDataEvtCb = (event: Event) => {
+    }
+
+    aboutToDisappear(): void {
+    }
+
+    @Builder
+    sceneInputDialogContent() {
+        Column({ space: 8 }) {
+            Text("Create Scene").fontSize(15).fontWeight(FontWeight.Bold)
+            TextInput({ text: $$this.sceneNameInput })
+            Button("CONFIRM").onClick(() => {
+                if (this.sceneNameInput == '') {
+                    toastMessage(this.getUIContext(), "name input err")
+                    return
+                }
+
+                let sceneId = this.meshInfo!.allocSceneId();
+                if (sceneId == -1) {
+                    toastMessage(this.getUIContext(), "no available scene id")
+                    return;
+                }
+                let scene = new Scene();
+                scene.sceneId = sceneId;
+                scene.name = this.sceneNameInput;
+                toastMessage(this.getUIContext(), 'create scene success')
+                this.meshInfo!.addScene(scene);
+                this.resetData();
+            })
+        }
+        .width('80%').alignItems(HorizontalAlign.Center).padding(8)
+
+    }
+
+    private showAddSceneDialog() {
+        this.getUIContext().getPromptAction().openCustomDialog({
+            builder: () => {
+                this.sceneInputDialogContent()
+            },
+            autoCancel: true,
+            // alignment: DialogAlignment.Bottom
+        }).then((id: number) => {
+            this.nameInputDialogId = id
+        })
+    }
+
+    private addScene() {
+        this.showAddSceneDialog()
+    }
+
+    @Builder
+    getActionView() {
+        getCommonIcon($r("app.media.ic_plus"), () => {
+            this.addScene()
+        })
+    }
+
+    @Builder
+    getSceneItem(scene: Scene) {
+        CardView({
+            cdPadding: 16,
+            cdMargin: 8,
+        }) {
+            Row({ space: 8 }) {
+                getCommonIcon($r('app.media.ic_scene', undefined, Color.Grey))
+                Text(`Name : ${scene.name}\nID : ${scene.sceneId}`)
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Medium).layoutWeight(1)
+
+                getCommonIcon($r('app.media.ic_open', () => {
+                    // scene recall
+                    let appKeyIndex = this.meshInfo!.getDefaultAppKeyIndex()
+                    let recallMessage = SceneRecallMessage.getSimple(0xFFFF,
+                        appKeyIndex, scene.sceneId, false, 0);
+                    MeshService.getInstance().sendMeshMessage(recallMessage);
+                }, Color.Grey))
+
+                getCommonIcon($r('app.media.ic_scene', ()=>{
+                    router.push({url: 'pages/scene/SceneSetting'})
+                }, Color.Grey))
+            }.alignItems(VerticalAlign.Center)
+        }
+    }
+
+    @Builder
+    getEmptyView() {
+        Column() {
+            getCommonIcon($r('app.media.ic_sad', undefined, $r('app.color.primary')))
+            Text('List Empty')
+            Button('ADD').buttonStyle(ButtonStyleMode.TEXTUAL).onClick(() => {
+                this.addScene()
+            })
+        }.alignItems(HorizontalAlign.Center).justifyContent(FlexAlign.Center)
+    }
+
+    build() {
+        Column() {
+            TitleBar({
+                title: "Scheduler List",
+                showNavigation: true,
+                showAction: true,
+                actionView: () => {
+                    this.getActionView()
+                }
+            })
+            if (this.scenes.length > 0) {
+                Scroll() {
+                    Column() {
+                        ForEach(this.scenes, (item: Scene, index: number) => {
+                            this.getSceneItem(item)
+                        })
+                    }.height('auto').justifyContent(FlexAlign.Start)
+                }.layoutWeight(1).align(Alignment.TopStart).padding(8)
+            } else {
+                this.getEmptyView()
+            }
+
+            // .backgroundColor(Color.Blue)
+        }.width('100%').height("100%")
+    }
+}
