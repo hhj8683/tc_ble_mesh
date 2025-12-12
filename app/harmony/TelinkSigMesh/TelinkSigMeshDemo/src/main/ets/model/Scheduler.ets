@@ -70,7 +70,7 @@ export class Scheduler {
 
 
     public static fromBytes(data: Uint8Array): Scheduler | undefined {
-        if (data == null || data.length != 10) {
+        if (data.length != 10) {
             return undefined;
         }
         let index = data[0] & 0x0F

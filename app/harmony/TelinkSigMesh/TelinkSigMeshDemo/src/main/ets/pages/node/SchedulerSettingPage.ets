@@ -1,29 +1,28 @@
 import {
     CompositionDataGetMessage,
-    CompositionDataStatusMessage,
     Event,
     EventBus,
-    getModelName,
+    getTaiTime,
     logd,
+    loge,
     MeshService,
     MeshSigModel,
     num2Hex,
-    StatusNotificationEvent
+    SchedulerActionSetMessage,
+    SchedulerActionStatusMessage,
+    StatusNotificationEvent,
+    TimeSetMessage,
+    TimeStatusMessage
 } from 'telinksigmeshlib';
-import { router, ToolBarOptions } from '@kit.ArkUI';
+import { router } from '@kit.ArkUI';
 import { MeshInfoService } from '../../model/MeshInfoService';
 import { NodeInfo } from '../../model/NodeInfo';
-import { NodeParams, SchedulerSettingParams } from '../PageParams';
-import { NodeStatusChangedEvent } from '../../model/NodeStatusChangedEvent';
+import { SchedulerSettingParams } from '../PageParams';
 import { TitleBar } from '../../components/TitleBar';
 import { getCommonIcon, toastMessage } from '../../components/Widgets';
-import NodeControlSubPage from './NodeControlSubPage';
-import NodeGroupingSubPage from './NodeGroupingSubPage';
-import NodeSettingSubPage from './NodeSettingSubPage';
-import { Scheduler } from '../../model/Scheduler';
-import { CardView } from '../../components/CardView';
-import { SchedulerRegister } from '../../model/SchedulerRegister';
 import { showConfirmDialog } from '../../components/Dialogs';
+import { UnitConvert } from '../../utils/UnitConvert';
+import { Scheduler, SchedulerBuilder } from '../../model/Scheduler';
 
 interface ItemSelection {
     itemName: string
@@ -67,10 +66,12 @@ const ACTION_TYPE_SCENE_RECALL = 3
 @Entry
 @Component
 struct SchedulerSettingPage {
+    private isTimeSetting = false
     @State node?: NodeInfo = undefined
     @State index: number = 0
     @State selectedElementIndex: number = 0
     schedElements: SelectOption[] = []
+    private settingSched?: Scheduler = undefined
     // is editing selected scheduler
     private isEditMode: boolean = false
     // year
@@ -129,20 +130,53 @@ struct SchedulerSettingPage {
         eles.forEach((val) => {
             this.schedElements.push({ value: `element ${val - adr}(address=0x${num2Hex(val, 4)})` })
         })
+        EventBus.getInstance().on(TimeStatusMessage.STATUS_NAME, this.evtCb)
+        EventBus.getInstance().on(SchedulerActionStatusMessage.STATUS_NAME, this.evtCb)
     }
 
     evtCb = (event: Event) => {
+        if (event.type == TimeStatusMessage.STATUS_NAME) {
+            let src = (event as StatusNotificationEvent).notificationMessage.src
+            if (src == this.node!.meshAddress && this.isTimeSetting) {
+                this.isTimeSetting = false
+                toastMessage(this.getUIContext(), "set time success")
+            }
+        } else if (event.type == SchedulerActionStatusMessage.STATUS_NAME) {
+            let schedStatus =
+                (event as StatusNotificationEvent).notificationMessage.statusMessage as SchedulerActionStatusMessage
+            let params = schedStatus.schedulerParams
+            let sched = Scheduler.fromBytes(params)
+            if (!sched) {
+                loge('parse scheduler err')
+                return
+            }
 
+            if (this.settingSched && this.settingSched.index == sched.index) {
+                this.node!.saveScheduler(sched)
+                MeshInfoService.getInstance().updateNodeInfo(this.node!)
+                toastMessage(this.getUIContext(), 'save scheduler success')
+            }
+        }
     }
 
     aboutToDisappear(): void {
+
+        EventBus.getInstance().off(TimeStatusMessage.STATUS_NAME, this.evtCb)
+        EventBus.getInstance().on(SchedulerActionStatusMessage.STATUS_NAME, this.evtCb)
     }
 
     @Builder
     getActionView() {
-        getCommonIcon($r("app.media.ic_plus"), () => {
-            MeshService.getInstance().sendMeshMessage(new CompositionDataGetMessage(this.node!.meshAddress))
-        })
+        Row() {
+
+            getCommonIcon($r("app.media.ic_time"), () => {
+                this.setTime()
+            })
+            getCommonIcon($r("app.media.ic_check"), () => {
+                this.setScheduler()
+            })
+        }
+
     }
 
     @Builder
@@ -540,6 +574,227 @@ struct SchedulerSettingPage {
                 }
             })
         }.columnsTemplate('1fr 1fr 1fr')
+    }
+
+    private async setTime() {
+        let time = getTaiTime()
+        let offset = UnitConvert.getZoneOffset()
+        const eleAdr = this.node!.getElementByModel(MeshSigModel.SIG_MD_TIME_S);
+        if (eleAdr == -1) {
+            toastMessage(this.getUIContext(), 'Time Model Not Found !')
+            return;
+        }
+
+        let meshInfo = MeshInfoService.getInstance().getCurrentMesh()
+        let timeSetMessage = TimeSetMessage.getSimple(eleAdr, meshInfo.getDefaultAppKeyIndex(), time, offset, 1);
+        timeSetMessage.ack = true
+        let re = await MeshService.getInstance().sendMeshMessage(timeSetMessage);
+        if (re) {
+            this.isTimeSetting = true;
+            logd("setTime time: " + time + " zone " + offset);
+        } else {
+            logd("setTime fail");
+        }
+    }
+
+    private setScheduler() {
+        let year: number
+        switch (this.yearType) {
+            case YEAR_TYPE_ANY:
+                year = 0x64
+                break
+            case YEAR_TYPE_CUSTOM:
+
+                try {
+                    year = parseInt(this.yearInput)
+                } catch (e) {
+                    toastMessage(this.getUIContext(), 'year input err')
+                    return
+                }
+                year -= 2000;
+                if (year < 0 || year > 0x63) {
+                    toastMessage(this.getUIContext(), 'custom day should be 2000-2099')
+                    return;
+                }
+                break
+            default:
+                toastMessage(this.getUIContext(), 'year selection err');
+                return;
+        }
+
+        let month = this.monthSelection
+        if (month == 0) {
+            toastMessage(this.getUIContext(), 'choose at least one month')
+            return
+        }
+
+        let day: number;
+        switch (this.dayType) {
+            case DAY_TYPE_ANY:
+                day = 0x00;
+                break;
+            case DAY_TYPE_CUSTOM:
+
+                try {
+                    day = parseInt(this.dayInput)
+                } catch (e) {
+                    toastMessage(this.getUIContext(), 'day input err')
+                    return
+                }
+
+                if (day < 0x01 || day > 0x1F) {
+                    toastMessage(this.getUIContext(), 'custom day should be 1-31')
+                    return;
+                }
+                break;
+            default:
+                toastMessage(this.getUIContext(), 'day selection err')
+                return;
+        }
+
+        let hour: number
+        switch (this.hourType) {
+            case HOUR_TYPE_ANY:
+                hour = 0x18;
+                break;
+
+            case HOUR_TYPE_RANDOM:
+                hour = 0x19;
+                break;
+
+            case HOUR_TYPE_CUSTOM:
+                try {
+                    hour = parseInt(this.hourInput)
+                } catch (e) {
+                    toastMessage(this.getUIContext(), 'hour input err')
+                    return
+                }
+
+                if (hour < 0x00 || hour > 0x17) {
+                    toastMessage(this.getUIContext(), "custom hour should be 0-23");
+                    return;
+                }
+                break;
+            default:
+                toastMessage(this.getUIContext(), "hour selection err");
+                return;
+        }
+
+        let minute: number;
+        switch (this.minuteType) {
+            case MINUTE_TYPE_ANY:
+                minute = 0x3C;
+                break;
+            case MINUTE_TYPE_CYCLE_15:
+                minute = 0x3D;
+                break;
+            case MINUTE_TYPE_CYCLE_20:
+                minute = 0x3E;
+                break;
+            case MINUTE_TYPE_RANDOM:
+                minute = 0x3F;
+                break;
+            case MINUTE_TYPE_CUSTOM:
+                try {
+                    minute = parseInt(this.minuteInput)
+                } catch (e) {
+                    toastMessage(this.getUIContext(), "minute input err");
+                    return
+                }
+                if (minute < 0x00 || minute > 0x3B) {
+                    toastMessage(this.getUIContext(), 'custom minute should be 0-59');
+                    return;
+                }
+                break;
+            default:
+                toastMessage(this.getUIContext(), "minute selection err");
+                return;
+        }
+
+
+        let second: number;
+        switch (this.secondType) {
+            case SECOND_TYPE_ANY:
+                second = 0x3C;
+                break;
+            case SECOND_TYPE_CYCLE_15:
+                second = 0x3D;
+                break;
+            case SECOND_TYPE_CYCLE_20:
+                second = 0x3E;
+                break;
+            case SECOND_TYPE_RANDOM:
+                second = 0x3F;
+                break;
+            case SECOND_TYPE_CUSTOM:
+                try {
+                    second = parseInt(this.secondInput)
+                } catch (e) {
+                    toastMessage(this.getUIContext(), "second input err");
+                    return
+                }
+                if (second < 0x00 || second > 0x3B) {
+                    toastMessage(this.getUIContext(), 'custom second should be 0-59');
+                    return;
+                }
+                break;
+            default:
+                toastMessage(this.getUIContext(), "second selection err");
+                return;
+        }
+
+        let week = this.weekSelection
+
+        let action: number;
+        let sceneId = 0;
+        switch (this.actionType) {
+            case ACTION_TYPE_OFF:
+                action = 0x00;
+                break;
+            case ACTION_TYPE_ON:
+                action = 0x01;
+                break;
+            case ACTION_TYPE_NO_ACTION:
+                action = 0x0F;
+                break;
+            case ACTION_TYPE_SCENE_RECALL:
+                action = 0x02;
+                try {
+                    sceneId = parseInt(this.actionSceneIdInput)
+                } catch (e) {
+                    toastMessage(this.getUIContext(), "scene id input err");
+                    return
+                }
+                break;
+
+            default:
+                toastMessage(this.getUIContext(), "action selection err");
+                return;
+        }
+        logd(`scheduler params : index=${this.index} , year=${year} , month=${month} , day=${day} , hour=${hour} , minute=${minute} , second=${second} , week=${week} , action=${action}`)
+
+        let transitionTime = 0
+        let scheduler = new SchedulerBuilder()
+            .setIndex(this.index)
+            .setYear(year)
+            .setMonth(month)
+            .setDay(day)
+            .setHour(hour)
+            .setMinute(minute)
+            .setSecond(second)
+            .setWeek(week)
+            .setAction(action)
+            .setTransTime(transitionTime)
+            .setSceneId(sceneId)
+            .build()
+
+        scheduler.elementOffset = this.selectedElementIndex
+        let schedData = scheduler.toBytes()
+        this.settingSched = scheduler
+        let eleAdr = this.node!.meshAddress + this.selectedElementIndex
+        let appKeyIndex = MeshInfoService.getInstance().getCurrentMesh().getDefaultAppKeyIndex()
+        let setMessage = SchedulerActionSetMessage.getSimple(eleAdr, appKeyIndex, schedData, true, 1);
+        MeshService.getInstance().sendMeshMessage(setMessage);
     }
 
     build() {

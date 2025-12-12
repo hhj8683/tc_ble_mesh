@@ -28,6 +28,7 @@ import { NodeResetStatusMessage } from './config/NodeResetStatusMessage';
 import { OnOffStatusMessage } from './generic/OnOffStatusMessage';
 import { Opcode } from './Opcode';
 import { StatusMessage } from './StatusMessage';
+import { TimeStatusMessage } from './time/TimeStatusMessage';
 
 
 /**
@@ -78,6 +79,10 @@ export class MeshStatus {
         });
         MeshStatus.register(Opcode.CFG_MODEL_SUB_STATUS, () => {
             return new ModelSubscriptionStatusMessage()
+        });
+
+        MeshStatus.register(Opcode.TIME_STATUS, () => {
+            return new TimeStatusMessage()
         });
         // MeshStatus.register(Opcode.CFG_MODEL_PUB_STATUS, ()=>{return new ModelPublicationStatusMessage()});
         // MeshStatus.register(Opcode.NODE_ID_STATUS, ()=>{return new NodeIdentityStatusMessage()});

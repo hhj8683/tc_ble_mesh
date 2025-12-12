@@ -32,3 +32,11 @@ export * from './lighting/LightnessSetMessage'
 export * from './lighting/CtlTemperatureSetMessage'
 
 export * from './lighting/HslSetMessage'
+
+export * from './time/TimeSetMessage'
+
+export * from './time/TimeStatusMessage'
+
+export * from './scheduler/SchedulerActionSetMessage'
+
+export * from './scheduler/SchedulerActionStatusMessage'
