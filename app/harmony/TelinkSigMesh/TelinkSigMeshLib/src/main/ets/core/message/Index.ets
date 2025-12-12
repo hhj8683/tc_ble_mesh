@@ -40,3 +40,11 @@ export * from './time/TimeStatusMessage'
 export * from './scheduler/SchedulerActionSetMessage'
 
 export * from './scheduler/SchedulerActionStatusMessage'
+
+export * from './scene/SceneRecallMessage'
+
+export * from './scene/SceneStoreMessage'
+
+export * from './scene/SceneDeleteMessage'
+
+export * from './scene/SceneRegisterStatusMessage'
