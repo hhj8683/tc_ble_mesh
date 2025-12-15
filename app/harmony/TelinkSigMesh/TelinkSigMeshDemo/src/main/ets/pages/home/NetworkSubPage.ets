@@ -13,7 +13,7 @@ interface NetworkAction {
 const NETWORK_ACTIONS: NetworkAction[] = [
     {
         icon: $r("app.media.ic_network"),
-        title: "Mesh Info - todo",
+        title: "Mesh Info",
         subTitle: "Default Mesh",
         pagePath: "pages/manage-network/NetworkInfoPage"
     },
@@ -25,7 +25,7 @@ const NETWORK_ACTIONS: NetworkAction[] = [
     },
     {
         icon: $r("app.media.ic_scene"),
-        title: "Scenes - todo",
+        title: "Scenes",
         subTitle: undefined,
         pagePath: "pages/scene/SceneListPage",
     },
@@ -87,7 +87,7 @@ export default struct NetworkSubPage {
         }) {
             Row() {
                 getCommonIcon($r('app.media.ic_sol'), undefined, $r('app.color.text_color_normal'))
-                Text("Publication : todo").layoutWeight(1).fontSize(14)
+                Text("Proxy Solicitation - todo").layoutWeight(1).fontSize(14)
                 Checkbox()
                     .select(true)
                     .enabled(false)

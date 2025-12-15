@@ -32,10 +32,10 @@ import { MeshStatus } from "../core/message/MeshStatus";
 
 
 // The maximum value for a unicast address
-export const UNICAST_ADDRESS_MAX = 0x7FFF;
+export const ADDRESS_UNICAST_MAX = 0x7FFF;
 
 // The minimum value for a unicast address is set to
-export const UNICAST_ADDRESS_MIN = 0x0001;
+export const ADDRESS_UNICAST_MIN = 0x0001;
 
 export const ADDRESS_BROADCAST = 0xFFFF;
 
@@ -55,11 +55,6 @@ export const LOCAL_MESSAGE_ADDRESS = 0;
 
 // ivIndex missing, used when import from JSON
 export const IV_MISSING = 0xFFFFFFFF;
-
-// Object Transfer Service UUID
-// public static final ParcelUuid OTS_UUID = new ParcelUuid(UUIDInfo.SERVICE_OTS);
-
-// public static final ParcelUuid SOL_UUID = new ParcelUuid(UUIDInfo.SERVICE_MESH_PROXY_SOLICITATION);
 
 /**
  * used in {@link #generateChars(int)}
@@ -100,29 +95,6 @@ export function currentTimeMillis() {
     return new Date().getTime()
 }
 
-
-/**
- * Mesh V1.0 3.7.3.1 Operation codes
- * Opcode Format
- * Notes
- * 0xxxxxxx (excluding 01111111)
- * 1-octet Opcodes
- * 01111111
- * Reserved for Future Use
- * 10xxxxxx xxxxxxxx
- * 2-octet Opcodes
- * 11xxxxxx zzzzzzzz
- * 3-octet Opcodes
- */
-
-/*public static OpcodeType getOpType(byte opFst) {
-//        final int opVal = getValue();
-    return (opFst & bit(7)) != 0
-            ?
-            ((opFst & bit(6)) != 0 ? OpcodeType.VENDOR : OpcodeType.SIG_2)
-            :
-            OpcodeType.SIG_1;
-}*/
 export function bit(n: number) {
     return 1 << n;
 }
@@ -164,7 +136,7 @@ export function getMicSize(szmic: number) {
  * @return true if the address is valid, false otherwise
  */
 export function validUnicastAddress(address: number): boolean {
-    return (address & 0xFFFF) <= UNICAST_ADDRESS_MAX && (address & 0xFFFF) >= UNICAST_ADDRESS_MIN;
+    return (address & 0xFFFF) <= ADDRESS_UNICAST_MAX && (address & 0xFFFF) >= ADDRESS_UNICAST_MIN;
 }
 
 /**
@@ -280,14 +252,6 @@ export function hexListContainsNumber(list: Array<string>, target: number): bool
     return false;
 }
 
-/**
- * @param unprovisioned true: get provision service data, false: get proxy service data
- */
-export function getMeshServiceData(scanRecord: Uint8Array, unprovisioned: boolean): Uint8Array | undefined {
-    return undefined
-    // MeshScanRecord meshScanRecord = MeshScanRecord.parseFromBytes(scanRecord);
-    // return meshScanRecord.getServiceData(ParcelUuid.fromString((unprovisioned ? UUIDInfo.SERVICE_PROVISION : UUIDInfo.SERVICE_PROXY).toString()));
-}
 
 /**
  * get missing bit position

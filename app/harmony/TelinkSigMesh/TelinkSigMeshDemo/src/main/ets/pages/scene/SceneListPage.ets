@@ -1,4 +1,4 @@
-import { Event, MeshService, SceneRecallMessage } from 'telinksigmeshlib';
+import { ADDRESS_BROADCAST, Event, MeshService, num2Hex, SceneRecallMessage } from 'telinksigmeshlib';
 import { router } from '@kit.ArkUI';
 import { MeshInfoService } from '../../model/MeshInfoService';
 import { SceneSettingParams } from '../PageParams';
@@ -18,6 +18,9 @@ struct SceneListPage {
 
     async aboutToAppear() {
         this.meshInfo = MeshInfoService.getInstance().getCurrentMesh()
+    }
+
+    onPageShow(): void {
         this.resetData()
     }
 
@@ -83,31 +86,53 @@ struct SceneListPage {
         })
     }
 
+    private sceneRecall(sceneId: number, adr: number) {
+        let appKeyIndex = this.meshInfo!.getDefaultAppKeyIndex()
+        let recallMessage = SceneRecallMessage.getSimple(adr,
+            appKeyIndex, sceneId, false, 0);
+        MeshService.getInstance().sendMeshMessage(recallMessage);
+    }
+
     @Builder
     getSceneItem(scene: Scene) {
         CardView({
             cdPadding: 16,
             cdMargin: 8,
         }) {
-            Row({ space: 8 }) {
-                getCommonIcon($r('app.media.ic_scene'), undefined, Color.Grey)
-                Text(`Name : ${scene.name}\nID : ${scene.sceneId}`)
-                    .fontSize(14)
-                    .fontWeight(FontWeight.Medium).layoutWeight(1)
+            Column() {
+                Row({ space: 8 }) {
+                    getCommonIcon($r('app.media.ic_scene'), undefined, Color.Grey)
+                    Text(`Name : ${scene.name}\nID : ${scene.sceneId}`)
+                        .fontSize(14)
+                        .fontWeight(FontWeight.Medium).layoutWeight(1)
 
-                getCommonIcon($r('app.media.ic_open'), () => {
-                    // scene recall
-                    let appKeyIndex = this.meshInfo!.getDefaultAppKeyIndex()
-                    let recallMessage = SceneRecallMessage.getSimple(0xFFFF,
-                        appKeyIndex, scene.sceneId, false, 0);
-                    MeshService.getInstance().sendMeshMessage(recallMessage);
-                }, Color.Grey)
+                    getCommonIcon($r('app.media.ic_open'), () => {
+                        // scene recall
+                        this.sceneRecall(scene.sceneId, ADDRESS_BROADCAST)
+                    }, Color.Grey)
 
-                getCommonIcon($r('app.media.ic_edit'), ()=>{
-                    let params: SceneSettingParams = {sceneId: scene.sceneId}
-                    router.push({url: 'pages/scene/SceneSettingPage', params: params})
-                }, Color.Grey)
-            }.alignItems(VerticalAlign.Center)
+                    getCommonIcon($r('app.media.ic_edit'), () => {
+                        let params: SceneSettingParams = { sceneId: scene.sceneId }
+                        router.push({ url: 'pages/scene/SceneSettingPage', params: params })
+                    }, Color.Grey)
+                }.alignItems(VerticalAlign.Center)
+
+                // elements
+                ForEach(scene.addressList, (ele: number, index) => {
+                    Row() {
+                        getCommonIcon($r('app.media.ic_element'), undefined, $r('app.color.primary'))
+
+                        Text(`${this.meshInfo!.getDeviceByElementAddress(ele)?.name ??
+                            '[unknown]'} \nelement address : 0x${num2Hex(ele, 4)}`).fontSize(12).layoutWeight(1)
+
+                        getCommonIcon($r('app.media.ic_open'), () => {
+                            this.sceneRecall(scene.sceneId, ele)
+                        }, $r('app.color.primary'), 36, 36)
+
+                    }.alignItems(VerticalAlign.Center)
+                })
+            }
+
         }
     }
 

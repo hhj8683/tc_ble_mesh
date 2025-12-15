@@ -31,7 +31,7 @@ import {
     logd,
     MeshConfiguration,
     num2Hex,
-    UNICAST_ADDRESS_MAX,
+    ADDRESS_UNICAST_MAX,
     uuidToByteArray,
     uuidToRawHex
 } from "telinksigmeshlib";
@@ -546,7 +546,7 @@ export class MeshInfo {
 
         let low = maxRangeHigh + 1;
 
-        if (low + 0xFF > UNICAST_ADDRESS_MAX) {
+        if (low + 0xFF > ADDRESS_UNICAST_MAX) {
             logd("no available unicast range");
             return false;
         }
