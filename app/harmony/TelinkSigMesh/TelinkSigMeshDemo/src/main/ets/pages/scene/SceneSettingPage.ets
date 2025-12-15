@@ -4,8 +4,10 @@ import {
     Event,
     EventBus,
     logd,
+    logw,
     MeshMessage,
     MeshService,
+    MeshSigModel,
     num2Hex,
     SceneDeleteMessage,
     SceneRecallMessage,
@@ -36,7 +38,7 @@ interface SettingModel {
 @Component
 struct SceneSettingPage {
     private sceneId = 0
-    private scene?: Scene
+    @State scene?: Scene = undefined
     private setSceneTimeoutId = 0
     @State sceneNameInput: string = ''
     @State nodes: NodeInfo[] = []
@@ -49,24 +51,39 @@ struct SceneSettingPage {
         this.sceneId = params.sceneId
         this.meshInfo = MeshInfoService.getInstance().getCurrentMesh()
         this.scene = this.meshInfo.getSceneById(this.sceneId)
-        this.nodes = [...this.meshInfo.nodes]
+        this.initData()
         this.resetData()
         EventBus.getInstance().on(SceneRegisterStatusMessage.STATUS_NAME, this.evtCb)
     }
 
-    private resetData() {
+    private initData() {
+        // init element selection state
+        for (let node of this.meshInfo!.nodes) {
+            if (!node.compositionData) {
+                continue;
+            }
+            for (let i = 0; i < node.compositionData.elements.length; i++) {
+                node.compositionData.elements[i].selected = this.scene!.contains(node.meshAddress + i);
+            }
+        }
     }
 
-    evtCb = (event: Event) => {
+    private resetData() {
+        this.nodes = [...this.meshInfo!.nodes]
+    }
+
+    private evtCb = (event: Event) => {
+        logw('scene register st')
         if (event.type == SceneRegisterStatusMessage.STATUS_NAME) {
             let statusNotificationEvent = event as StatusNotificationEvent;
             let notificationMessage = statusNotificationEvent.notificationMessage
-            let sceneRegisterStatusMessage =  notificationMessage.statusMessage as SceneRegisterStatusMessage
+            let sceneRegisterStatusMessage = notificationMessage.statusMessage as SceneRegisterStatusMessage
             let model = this.settingModel;
             if (!model) {
                 logd("scene setting null");
                 return;
             }
+
             if (sceneRegisterStatusMessage.statusCode == ConfigStatus.SUCCESS
                 && notificationMessage.src == model.nodeInfo.meshAddress + model.elementOffset) {
                 this.onSettingComplete(model);
@@ -81,7 +98,7 @@ struct SceneSettingPage {
     @Builder
     nameInputDialogContent() {
         Column({ space: 8 }) {
-            Text("Create Scene").fontSize(15).fontWeight(FontWeight.Bold)
+            Text("Update Scene Name").fontSize(15).fontWeight(FontWeight.Bold)
             TextInput({ text: $$this.sceneNameInput })
             Button("CONFIRM").onClick(() => {
                 if (this.sceneNameInput == '') {
@@ -89,17 +106,10 @@ struct SceneSettingPage {
                     return
                 }
 
-                let sceneId = this.meshInfo!.allocSceneId();
-                if (sceneId == -1) {
-                    toastMessage(this.getUIContext(), "no available scene id")
-                    return;
-                }
-                let scene = new Scene();
-                scene.sceneId = sceneId;
-                scene.name = this.sceneNameInput;
-                toastMessage(this.getUIContext(), 'create scene success')
-                this.meshInfo!.addScene(scene);
-                this.resetData();
+                this.scene!.name = this.sceneNameInput;
+                toastMessage(this.getUIContext(), 'update name success')
+                this.meshInfo!.saveOrUpdate();
+                this.getUIContext().getPromptAction().closeCustomDialog(this.nameInputDialogId)
             })
         }
         .width('80%').alignItems(HorizontalAlign.Center).padding(8)
@@ -107,6 +117,7 @@ struct SceneSettingPage {
     }
 
     private showEditNameDialog() {
+        this.sceneNameInput = this.scene!.name
         this.getUIContext().getPromptAction().openCustomDialog({
             builder: () => {
                 this.nameInputDialogContent()
@@ -143,9 +154,12 @@ struct SceneSettingPage {
         } else {
             this.scene!.remove(adr);
         }
+
+        MeshInfoService.getInstance().updateMeshInfo(this.meshInfo!)
         settingModel.nodeInfo.compositionData!.elements[settingModel.elementOffset].selected = settingModel.add;
         WaitingDialog.dismiss()
-        this.resetData
+        this.resetData()
+        toastMessage(this.getUIContext(), 'set scene success')
     }
 
     @Builder
@@ -155,6 +169,26 @@ struct SceneSettingPage {
         })
     }
 
+    isElementSupportScene(element: Element) {
+        let tarModelId = MeshSigModel.SIG_MD_SCENE_S
+        if (element.sigModels != null) {
+            for (let modelId of element.sigModels) {
+                if (modelId == tarModelId) {
+                    return true;
+                }
+            }
+        }
+
+        if (element.vendorModels != null) {
+            for (let modelId of element.vendorModels) {
+                if (modelId == tarModelId) {
+                    return true;
+                }
+            }
+        }
+        return false
+    }
+
     @Builder
     getNodeItem(node: NodeInfo) {
         CardView({
@@ -162,6 +196,7 @@ struct SceneSettingPage {
             cdMargin: 8,
         }) {
             Column() {
+                // node icon
                 Row({ space: 8 }) {
                     Image(IconGenerator.getIcon(node)).width(36).height(36)
                     Text(`name : ${node.name}\naddress : 0x${num2Hex(node.meshAddress, 4)}`)
@@ -170,39 +205,48 @@ struct SceneSettingPage {
 
                 }.alignItems(VerticalAlign.Center)
 
+                // elements
                 ForEach(node.compositionData?.elements, (ele: Element, index) => {
-
                     Row() {
-
                         Row() {
                             getCommonIcon($r('app.media.ic_element'), undefined, $r('app.color.primary'))
-                            Text(`element : 0x${num2Hex(node.meshAddress + index, 4)}`).fontSize(12)
-                            Checkbox().select(ele.selected).shape(CheckBoxShape.ROUNDED_SQUARE)
+                            Text(`element : 0x${num2Hex(node.meshAddress + index, 4)}`).fontSize(12).layoutWeight(1)
+                            if (this.isElementSupportScene(ele)) {
+                                Checkbox().select(ele.selected).shape(CheckBoxShape.ROUNDED_SQUARE)
+                            } else {
+                                Text(`scene not support`).fontSize(12)
+                            }
                         }.alignItems(VerticalAlign.Center)
                         .hitTestBehavior(HitTestMode.Block)
                         .onClick(() => {
-                            this.setScene(node, index, !ele.selected)
-                        })
+                            if (this.isElementSupportScene(ele)) {
+                                this.setScene(node, index, !ele.selected)
+                            } else {
+                                toastMessage(this.getUIContext(), 'scene not support')
+                            }
+                        }).layoutWeight(1)
 
-                        if (ele.selected) {
-                            getCommonIcon($r('app.media.ic_refresh'), () => {
-                                this.setScene(node, index, true)
-                            }, $r('app.color.primary'), 42, 42)
-                        } else {
-                            Text().width(42).height(42)
-
+                        if (this.isElementSupportScene(ele)) {
+                            if (ele.selected) {
+                                getCommonIcon($r('app.media.ic_refresh'), () => {
+                                    this.setScene(node, index, true)
+                                }, $r('app.color.primary'), 42, 42)
+                            } else {
+                                Text().width(42).height(42)
+                            }
                         }
 
-                    }.alignItems(VerticalAlign.Center)
+                    }.alignItems(VerticalAlign.Center).width('100%')
                 })
-            }.alignItems(HorizontalAlign.Start)
+            }.alignItems(HorizontalAlign.Start).width('100%')
         }
     }
 
     build() {
         Column() {
             TitleBar({
-                title: "Scheduler List",
+                title: "Scene Setting",
+                subTitle: this.scene!.name,
                 showNavigation: true,
                 showAction: true,
                 actionView: () => {
@@ -213,11 +257,9 @@ struct SceneSettingPage {
                 ForEach(this.nodes, (node: NodeInfo, index: number) => {
                     ListItem() {
                         this.getNodeItem(node)
-                    }
+                    }.width('100%')
                 })
             }.layoutWeight(1).width('100%')
-
-            // .backgroundColor(Color.Blue)
         }.width('100%').height("100%")
     }
 }

@@ -27,6 +27,7 @@ import { ModelSubscriptionStatusMessage } from './config/ModelSubscriptionStatus
 import { NodeResetStatusMessage } from './config/NodeResetStatusMessage';
 import { OnOffStatusMessage } from './generic/OnOffStatusMessage';
 import { Opcode } from './Opcode';
+import { SceneRegisterStatusMessage } from './scene/SceneRegisterStatusMessage';
 import { StatusMessage } from './StatusMessage';
 import { TimeStatusMessage } from './time/TimeStatusMessage';
 
@@ -136,7 +137,7 @@ export class MeshStatus {
         //
         // // scene
         // MeshStatus.register(Opcode.SCENE_STATUS, ()=>{return new SceneStatusMessage()});
-        // MeshStatus.register(Opcode.SCENE_REG_STATUS, ()=>{return new SceneRegisterStatusMessage()});
+        MeshStatus.register(Opcode.SCENE_REG_STATUS, ()=>{return new SceneRegisterStatusMessage()});
         //
         // // scheduler status
         // MeshStatus.register(Opcode.SCHD_STATUS, ()=>{return new SchedulerStatusMessage()});

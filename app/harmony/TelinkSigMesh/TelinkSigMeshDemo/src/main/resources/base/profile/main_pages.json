@@ -13,6 +13,7 @@
     "pages/manage-network/ShareExportPage",
     "pages/manage-network/ShareQrcodePage",
     "pages/scene/SceneListPage",
+    "pages/scene/SceneSettingPage",
     "pages/provision/SelectableProvisionPage"
   ]
 }

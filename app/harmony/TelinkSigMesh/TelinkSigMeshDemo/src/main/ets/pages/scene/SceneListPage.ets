@@ -1,8 +1,7 @@
-import { Event, MeshService, num2Hex, SceneRecallMessage } from 'telinksigmeshlib';
+import { Event, MeshService, SceneRecallMessage } from 'telinksigmeshlib';
 import { router } from '@kit.ArkUI';
 import { MeshInfoService } from '../../model/MeshInfoService';
-import { NodeInfo } from '../../model/NodeInfo';
-import { NodeParams, SchedulerSettingParams } from '../PageParams';
+import { SceneSettingParams } from '../PageParams';
 import { TitleBar } from '../../components/TitleBar';
 import { getCommonIcon, toastMessage } from '../../components/Widgets';
 import { CardView } from '../../components/CardView';
@@ -54,6 +53,7 @@ struct SceneListPage {
                 toastMessage(this.getUIContext(), 'create scene success')
                 this.meshInfo!.addScene(scene);
                 this.resetData();
+                this.getUIContext().getPromptAction().closeCustomDialog(this.nameInputDialogId)
             })
         }
         .width('80%').alignItems(HorizontalAlign.Center).padding(8)
@@ -90,22 +90,23 @@ struct SceneListPage {
             cdMargin: 8,
         }) {
             Row({ space: 8 }) {
-                getCommonIcon($r('app.media.ic_scene', undefined, Color.Grey))
+                getCommonIcon($r('app.media.ic_scene'), undefined, Color.Grey)
                 Text(`Name : ${scene.name}\nID : ${scene.sceneId}`)
                     .fontSize(14)
                     .fontWeight(FontWeight.Medium).layoutWeight(1)
 
-                getCommonIcon($r('app.media.ic_open', () => {
+                getCommonIcon($r('app.media.ic_open'), () => {
                     // scene recall
                     let appKeyIndex = this.meshInfo!.getDefaultAppKeyIndex()
                     let recallMessage = SceneRecallMessage.getSimple(0xFFFF,
                         appKeyIndex, scene.sceneId, false, 0);
                     MeshService.getInstance().sendMeshMessage(recallMessage);
-                }, Color.Grey))
+                }, Color.Grey)
 
-                getCommonIcon($r('app.media.ic_scene', ()=>{
-                    router.push({url: 'pages/scene/SceneSetting'})
-                }, Color.Grey))
+                getCommonIcon($r('app.media.ic_edit'), ()=>{
+                    let params: SceneSettingParams = {sceneId: scene.sceneId}
+                    router.push({url: 'pages/scene/SceneSettingPage', params: params})
+                }, Color.Grey)
             }.alignItems(VerticalAlign.Center)
         }
     }
@@ -124,7 +125,7 @@ struct SceneListPage {
     build() {
         Column() {
             TitleBar({
-                title: "Scheduler List",
+                title: "Scene List",
                 showNavigation: true,
                 showAction: true,
                 actionView: () => {
