@@ -18,12 +18,18 @@ struct NetworkInfoPage {
     private nameInputDialogId = 0
 
     async aboutToAppear() {
-        let meshId = (router.getParams() as MeshInfoParams).id
-        if (meshId) {
-            this.meshInfo = MeshInfoService.getInstance().getById(meshId)
-        } else {
+        // let params = router.getParams()
+        let params = router.getParams() as MeshInfoParams
+        if (params && params.id){
+            this.meshInfo = MeshInfoService.getInstance().getById(params.id)
+        }else {
             this.meshInfo = MeshInfoService.getInstance().getCurrentMesh()
         }
+        // let meshId = params.id
+        // if (meshId) {
+        //
+        // } else {
+        // }
     }
 
     @Builder
