@@ -199,6 +199,7 @@ class BlobTransfer {
         this.transferType = type;
         log("transfer begin: " + type);
         this.missingNodes.clear();
+        this.mixedFormat = -1;
         if (type == BlobTransferType.LOCAL_INIT || type == BlobTransferType.GATT_INIT) {
             this.targetDevices.add(new TargetDevice(directAddress));
             this.missingNodes.add(directAddress);
@@ -476,6 +477,9 @@ class BlobTransfer {
         while (iterator.hasNext()) {
             updatingNode = iterator.next();
             if (updatingNode.state == MeshUpdatingDevice.STATE_FAIL) {
+                if (missingNodes.contains(updatingNode.address)) {
+                    missingNodes.remove((Integer) updatingNode.address);
+                }
                 iterator.remove();
             }
         }
