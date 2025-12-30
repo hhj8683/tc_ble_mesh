@@ -5,6 +5,7 @@ import {
     BindingDevice,
     BindingEvent,
     BindingParameters,
+    bytesEquals,
     bytesToHexString,
     Event,
     EventBus,
@@ -125,12 +126,30 @@ struct SelectableProvisionPage {
             return
         }
         let deviceUuid = data.slice(0, 16)
+        if (this.deviceExists(deviceUuid)) {
+            logd("device exists");
+            return;
+        }
         this.devices.push({
             deviceUuid: deviceUuid,
             address: 0,
             scanResult: scanResult,
             state: NetworkingState.STATE_IDLE
         })
+    }
+
+    /**
+     * only find in unprovisioned list
+     *
+     * @param deviceUuid deviceUUID in unprovisioned scan record
+     */
+    private deviceExists(deviceUuid: Uint8Array): boolean {
+        for (let device of this.devices) {
+            if (device.state == NetworkingState.STATE_IDLE && bytesEquals(deviceUuid, device.deviceUuid)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     onProvisionSuccess(event: ProvisioningEvent) {
