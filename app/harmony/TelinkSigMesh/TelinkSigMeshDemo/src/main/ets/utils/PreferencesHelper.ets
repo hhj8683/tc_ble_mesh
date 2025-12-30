@@ -1,7 +1,7 @@
 import { bundleManager, common } from "@kit.AbilityKit";
 
 import dataPreferences from '@ohos.data.preferences';
-import { logd, loge, OtaSetting } from "telinksigmeshlib";
+import { logd, loge } from "telinksigmeshlib";
 import { util } from "@kit.ArkTS";
 
 export const PREFERENCES_NAME = 'telink_ble_ota_preferences';
@@ -19,34 +19,6 @@ export const KEY_LEVEL_SERVICE = "KEY_LEVEL_SERVICE"
 export const KEY_SELECTED_MESH_ID = "KEY_SELECTED_MESH_ID"
 
 export class PreferencesHelper {
-    public static async saveOtaSetting(context: common.Context, otaSetting: OtaSetting) {
-        try {
-            const preferences = await dataPreferences.getPreferences(context, PREFERENCES_NAME);
-            preferences.putSync(KEY_OTA_SETTING, JSON.stringify(otaSetting))
-            preferences.flushSync();
-            console.log('save setting success');
-        } catch (err) {
-            console.error(`save setting fail: ${err.code}, ${err.message}`);
-        }
-    }
-
-    public static async getOtaSetting(context: common.Context): Promise<OtaSetting | undefined> {
-        try {
-            const preferences = await dataPreferences.getPreferences(context, PREFERENCES_NAME);
-            if (!preferences.hasSync(KEY_OTA_SETTING)) {
-                return
-            }
-            let settingInfo = await preferences.get(KEY_OTA_SETTING, "")
-            if (typeof settingInfo == 'string') {
-                let otaSetting: OtaSetting = JSON.parse(settingInfo) as OtaSetting
-                return otaSetting
-            }
-            return
-        } catch (err) {
-            console.error(`get ota setting error: ${err.code}, ${err.message}`);
-            return
-        }
-    }
 
 
     public static async saveFilter(context: common.Context, filterName: string, filterRssi: number) {

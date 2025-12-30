@@ -81,7 +81,7 @@ export class BleScanner {
             ble.on("BLEDeviceFind", (data) => {
                 this.onReceiveEvent(data)
             })
-            ble.startBLEScan(filter, scanOptions);
+            ble.startBLEScan(filter ?? null, scanOptions);
             logd('startBleScan success');
         } catch (err) {
             clearTimeout(this.scanTimerId)

@@ -24,8 +24,10 @@ import { AppKeyStatusMessage } from './config/AppKeyStatusMessage';
 import { CompositionDataStatusMessage } from './config/CompositionDataStatusMessage';
 import { ModelAppStatusMessage } from './config/ModelAppStatusMessage';
 import { ModelSubscriptionStatusMessage } from './config/ModelSubscriptionStatusMessage';
+import { NodeIdentityStatusMessage } from './config/NodeIdentityStatusMessage';
 import { NodeResetStatusMessage } from './config/NodeResetStatusMessage';
 import { OnOffStatusMessage } from './generic/OnOffStatusMessage';
+import { LightnessStatusMessage } from './Index';
 import { Opcode } from './Opcode';
 import { SceneRegisterStatusMessage } from './scene/SceneRegisterStatusMessage';
 import { StatusMessage } from './StatusMessage';
@@ -86,7 +88,9 @@ export class MeshStatus {
             return new TimeStatusMessage()
         });
         // MeshStatus.register(Opcode.CFG_MODEL_PUB_STATUS, ()=>{return new ModelPublicationStatusMessage()});
-        // MeshStatus.register(Opcode.NODE_ID_STATUS, ()=>{return new NodeIdentityStatusMessage()});
+        MeshStatus.register(Opcode.NODE_ID_STATUS, () => {
+            return new NodeIdentityStatusMessage()
+        });
         // MeshStatus.register(Opcode.NETKEY_STATUS, ()=>{return new NetKeyStatusMessage()});
         //
         // MeshStatus.register(Opcode.SUBNET_BRIDGE_STATUS, ()=>{return new SubnetBridgeStatusMessage()});
@@ -114,7 +118,7 @@ export class MeshStatus {
         // MeshStatus.register(Opcode.G_LEVEL_STATUS, ()=>{return new LevelStatusMessage()});
         //
         // // lighting
-        // MeshStatus.register(Opcode.LIGHTNESS_STATUS, ()=>{return new LightnessStatusMessage()});
+        MeshStatus.register(Opcode.LIGHTNESS_STATUS, ()=>{return new LightnessStatusMessage()});
         // MeshStatus.register(Opcode.LIGHT_CTL_TEMP_STATUS, ()=>{return new CtlTemperatureStatusMessage()});
         // MeshStatus.register(Opcode.LIGHT_CTL_STATUS, ()=>{return new CtlStatusMessage()});
         //
@@ -137,7 +141,9 @@ export class MeshStatus {
         //
         // // scene
         // MeshStatus.register(Opcode.SCENE_STATUS, ()=>{return new SceneStatusMessage()});
-        MeshStatus.register(Opcode.SCENE_REG_STATUS, ()=>{return new SceneRegisterStatusMessage()});
+        MeshStatus.register(Opcode.SCENE_REG_STATUS, () => {
+            return new SceneRegisterStatusMessage()
+        });
         //
         // // scheduler status
         // MeshStatus.register(Opcode.SCHD_STATUS, ()=>{return new SchedulerStatusMessage()});

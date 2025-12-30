@@ -24,6 +24,8 @@ export * from './event/MeshEvent'
 
 export * from './event/NetworkInfoUpdateEvent'
 
+export * from './event/GattOtaEvent'
+
 export * from './event/OnlineStatusEvent'
 
 export * from './event/ProvisioningEvent'
@@ -43,5 +45,7 @@ export * from './parameter/AutoConnectParameters'
 export * from './parameter/BindingParameters'
 
 export * from './parameter/ProvisioningParameters'
+
+export * from './parameter/GattOtaParameters'
 
 export * from './parameter/ScanParameters'

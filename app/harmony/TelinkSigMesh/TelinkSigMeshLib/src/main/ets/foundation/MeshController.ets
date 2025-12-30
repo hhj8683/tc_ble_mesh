@@ -77,6 +77,14 @@ import { BindingEvent } from "./event/BindingEvent";
 import { EventCallback } from "./EventCallback";
 import { BleScanner } from "../ble/BleScanner";
 import { ProvisioningParameters } from "./parameter/ProvisioningParameters";
+import { ConnectionFilter } from "../entity/ConnectionFilter";
+import { MeshAdvFilter } from "../entity/MeshAdvFilter";
+import { GattOtaParameters } from "./parameter/GattOtaParameters";
+import { GattOtaEvent } from "./event/GattOtaEvent";
+import { GattOtaController } from "../ble/GattOtaController";
+import { OtaStatusCode } from "../ble/OtaStatusCode";
+import { NodeIdentityStatusMessage } from "../core/message/config/NodeIdentityStatusMessage";
+import { ConfigStatus } from "../core/message/config/ConfigStatus";
 
 
 /**
@@ -131,6 +139,10 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
     // key binding
     private mBindingController: BindingController
     /**
+     * gatt OTA
+     */
+    private mGattOtaController: GattOtaController
+    /**
      * current active action
      */
     private actionMode = Mode.IDLE;
@@ -183,9 +195,19 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
      */
     private directDeviceAddress = 0;
     /**
+     * OTA reconnect
+     * used when ota target device's advertising identification Type is NetworkID,
+     * set to node identity when first connect mesh network, and reconnect by node identity
+     */
+    private isProxyReconnect = false;
+    /**
      * reconnect target proxy node by node identity
      */
     private static readonly TARGET_PROXY_CONNECT_TIMEOUT = 60 * 1000;
+    /**
+     * rest when receive NodeIdentityStatus message
+     */
+    private lastNodeSetTimestamp = 0;
     /**
      * binding target valued when device scanned
      */
@@ -222,6 +244,9 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
         this.mBindingController = new BindingController(this);
         this.mBleScanner =
             new BleScanner(this.onScanStartFail, this.onScanStarted, this.onScanTimeout, this.onScanDeviceFound);
+        this.mGattOtaController =
+            new GattOtaController(this.mGattConnection, this.gattOtaStateCb, this.gattOtaProgressCb)
+
     }
 
     start(): void {
@@ -601,7 +626,7 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
      * Otherwise, it sets the binding start tick to the current system time and checks if disconnecting from the GATT connection is successful. If so, it sets the isDisconnectWaiting flag to true. If not, it starts scanning for devices.
      */
     startKeyBind(bindingParameters: BindingParameters) {
-        if (!this.validateActionMode(Mode.MODE_BIND)) {
+        if (!this.validateActionMode(Mode.KEY_BIND)) {
             logd("key binding currently");
             return;
         }
@@ -615,7 +640,7 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
         }
 
         this.mActionParams = bindingParameters;
-        this.actionMode = Mode.MODE_BIND;
+        this.actionMode = Mode.KEY_BIND;
         this.reconnectTargetDeviceId = undefined;
         this.resetAction();
 
@@ -669,6 +694,36 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
         }
     }
 
+
+    /**
+     * Starts the GATT OTA (Over-the-Air) process with the given parameters.
+     * <p>
+     * It retrieves the connection filter from the OTA parameters and checks if the GATT connection is valid based on the filter.
+     * If it is valid, it calls the onConnectSuccess() method. If not, it starts the safety scan.
+     *
+     * @param otaParameters
+     */
+    startGattOta(otaParameters: GattOtaParameters) {
+        if (!this.validateActionMode(Mode.GATT_OTA)) {
+            logd("ota running currently");
+            return;
+        }
+        this.clearTimers()
+        this.mActionParams = otaParameters;
+        this.actionMode = Mode.GATT_OTA;
+        this.isProxyReconnect = false;
+        this.lastNodeSetTimestamp = 0;
+        this.reconnectTargetDeviceId = undefined
+        this.resetAction();
+        let filter = otaParameters.get(ActionParameters.ACTION_CONNECTION_FILTER) as ConnectionFilter
+        if (this.mGattConnection.isProxyNodeConnected()) {
+            this.onConnectSuccess();
+        } else {
+            this.startSafetyScan();
+        }
+    }
+
+
     /**
      * used to Send a GattRequest to the GattConnection.
      *
@@ -718,7 +773,7 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
         } else {
             if (this.actionMode == Mode.PROVISION) {
                 this.mProvisioningController.clear();
-            } else if (this.actionMode == Mode.MODE_BIND) {
+            } else if (this.actionMode == Mode.KEY_BIND) {
                 this.mBindingController.clear();
             }
             //            clearNetworkCache();
@@ -1010,6 +1065,99 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
     private bindStartTimerId = 0
 
     /**
+     * GATT ota start
+     */
+
+
+    /**
+     * This method starts the GATT OTA (Over-the-Air) process.
+     * It retrieves the OTA firmware data from the action parameters.
+     * If the firmware data is not found, it calls the onOtaComplete method with a failure message.
+     * Otherwise, it calls the onActionStart method and begins the GATT OTA process using the firmware data.
+     */
+    private startGattOtaAction() {
+        let otaFirmware = this.mActionParams!.get(ActionParameters.ACTION_OTA_FIRMWARE) as Uint8Array
+        if (!otaFirmware) {
+            this.onOtaComplete(false, "firmware not found");
+        } else {
+            this.onActionStart();
+            this.mGattOtaController.startOta(otaFirmware, 8);
+        }
+    }
+
+
+    /**
+     * gatt will be disconnected by remote device (or timeout because of timeout)
+     * waiting for gatt disconnected callback
+     */
+    private isGattOtaDisconnectWaiting = false;
+    private gattOtaSuccessTimeoutId = 0
+
+    /**
+     * This method is called when the OTA (Over-the-Air) update is complete.
+     * It resets the action and sets the device to idle mode.
+     * It then determines the event type based on the success of the OTA update,
+     * and calls the onOtaEvent method to notify the listeners of the event.
+     *
+     * @param success - a boolean indicating whether the OTA update was successful or not
+     * @param desc    - a String description of the OTA update result
+     */
+    private onOtaComplete(success: boolean, desc: string) {
+        if (success) {
+            if (!this.mGattConnection.isConnected()) {
+                // if not connected, post ota success event right now
+                this.onOtaSuccess();
+                return;
+            }
+            // waiting for gatt disconnected callback
+            logd("ota complete -> waiting for gatt disconnect cb");
+            this.isGattOtaDisconnectWaiting = true;
+            clearTimeout(this.gattOtaSuccessTimeoutId)
+            this.gattOtaSuccessTimeoutId = setTimeout(() => {
+                this.onOtaSuccess();
+            }, 5 * 1000)
+        } else {
+            this.resetAction();
+            this.idle(false);
+            let evenType = GattOtaEvent.EVENT_TYPE_OTA_FAIL;
+            this.onOtaEvent(evenType, 0, desc);
+        }
+    }
+
+    private onOtaSuccess() {
+
+        clearTimeout(this.gattOtaSuccessTimeoutId)
+        this.isGattOtaDisconnectWaiting = false;
+        this.resetAction();
+        this.idle(false);
+        let evenType = GattOtaEvent.EVENT_TYPE_OTA_SUCCESS;
+        this.onOtaEvent(evenType, 0, "OTA Success");
+    }
+
+    /**
+     * This method is called to update the progress of the OTA (Over-The-Air) update.
+     *
+     * @param progress The current progress of the OTA update.
+     */
+    private onOtaProgress(progress: number) {
+        this.onOtaEvent(GattOtaEvent.EVENT_TYPE_OTA_PROGRESS, progress, "ota progress update");
+    }
+
+    /**
+     * handles the OTA (Over-The-Air) events in the application.
+     *
+     * @param eventType represents the type of OTA event that occurred
+     * @param progress  indicates the progress of the OTA process
+     * @param desc      provides a description or additional information about the OTA event
+     */
+    private onOtaEvent(eventType: string, progress: number, desc: string) {
+        //        int meshAddress = mActionParams.getInt(Parameters.ACTION_CONNECTION_MESH_ADDRESS, -1);
+        let otaEvent = new GattOtaEvent(eventType, desc);
+        otaEvent.progress = progress
+        this.onEventPrepared(otaEvent);
+    }
+
+    /**
      * This method is called when the proxy login is successful. It sets the login status to true and performs different actions based on the action mode.
      * <p>
      * - If the action mode is AUTO_CONNECT, it calls the onAutoConnectSuccess() method.
@@ -1026,7 +1174,7 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
                 this.onAutoConnectSuccess();
                 break;
 
-            case Mode.MODE_BIND:
+            case Mode.KEY_BIND:
                 clearTimeout(this.bindStartTimerId)
                 this.bindStartTimerId = setTimeout(() => {
                     this.onActionStart();
@@ -1043,7 +1191,34 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
                     }
                 }, 500)
                 break;
+
+            case Mode.GATT_OTA: {
+                let address = this.getConnectionTarget();
+                if (address != -1) {
+                    this.setNodeIdentity(address);
+                } else {
+                    this.startGattOtaAction();
+                }
+                break;
+            }
         }
+    }
+
+
+    /**
+     * This method retrieves the connection target based on the specified connection filter.
+     * If the connection filter type is not of type TYPE_MESH_ADDRESS, it returns -1.
+     * Otherwise, it retrieves the target address from the filter and checks if it is different from the direct device address.
+     * If it is different, it returns the target address. Otherwise, it returns -1.
+     *
+     * @return The connection target address, or -1 if not applicable.
+     */
+    private getConnectionTarget(): number {
+        let filter = this.mActionParams!.get(ActionParameters.ACTION_CONNECTION_FILTER) as ConnectionFilter
+        if (this.directDeviceAddress != filter.meshAddress) {
+            return filter.meshAddress;
+        }
+        return -1;
     }
 
     /**
@@ -1067,8 +1242,13 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
                 let device = this.mProvisioningController.getProvisioningDevice();
                 this.onProvisionFailed(device!, desc);
                 break;
-            case Mode.MODE_BIND:
+            case Mode.KEY_BIND:
                 this.onBindingFail(desc);
+                break;
+
+
+            case Mode.GATT_OTA:
+                this.onOtaComplete(false, desc);
                 break;
 
         }
@@ -1097,8 +1277,12 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
                     this.mActionParams!.get(ActionParameters.ACTION_PROVISIONING_TARGET) as ProvisioningDevice
                 this.onProvisionFailed(provisioningDevice, "connect fail");
                 break;
-            case Mode.MODE_BIND:
+            case Mode.KEY_BIND:
                 this.onBindingFail(desc);
+                break;
+
+            case Mode.GATT_OTA:
+                this.onOtaComplete(false, desc);
                 break;
         }
     }
@@ -1134,7 +1318,15 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
             this.startBleScan();
         } else {
             if (this.actionMode == Mode.PROVISION
-                || this.actionMode == Mode.MODE_BIND) {
+                || this.actionMode == Mode.KEY_BIND
+                || this.actionMode == Mode.GATT_OTA) {
+                if (this.actionMode == Mode.GATT_OTA) {
+                    if (this.isGattOtaDisconnectWaiting) {
+                        this.onOtaSuccess();
+                        return;
+                    }
+                }
+
                 if (this.isActionStarted) {
                     this.onConnectionInterrupt();
                 } else {
@@ -1149,7 +1341,8 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
                                 this.mActionParams!.get(ActionParameters.ACTION_PROVISIONING_TARGET) as ProvisioningDevice
                             logd("provisioning connect retry: " + this.connectRetry);
                             this.connect(provisioningDevice.bluetoothDeviceId);
-                        } else if (this.actionMode == Mode.MODE_BIND) {
+                        } else if (this.actionMode == Mode.KEY_BIND
+                            ||this.actionMode == Mode.GATT_OTA) {
                             let device = this.reconnectTargetDeviceId;
                             if (device) {
                                 this.connect(device);
@@ -1203,6 +1396,12 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
         } else {
             this.onUnexpectedNotify(serviceUuid, characteristicUuid, data);
         }
+    }
+    otaStateCb = (state: number, extra: string) => {
+
+    }
+    otaProgressCb = (progress: number) => {
+
     }
 
     /**
@@ -1463,7 +1662,32 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
         }
         if (this.actionMode == Mode.AUTO_CONNECT) {
             connectIntent = this.validateProxyAdv(scanRecord);
-        } else if (this.actionMode == Mode.MODE_BIND) {
+        } else if (this.actionMode == Mode.GATT_OTA) {
+            let filter = this.mActionParams!.get(ActionParameters.ACTION_CONNECTION_FILTER) as ConnectionFilter
+            if (!filter) {
+                return
+            }
+            if (filter == null) {
+                return;
+            }
+            let nodeAddress: number = filter.meshAddress
+            if (filter.advFilter == MeshAdvFilter.NODE_ID_ONLY) {
+                connectIntent = this.validateTargetNodeIdentity(sr.getProxyServiceData(), nodeAddress);
+            } else if (filter.advFilter == MeshAdvFilter.NETWORK_ID_ONLY) {
+                connectIntent = this.validateNetworkId(scanRecord);
+            } else {
+                // any
+                let during = currentTimeMillis() - this.lastNodeSetTimestamp;
+                if (this.isProxyReconnect && during < MeshController.TARGET_PROXY_CONNECT_TIMEOUT) {
+                    connectIntent = this.validateTargetNodeIdentity(sr.getProxyServiceData(), nodeAddress);
+                } else {
+                    connectIntent = this.validateProxyAdv(scanRecord);
+                }
+                if (connectIntent && this.directDeviceAddress == nodeAddress) {
+                    this.reconnectTargetDeviceId = scanResult.deviceId;
+                }
+            }
+        } else if (this.actionMode == Mode.KEY_BIND) {
             let bindingDevice = this.mActionParams!.get(ActionParameters.ACTION_BINDING_TARGET) as BindingDevice
 
             if (bindingDevice.bearer == BindingBearer.GattOnly) {
@@ -1534,7 +1758,7 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
                 this.onScanTimeoutEvent();
                 break;
 
-            case Mode.MODE_BIND:
+            case Mode.KEY_BIND:
                 this.onBindingFail("device not found when scanning");
                 break;
 
@@ -1545,7 +1769,21 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
                     }
                 })
                 break;
+
+            case Mode.GATT_OTA:
+                this.onOtaComplete(false, "ota fail: scan timeout");
+                break;
         }
+    }
+    private gattOtaStateCb = (state: number, extra: string) => {
+        if (state == OtaStatusCode.SUCCESS) {
+            this.onOtaComplete(true, extra);
+        } else if (OtaStatusCode.isFailed(state)) {
+            this.onOtaComplete(false, extra);
+        }
+    }
+    private gattOtaProgressCb = (progress: number) => {
+        this.onOtaProgress(progress)
     }
 
     /**
@@ -1759,7 +1997,7 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
      */
     public onReliableMessageComplete(success: boolean, opcode: number, dest: number,
         rspMax: number, rspCount: number, rspArr: Uint16Array) {
-        if (this.actionMode == Mode.MODE_BIND) {
+        if (this.actionMode == Mode.KEY_BIND) {
             this.mBindingController.onBindingCommandComplete(success, opcode, rspMax, rspCount);
         }
 
@@ -1793,7 +2031,11 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
      */
     public onInnerMessageFailed(opcode: number) {
         if (opcode == Opcode.NODE_ID_SET) {
-
+            if (this.actionMode == Mode.GATT_OTA) {
+                this.onOtaComplete(false, "node identity set failed");
+            } else if (this.actionMode == Mode.GATT_CONNECTION) {
+                // onGattConnectionComplete(false, "node identity set failed");
+            }
         }
     }
 
@@ -1814,7 +2056,65 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
                 this.validateAutoConnectTargets();
             }
         } else if (opcode == Opcode.NODE_ID_STATUS) {
+            let identityStatusMessage = notificationMessage.statusMessage! as NodeIdentityStatusMessage;
+            if (this.actionMode == Mode.GATT_OTA || this.actionMode == Mode.GATT_CONNECTION) {
+                let filter = this.mActionParams!.get(ActionParameters.ACTION_CONNECTION_FILTER) as ConnectionFilter
+                let target = filter.meshAddress
+                this.onNodeIdentityStatusMessageReceived(src, identityStatusMessage, target);
+            }
+        }
+    }
 
+
+    /**
+     * This method is called when a node identity status message is received from a specific source.
+     * The method checks if the source matches the connection target. If it does, it retrieves the status from the identity status message and checks if it is a success. If it is, it further checks the identity of the node. If the identity is "running", it indicates that the target device needs to be reconnected. If the identity is different, it indicates a node identity check error. If the status is not a success, it indicates a node identity status error.
+     * <p>
+     * If the target device needs to be reconnected, a flag is set to indicate that a proxy reconnect is required and the timestamp of the last node set is updated. Then, a safety scan is started.
+     * <p>
+     * If the target device does not need to be reconnected, the method checks the action mode. If it is in GATT OTA mode, it calls the "onOtaComplete" method with a false flag and a description. If it is in GATT CONNECTION mode, it calls the "onGattConnectionComplete" method with a false flag and a description. If it is in MESH OTA mode, it dispatches the false flag and description to the FU state.
+     * <p>
+     * The purpose of this method is to handle the node identity status message received from a specific source and take appropriate actions based on the status and identity of the node.
+     *
+     * @param src                   source address
+     * @param identityStatusMessage notification message
+     * @param connectionTarget      target address
+     */
+    private onNodeIdentityStatusMessageReceived(src: number, identityStatusMessage: NodeIdentityStatusMessage,
+        connectionTarget: number) {
+        if (src == connectionTarget) {
+            let status = identityStatusMessage.status;
+            let success = false;
+            let desc = "";
+
+            if (status == ConfigStatus.SUCCESS) {
+                let identity = identityStatusMessage.identity;
+                if (identity == NodeIdentity.RUNNING) {
+                    // reconnect target device
+                    logd("reconnect target device");
+                    success = true;
+                } else {
+                    // node identity check error
+                    desc = "node identity check error: " + identity;
+                }
+            } else {
+                desc = "node identity status error: " + status;
+            }
+
+            if (success) {
+                this.isProxyReconnect = true;
+                this.lastNodeSetTimestamp = currentTimeMillis()
+                this.startSafetyScan();
+            } else {
+                if (this.actionMode == Mode.GATT_OTA) {
+                    this.onOtaComplete(false, desc);
+                } else if (this.actionMode == Mode.GATT_CONNECTION) {
+                    // this.onGattConnectionComplete(false, desc);
+                }
+                // else if (this.actionMode == Mode.MESH_OTA) {
+                //     dispatchFUState(false, desc);
+                // }
+            }
         }
     }
 
@@ -1837,7 +2137,7 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
      */
     private onMeshMessageNotification(notificationMessage: NotificationMessage) {
         this.onInnerMessageHandle(notificationMessage);
-        if (this.actionMode == Mode.MODE_BIND) {
+        if (this.actionMode == Mode.KEY_BIND) {
             this.mBindingController.onMessageNotification(notificationMessage);
         }
         let eventType: string;
@@ -1939,7 +2239,7 @@ export class MeshController implements ProvisioningBridge, NetworkingBridge, Acc
      */
     public onAccessStateChanged(state: number, desc: string, mode: number, obj: Object) {
         logd("access state changed: " + state + " -- " + desc);
-        if (this.actionMode == Mode.MODE_BIND && mode == ACCESS_MODE_BINDING) {
+        if (this.actionMode == Mode.KEY_BIND && mode == ACCESS_MODE_BINDING) {
             if (state == BindingController.STATE_FAIL) {
                 this.onBindingFail(desc);
             } else if (state == BindingController.STATE_SUCCESS) {
@@ -2005,13 +2305,18 @@ export enum Mode {
     /**
      * MODE_OTA: auto scan, connect, start ota
      */
-    // GATT_OTA,
+    GATT_OTA,
+
+    /**
+     * GATT_CONNECTION: auto scan, connect
+     */
+    GATT_CONNECTION,
 
     /**
      * bind app key
      * connect target device without scan
      */
-    MODE_BIND,
+    KEY_BIND,
 
     /**
      * remote provision

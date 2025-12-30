@@ -1,10 +1,6 @@
-export * from './src/main/ets/ble/OtaController'
+export * from './src/main/ets/ble/GattOtaController'
 
 export * from './src/main/ets/ble/UuidInfo'
-
-export * from './src/main/ets/ble/OtaSetting'
-
-export * from './src/main/ets/ble/OtaProtocol'
 
 export * from './src/main/ets/utils/FileSystem'
 

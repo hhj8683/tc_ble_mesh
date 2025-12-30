@@ -28,6 +28,7 @@ import { Event } from "./Event";
 import { AutoConnectParameters, BindingParameters, ProvisioningParameters, ScanParameters } from "./Index";
 import { MeshConfiguration } from "./MeshConfiguration";
 import { MeshController, Mode } from "./MeshController";
+import { GattOtaParameters } from "./parameter/GattOtaParameters";
 
 /**
  * Created by kee on 2019/8/26.
@@ -180,6 +181,13 @@ export class MeshService {
      */
     public autoConnect(parameters: AutoConnectParameters) {
         this.mController.autoConnect(parameters);
+    }
+
+    /**
+     * scanning an connecting proxy node for mesh control
+     */
+    public startGattOta(parameters: GattOtaParameters) {
+        this.mController.startGattOta(parameters);
     }
 
 

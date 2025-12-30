@@ -33,6 +33,8 @@ export * from './lighting/CtlTemperatureSetMessage'
 
 export * from './lighting/HslSetMessage'
 
+export * from './lighting/LightnessStatusMessage'
+
 export * from './time/TimeSetMessage'
 
 export * from './time/TimeStatusMessage'

@@ -1,9 +1,3 @@
-import { GattConnection } from "./GattConnection";
-import { OtaPacketParser } from "./OtaPacketParser";
-import { OtaProtocol } from "./OtaProtocol";
-import { OtaSetting } from "./OtaSetting";
-import { OtaSignParser } from "./OtaSignParser";
-import { OtaStatusCode } from "./OtaStatusCode";
 
 export interface OtaResult {
   code: number
