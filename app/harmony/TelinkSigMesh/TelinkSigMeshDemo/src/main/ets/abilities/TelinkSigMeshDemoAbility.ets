@@ -11,13 +11,16 @@ import {
     StatusNotificationEvent,
     NetworkInfoUpdateEvent,
     MeshEvent,
-    logw
+    logw,
+    LightnessStatusMessage
 } from 'telinksigmeshlib';
 import { MeshInfoService } from '../model/MeshInfoService';
 import { MeshInfo } from '../model/MeshInfo';
 import { PreferencesHelper } from '../utils/PreferencesHelper';
 import { NodeStatusChangedEvent } from '../model/NodeStatusChangedEvent';
 import { OnlineState } from '../model/OnlineState';
+import { NodeInfo } from '../model/NodeInfo';
+import { UnitConvert } from '../utils/UnitConvert';
 
 export default class TelinkSigMeshDemoAbility extends UIAbility {
     private static globalContext: common.Context
@@ -77,12 +80,38 @@ export default class TelinkSigMeshDemoAbility extends UIAbility {
                     EventBus.getInstance().emit(new NodeStatusChangedEvent(node))
                 }
             }
+        }else if (eventType == LightnessStatusMessage.STATUS_NAME) {
+            let stEvent = event as StatusNotificationEvent
+            let lightnessStatusMessage = stEvent.notificationMessage.statusMessage! as LightnessStatusMessage
+            let src = stEvent.notificationMessage.src
+            let node = MeshInfoService.getInstance().getCurrentMesh().getDeviceByMeshAddress(src)
+            if (node) {
+                let lum = lightnessStatusMessage.isComplete ? lightnessStatusMessage.targetLightness : lightnessStatusMessage.presentLightness;
+                if (this.onLumStatus(node, UnitConvert.lightness2lum(lum))) {
+                    EventBus.getInstance().emit(new NodeStatusChangedEvent(node))
+                }
+            }
         } else if (eventType == MeshEvent.EVENT_TYPE_DISCONNECTED) {
             for (let node of MeshInfoService.getInstance().getCurrentMesh().nodes) {
                 node.setOnlineState(OnlineState.OFFLINE)
             }
         }
     }
+
+
+    private  onLumStatus(nodeInfo: NodeInfo, lum: number) : boolean{
+    let statusChanged = false;
+    let tarOnOff = lum > 0 ? 1 : 0;
+    if (nodeInfo.getOnlineState() != tarOnOff) {
+    statusChanged = true;
+}
+nodeInfo.setOnlineState(tarOnOff);
+if (nodeInfo.lum != lum) {
+    statusChanged = true;
+    nodeInfo.lum = lum;
+}
+return statusChanged;
+}
 
     onDestroy(): void {
         logd('Ability onDestroy');
