@@ -232,7 +232,7 @@ export class NodeInfo {
         return this.publishModel;
     }
 
-    public setPublishModel(model: PublishModel) {
+    public setPublishModel(model?: PublishModel) {
         this.publishModel = model
         if (this.isSensor()) {
             return;

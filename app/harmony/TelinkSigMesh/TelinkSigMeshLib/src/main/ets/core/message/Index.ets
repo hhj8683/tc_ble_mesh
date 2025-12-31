@@ -25,6 +25,10 @@ export * from './config/CompositionDataStatusMessage'
 
 export * from './config/CompositionDataGetMessage'
 
+export * from './config/ModelPublicationSetMessage'
+
+export * from './config/ModelPublicationStatusMessage'
+
 export * from './config/ConfigStatus'
 
 export * from './lighting/LightnessSetMessage'

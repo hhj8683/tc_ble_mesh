@@ -27,7 +27,7 @@ import { ModelSubscriptionStatusMessage } from './config/ModelSubscriptionStatus
 import { NodeIdentityStatusMessage } from './config/NodeIdentityStatusMessage';
 import { NodeResetStatusMessage } from './config/NodeResetStatusMessage';
 import { OnOffStatusMessage } from './generic/OnOffStatusMessage';
-import { LightnessStatusMessage } from './Index';
+import { LightnessStatusMessage, ModelPublicationStatusMessage } from './Index';
 import { Opcode } from './Opcode';
 import { SceneRegisterStatusMessage } from './scene/SceneRegisterStatusMessage';
 import { StatusMessage } from './StatusMessage';
@@ -83,11 +83,12 @@ export class MeshStatus {
         MeshStatus.register(Opcode.CFG_MODEL_SUB_STATUS, () => {
             return new ModelSubscriptionStatusMessage()
         });
-
         MeshStatus.register(Opcode.TIME_STATUS, () => {
             return new TimeStatusMessage()
         });
-        // MeshStatus.register(Opcode.CFG_MODEL_PUB_STATUS, ()=>{return new ModelPublicationStatusMessage()});
+        MeshStatus.register(Opcode.CFG_MODEL_PUB_STATUS, () => {
+            return new ModelPublicationStatusMessage()
+        });
         MeshStatus.register(Opcode.NODE_ID_STATUS, () => {
             return new NodeIdentityStatusMessage()
         });
@@ -118,7 +119,9 @@ export class MeshStatus {
         // MeshStatus.register(Opcode.G_LEVEL_STATUS, ()=>{return new LevelStatusMessage()});
         //
         // // lighting
-        MeshStatus.register(Opcode.LIGHTNESS_STATUS, ()=>{return new LightnessStatusMessage()});
+        MeshStatus.register(Opcode.LIGHTNESS_STATUS, () => {
+            return new LightnessStatusMessage()
+        });
         // MeshStatus.register(Opcode.LIGHT_CTL_TEMP_STATUS, ()=>{return new CtlTemperatureStatusMessage()});
         // MeshStatus.register(Opcode.LIGHT_CTL_STATUS, ()=>{return new CtlStatusMessage()});
         //
