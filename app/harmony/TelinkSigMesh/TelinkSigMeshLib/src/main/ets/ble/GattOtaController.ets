@@ -1,6 +1,6 @@
 import { bytesToHex, UUID_OTA_CHARACTERISTIC, UUID_OTA_SERVICE } from '../../../../Index';
 import { GattConnection } from './GattConnection';
-import { Opcode } from './GattOtaOpcode';
+import { GattOtaOpcode } from './GattOtaOpcode';
 import { OtaPacketParser } from './OtaPacketParser';
 import { OtaResultCode } from './OtaResultCode';
 import { OtaStatusCode } from './OtaStatusCode';
@@ -97,7 +97,7 @@ export class GattOtaController {
 
         let opcode = (notificationData[0] & 0xFF) | ((notificationData[1] & 0xFF) << 8);
         console.info("ota notify: " + opcode.toString(16).padStart(4, '0'));
-        if (opcode == Opcode.CMD_OTA_RESULT) {
+        if (opcode == GattOtaOpcode.CMD_OTA_RESULT) {
             if (!this.otaRunning) {
                 return;
             }
@@ -251,7 +251,7 @@ export class GattOtaController {
     // OTA 开始时发送的命令
     private sendOtaStartCmd() {
         this.onLog("send OTA start cmd(FF01)");
-        return this.sendOtaCmd(Opcode.CMD_OTA_START, TAG_OTA_START);
+        return this.sendOtaCmd(GattOtaOpcode.CMD_OTA_START, TAG_OTA_START);
     }
 
     private sendOtaStartReadCmd() {
@@ -278,7 +278,7 @@ export class GattOtaController {
         data[2] = ~index & 0xFF
         data[3] = ~index >> 8 & 0xFF
 
-        return this.sendOtaCmd(Opcode.CMD_OTA_END, TAG_OTA_END, data);
+        return this.sendOtaCmd(GattOtaOpcode.CMD_OTA_END, TAG_OTA_END, data);
     }
 
     private sendOtaCmd(opcode: number, tag: number, data?: Uint8Array): Promise<void> {

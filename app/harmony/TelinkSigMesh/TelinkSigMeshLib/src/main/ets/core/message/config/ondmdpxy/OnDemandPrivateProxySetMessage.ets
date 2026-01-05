@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BeaconGetMessage.java
+ * @file OnDemandPrivateProxySetMessage.java
  *
  * @brief for TLSR chips
  *
@@ -20,48 +20,43 @@
  *          See the License for the specific language governing permissions and
  *          limitations under the License.
  *******************************************************************************************************/
-import { Opcode } from '../Opcode';
-import { ConfigMessage } from './ConfigMessage';
+import { Opcode } from '../../Opcode';
+import { ConfigMessage } from '../ConfigMessage';
 
 /**
- * The Config Beacon Get is an acknowledged message used to get the current Secure Network Beacon state of a node
+ * This class represents a message for setting the state of an on-demand private GATT proxy.
+ * It extends the ConfigMessage class.
  */
- export class BeaconGetMessage extends ConfigMessage {
-
+export class OnDemandPrivateProxySetMessage extends ConfigMessage {
     /**
-     * Creates a new BeaconGetMessage with the specified destination address.
-     *
-     * @param destinationAddress The destination address of the message.
+     * The new state of the on-demand private GATT proxy.
      */
-    public constructor( destinationAddress: number) {
-        super(destinationAddress);
-    }
+    public privateProxy = 0;
 
     /**
-     * Gets the opcode of the message.
+     * Returns the opcode of the message.
      *
      * @return The opcode of the message.
      */
-    public  getOpcode(): number {
-        return Opcode.CFG_BEACON_GET;
+    public getOpcode() {
+        return Opcode.CFG_ON_DEMAND_PROXY_SET
     }
 
     /**
-     * Gets the opcode of the response message.
+     * Returns the response opcode of the message.
      *
-     * @return The opcode of the response message.
+     * @return The response opcode of the message.
      */
-    public  getResponseOpcode() : number{
-        return Opcode.CFG_BEACON_STATUS;
+    public getResponseOpcode() {
+        return Opcode.CFG_ON_DEMAND_PROXY_STATUS
     }
 
     /**
-     * Gets the parameters of the message.
+     * Returns the parameters of the message.
      *
-     * @return null.
+     * @return The parameters of the message.
      */
-    public  getParams() : Uint8Array | undefined{
-        return undefined;
+    public getParams() {
+        return new Uint8Array([this.privateProxy])
     }
-
 }

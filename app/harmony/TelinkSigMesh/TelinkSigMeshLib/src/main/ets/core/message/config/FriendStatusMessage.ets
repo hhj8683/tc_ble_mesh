@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BeaconGetMessage.java
+ * @file FriendStatusMessage.java
  *
  * @brief for TLSR chips
  *
@@ -20,48 +20,37 @@
  *          See the License for the specific language governing permissions and
  *          limitations under the License.
  *******************************************************************************************************/
-import { Opcode } from '../Opcode';
-import { ConfigMessage } from './ConfigMessage';
+import { StatusMessage } from "../StatusMessage";
 
 /**
- * The Config Beacon Get is an acknowledged message used to get the current Secure Network Beacon state of a node
+ * The Config Friend Status is an unacknowledged message used to report the current Friend state of a node
+ * The FriendStatusMessage class represents an unacknowledged message used to report the current Friend state of a node.
+ * This message is a response to FriendGetMessage and FriendSetMessage.
+ *
+ * @see com.telink.ble.mesh.core.message.Opcode#CFG_FRIEND_STATUS
  */
- export class BeaconGetMessage extends ConfigMessage {
+export class FriendStatusMessage extends StatusMessage {
+    public static readonly STATUS_NAME = "FriendStatusMessage"
 
-    /**
-     * Creates a new BeaconGetMessage with the specified destination address.
-     *
-     * @param destinationAddress The destination address of the message.
-     */
-    public constructor( destinationAddress: number) {
-        super(destinationAddress);
+    public statusName(): string {
+        return FriendStatusMessage.STATUS_NAME
     }
 
     /**
-     * Gets the opcode of the message.
-     *
-     * @return The opcode of the message.
+     * The Friend state of the node.
      */
-    public  getOpcode(): number {
-        return Opcode.CFG_BEACON_GET;
-    }
+    public friend = 0;
 
     /**
-     * Gets the opcode of the response message.
-     *
-     * @return The opcode of the response message.
+     * Default constructor for the FriendStatusMessage class.
      */
-    public  getResponseOpcode() : number{
-        return Opcode.CFG_BEACON_STATUS;
-    }
 
     /**
-     * Gets the parameters of the message.
+     * Parses the message parameters.
      *
-     * @return null.
+     * @param params The byte array containing the message parameters.
      */
-    public  getParams() : Uint8Array | undefined{
-        return undefined;
+    public parse(params: Uint8Array) {
+        this.friend = params[0];
     }
-
 }

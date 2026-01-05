@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BeaconGetMessage.java
+ * @file NetworkTransmitGetMessage.java
  *
  * @brief for TLSR chips
  *
@@ -24,44 +24,35 @@ import { Opcode } from '../Opcode';
 import { ConfigMessage } from './ConfigMessage';
 
 /**
- * The Config Beacon Get is an acknowledged message used to get the current Secure Network Beacon state of a node
+ * The Config Network Transmit Get is an acknowledged message used to get the current Network Transmit state of a node
+ * The NetworkTransmitGetMessage class represents an acknowledged message used to retrieve the current Network Transmit state of a node.
+ * It extends the ConfigMessage class.
  */
- export class BeaconGetMessage extends ConfigMessage {
-
+export class NetworkTransmitGetMessage extends ConfigMessage {
     /**
-     * Creates a new BeaconGetMessage with the specified destination address.
+     * Returns the opcode value for the Network Transmit Get message.
      *
-     * @param destinationAddress The destination address of the message.
+     * @return The opcode value for the Network Transmit Get message.
      */
-    public constructor( destinationAddress: number) {
-        super(destinationAddress);
+    public getOpcode() {
+        return Opcode.CFG_NW_TRANSMIT_GET
     }
 
     /**
-     * Gets the opcode of the message.
+     * Returns the opcode value for the response message to the Network Transmit Get message.
      *
-     * @return The opcode of the message.
+     * @return The opcode value for the response message to the Network Transmit Get message.
      */
-    public  getOpcode(): number {
-        return Opcode.CFG_BEACON_GET;
+    public getResponseOpcode() {
+        return Opcode.CFG_NW_TRANSMIT_STATUS
     }
 
     /**
-     * Gets the opcode of the response message.
+     * Returns the parameters of the Network Transmit Get message.
      *
-     * @return The opcode of the response message.
+     * @return The parameters of the Network Transmit Get message.
      */
-    public  getResponseOpcode() : number{
-        return Opcode.CFG_BEACON_STATUS;
+    public getParams() {
+        return undefined
     }
-
-    /**
-     * Gets the parameters of the message.
-     *
-     * @return null.
-     */
-    public  getParams() : Uint8Array | undefined{
-        return undefined;
-    }
-
 }

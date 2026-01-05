@@ -118,7 +118,7 @@ struct SchedulerSettingPage {
         }
         let eles = this.node!.getElementsByModel(MeshSigModel.SIG_MD_SCHED_S)
         let adr = this.node!.meshAddress
-        eles = [adr + 1, adr + 2] //  for test
+        // eles = [adr + 1, adr + 2] //  for test
         if (!eles || eles.length == 0) {
             showConfirmDialog(this.getUIContext(), 'Warning', 'Not Support Scheduler', () => {
                 router.back()

@@ -22,10 +22,15 @@
  *******************************************************************************************************/
 import { AppKeyStatusMessage } from './config/AppKeyStatusMessage';
 import { CompositionDataStatusMessage } from './config/CompositionDataStatusMessage';
+import { FriendStatusMessage } from './config/FriendStatusMessage';
+import { GattProxyStatusMessage } from './config/GattProxyStatusMessage';
+import { KeyRefreshPhaseStatusMessage } from './config/KeyRefreshPhaseStatusMessage';
 import { ModelAppStatusMessage } from './config/ModelAppStatusMessage';
 import { ModelSubscriptionStatusMessage } from './config/ModelSubscriptionStatusMessage';
 import { NodeIdentityStatusMessage } from './config/NodeIdentityStatusMessage';
 import { NodeResetStatusMessage } from './config/NodeResetStatusMessage';
+import { OnDemandPrivateProxyStatusMessage } from './config/ondmdpxy/OnDemandPrivateProxyStatusMessage';
+import { RelayStatusMessage } from './config/RelayStatusMessage';
 import { OnOffStatusMessage } from './generic/OnOffStatusMessage';
 import { LightnessStatusMessage, ModelPublicationStatusMessage } from './Index';
 import { Opcode } from './Opcode';
@@ -101,11 +106,19 @@ export class MeshStatus {
         // MeshStatus.register(Opcode.CFG_NW_TRANSMIT_STATUS, ()=>{return new NetworkTransmitStatusMessage()});
         // MeshStatus.register(Opcode.CFG_BEACON_STATUS, ()=>{return new BeaconStatusMessage()});
         // MeshStatus.register(Opcode.CFG_DEFAULT_TTL_STATUS, ()=>{return new DefaultTTLStatusMessage()});
-        // MeshStatus.register(Opcode.CFG_RELAY_STATUS, ()=>{return new RelayStatusMessage()});
+        MeshStatus.register(Opcode.CFG_RELAY_STATUS, () => {
+            return new RelayStatusMessage()
+        });
         //
-        // MeshStatus.register(Opcode.CFG_FRIEND_STATUS, ()=>{return new FriendStatusMessage()});
-        // MeshStatus.register(Opcode.CFG_GATT_PROXY_STATUS, ()=>{return new GattProxyStatusMessage()});
-        // MeshStatus.register(Opcode.CFG_KEY_REFRESH_PHASE_STATUS, ()=>{return new KeyRefreshPhaseStatusMessage()});
+        MeshStatus.register(Opcode.CFG_FRIEND_STATUS, () => {
+            return new FriendStatusMessage()
+        });
+        MeshStatus.register(Opcode.CFG_GATT_PROXY_STATUS, () => {
+            return new GattProxyStatusMessage()
+        });
+        MeshStatus.register(Opcode.CFG_KEY_REFRESH_PHASE_STATUS, () => {
+            return new KeyRefreshPhaseStatusMessage()
+        });
         //
         // // private beacon
         // MeshStatus.register(Opcode.PRIVATE_BEACON_STATUS, ()=>{return new PrivateBeaconStatusMessage()});
@@ -192,7 +205,9 @@ export class MeshStatus {
         // // enhanced features
         // MeshStatus.register(Opcode.CFG_SAR_TRANSMITTER_STATUS, ()=>{return new SarTransmitStatusMessage()});
         // MeshStatus.register(Opcode.CFG_SAR_RECEIVER_STATUS, ()=>{return new SarReceiverStatusMessage()});
-        // MeshStatus.register(Opcode.CFG_ON_DEMAND_PROXY_STATUS, ()=>{return new OnDemandPrivateProxyStatusMessage()});
+        MeshStatus.register(Opcode.CFG_ON_DEMAND_PROXY_STATUS, () => {
+            return new OnDemandPrivateProxyStatusMessage()
+        });
         // MeshStatus.register(Opcode.LARGE_CPS_STATUS, ()=>{return new LargeCompositionDataStatusMessage()});
         // MeshStatus.register(Opcode.SOLI_PDU_RPL_ITEM_STATUS, ()=>{return new SolicitationItemsStatusMessage()});
     }

@@ -12,6 +12,18 @@ export * from './generic/OnOffGetMessage'
 
 export * from './generic/OnOffStatusMessage'
 
+export * from './config/BeaconGetMessage'
+
+export * from './config/BeaconSetMessage'
+
+export * from './config/BeaconStatusMessage'
+
+export * from './config/DefaultTTLGetMessage'
+
+export * from './config/DefaultTTLSetMessage'
+
+export * from './config/DefaultTTLStatusMessage'
+
 
 export * from './config/NodeResetMessage'
 
@@ -29,7 +41,54 @@ export * from './config/ModelPublicationSetMessage'
 
 export * from './config/ModelPublicationStatusMessage'
 
+
+export * from './config/FriendGetMessage'
+
+export * from './config/FriendSetMessage'
+
+export * from './config/FriendStatusMessage'
+
+export * from './config/GattProxyGetMessage'
+
+export * from './config/GattProxySetMessage'
+
+export * from './config/GattProxyStatusMessage'
+
+export * from './config/KeyRefreshPhaseGetMessage'
+
+export * from './config/KeyRefreshPhaseSetMessage'
+
+export * from './config/KeyRefreshPhaseStatusMessage'
+
+
+export * from './config/NetworkTransmitGetMessage'
+
+export * from './config/NetworkTransmitSetMessage'
+
+export * from './config/NetworkTransmitStatusMessage'
+
+export * from './config/NodeIdentity'
+
+export * from './config/NodeIdentityGetMessage'
+
+export * from './config/NodeIdentitySetMessage'
+
+export * from './config/NodeIdentityStatusMessage'
+
+export * from './config/RelayGetMessage'
+
+export * from './config/RelaySetMessage'
+
+export * from './config/RelayStatusMessage'
+
+
 export * from './config/ConfigStatus'
+
+export * from './config/ondmdpxy/OnDemandPrivateProxyGetMessage'
+
+export * from './config/ondmdpxy/OnDemandPrivateProxySetMessage'
+
+export * from './config/ondmdpxy/OnDemandPrivateProxyStatusMessage'
 
 export * from './lighting/LightnessSetMessage'
 

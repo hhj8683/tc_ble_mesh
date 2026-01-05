@@ -1,4 +1,4 @@
-export enum Opcode {
+export enum GattOtaOpcode {
     /**
      * Legacy
      * 该命令为获得 slave 当前 firmware 版本号的命令，user 若采用 OTA Legacy protocol 进行 OTA 升级，

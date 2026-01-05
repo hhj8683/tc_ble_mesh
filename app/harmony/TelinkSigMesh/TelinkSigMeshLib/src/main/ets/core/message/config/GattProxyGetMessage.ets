@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BeaconGetMessage.java
+ * @file GattProxyGetMessage.java
  *
  * @brief for TLSR chips
  *
@@ -24,44 +24,37 @@ import { Opcode } from '../Opcode';
 import { ConfigMessage } from './ConfigMessage';
 
 /**
- * The Config Beacon Get is an acknowledged message used to get the current Secure Network Beacon state of a node
+ * The Config GATT Proxy Get is an acknowledged message used to get the current GATT Proxy state of a node
+ * The GattProxyGetMessage class represents an acknowledged message used to retrieve the current GATT Proxy state of a node.
+ * This message is sent to a destination address and expects a response in the form of a GattProxyStatusMessage.
+ * The response to a Config GATT Proxy Get message is a Config GATT Proxy Status message.
+ * {@link GattProxyStatusMessage}
  */
- export class BeaconGetMessage extends ConfigMessage {
-
+export class GattProxyGetMessage extends ConfigMessage {
     /**
-     * Creates a new BeaconGetMessage with the specified destination address.
+     * Gets the opcode value for the GattProxyGetMessage.
      *
-     * @param destinationAddress The destination address of the message.
+     * @return The opcode value.
      */
-    public constructor( destinationAddress: number) {
-        super(destinationAddress);
+    public getOpcode() {
+        return Opcode.CFG_GATT_PROXY_GET
     }
 
     /**
-     * Gets the opcode of the message.
+     * Gets the response opcode value for the GattProxyGetMessage.
      *
-     * @return The opcode of the message.
+     * @return The response opcode value.
      */
-    public  getOpcode(): number {
-        return Opcode.CFG_BEACON_GET;
+    public getResponseOpcode() {
+        return Opcode.CFG_GATT_PROXY_STATUS
     }
 
     /**
-     * Gets the opcode of the response message.
+     * Gets the parameters for the GattProxyGetMessage.
      *
-     * @return The opcode of the response message.
+     * @return The parameters.
      */
-    public  getResponseOpcode() : number{
-        return Opcode.CFG_BEACON_STATUS;
-    }
-
-    /**
-     * Gets the parameters of the message.
-     *
-     * @return null.
-     */
-    public  getParams() : Uint8Array | undefined{
+    public getParams() {
         return undefined;
     }
-
 }

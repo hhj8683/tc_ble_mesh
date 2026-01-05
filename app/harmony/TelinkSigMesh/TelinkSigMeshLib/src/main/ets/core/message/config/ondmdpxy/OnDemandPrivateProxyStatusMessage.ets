@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BeaconGetMessage.java
+ * @file OnDemandPrivateProxyStatusMessage.java
  *
  * @brief for TLSR chips
  *
@@ -20,48 +20,36 @@
  *          See the License for the specific language governing permissions and
  *          limitations under the License.
  *******************************************************************************************************/
-import { Opcode } from '../Opcode';
-import { ConfigMessage } from './ConfigMessage';
+import { StatusMessage } from "../../StatusMessage";
 
 /**
- * The Config Beacon Get is an acknowledged message used to get the current Secure Network Beacon state of a node
+ * OnDemandPrivateProxyStatusMessage
  */
- export class BeaconGetMessage extends ConfigMessage {
+export class OnDemandPrivateProxyStatusMessage extends StatusMessage {
+    public static readonly STATUS_NAME = "OnDemandPrivateProxyStatusMessage"
 
-    /**
-     * Creates a new BeaconGetMessage with the specified destination address.
-     *
-     * @param destinationAddress The destination address of the message.
-     */
-    public constructor( destinationAddress: number) {
-        super(destinationAddress);
+    public statusName(): string {
+        return OnDemandPrivateProxyStatusMessage.STATUS_NAME
     }
 
     /**
-     * Gets the opcode of the message.
-     *
-     * @return The opcode of the message.
+     * private proxy
      */
-    public  getOpcode(): number {
-        return Opcode.CFG_BEACON_GET;
-    }
+    public privateProxy = 0;
 
     /**
-     * Gets the opcode of the response message.
-     *
-     * @return The opcode of the response message.
+     * Constructs a new OnDemandPrivateProxyStatusMessage object.
      */
-    public  getResponseOpcode() : number{
-        return Opcode.CFG_BEACON_STATUS;
+    public OnDemandPrivateProxyStatusMessage() {
     }
+
 
     /**
-     * Gets the parameters of the message.
+     * Parses the byte array to extract the page number of the Composition Data.
      *
-     * @return null.
+     * @param params The byte array to parse.
      */
-    public  getParams() : Uint8Array | undefined{
-        return undefined;
+    public parse(params: Uint8Array) {
+        this.privateProxy = params[0];
     }
-
 }

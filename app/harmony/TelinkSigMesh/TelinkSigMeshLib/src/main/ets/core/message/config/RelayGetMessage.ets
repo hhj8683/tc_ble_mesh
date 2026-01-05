@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BeaconGetMessage.java
+ * @file RelayGetMessage.java
  *
  * @brief for TLSR chips
  *
@@ -20,48 +20,40 @@
  *          See the License for the specific language governing permissions and
  *          limitations under the License.
  *******************************************************************************************************/
-import { Opcode } from '../Opcode';
-import { ConfigMessage } from './ConfigMessage';
+import { Opcode } from "../Opcode";
+import { ConfigMessage } from "./ConfigMessage";
+
 
 /**
- * The Config Beacon Get is an acknowledged message used to get the current Secure Network Beacon state of a node
+ * The Config Relay Get is an acknowledged message used to get the current Relay and Relay Retransmit states of a node.
+ * The RelayGetMessage class represents an acknowledged message used to retrieve the current Relay and Relay Retransmit states of a node.
  */
- export class BeaconGetMessage extends ConfigMessage {
+export class RelayGetMessage extends ConfigMessage {
 
     /**
-     * Creates a new BeaconGetMessage with the specified destination address.
+     * Returns the opcode value for the RelayGetMessage.
      *
-     * @param destinationAddress The destination address of the message.
+     * @return The opcode value for the RelayGetMessage.
      */
-    public constructor( destinationAddress: number) {
-        super(destinationAddress);
+    public  getOpcode() {
+        return Opcode.CFG_RELAY_GET
     }
 
     /**
-     * Gets the opcode of the message.
+     * Returns the response opcode value for the RelayGetMessage.
      *
-     * @return The opcode of the message.
+     * @return The response opcode value for the RelayGetMessage.
      */
-    public  getOpcode(): number {
-        return Opcode.CFG_BEACON_GET;
+    public  getResponseOpcode() {
+        return Opcode.CFG_RELAY_STATUS
     }
 
     /**
-     * Gets the opcode of the response message.
+     * Returns the parameters of the RelayGetMessage.
      *
-     * @return The opcode of the response message.
+     * @return The parameters of the RelayGetMessage.
      */
-    public  getResponseOpcode() : number{
-        return Opcode.CFG_BEACON_STATUS;
-    }
-
-    /**
-     * Gets the parameters of the message.
-     *
-     * @return null.
-     */
-    public  getParams() : Uint8Array | undefined{
+    public getParams() {
         return undefined;
     }
-
 }
