@@ -7,6 +7,7 @@
     "pages/node/SubscriptionModelsPage",
     "pages/node/SchedulerListPage",
     "pages/node/SchedulerSettingPage",
+    "pages/node/NodeConfigPage",
     "pages/node/NodeOtaPage",
     "pages/manage-network/NetworkListPage",
     "pages/manage-network/NetworkInfoPage",

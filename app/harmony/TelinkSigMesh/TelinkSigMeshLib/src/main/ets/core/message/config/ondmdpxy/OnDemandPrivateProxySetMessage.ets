@@ -33,6 +33,12 @@ export class OnDemandPrivateProxySetMessage extends ConfigMessage {
      */
     public privateProxy = 0;
 
+    public static getSimple(destinationAddress: number, privateProxy: number): OnDemandPrivateProxySetMessage {
+        let instance = new OnDemandPrivateProxySetMessage(destinationAddress);
+        instance.privateProxy = privateProxy;
+        return instance;
+    }
+
     /**
      * Returns the opcode of the message.
      *

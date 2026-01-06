@@ -21,6 +21,8 @@
  *          limitations under the License.
  *******************************************************************************************************/
 import { AppKeyStatusMessage } from './config/AppKeyStatusMessage';
+import { BeaconStatusMessage } from './config/BeaconStatusMessage';
+import { DefaultTTLStatusMessage } from './config/DefaultTTLStatusMessage';
 import { CompositionDataStatusMessage } from './config/CompositionDataStatusMessage';
 import { FriendStatusMessage } from './config/FriendStatusMessage';
 import { GattProxyStatusMessage } from './config/GattProxyStatusMessage';
@@ -104,8 +106,12 @@ export class MeshStatus {
         //
         // /// configs
         // MeshStatus.register(Opcode.CFG_NW_TRANSMIT_STATUS, ()=>{return new NetworkTransmitStatusMessage()});
-        // MeshStatus.register(Opcode.CFG_BEACON_STATUS, ()=>{return new BeaconStatusMessage()});
-        // MeshStatus.register(Opcode.CFG_DEFAULT_TTL_STATUS, ()=>{return new DefaultTTLStatusMessage()});
+        MeshStatus.register(Opcode.CFG_BEACON_STATUS, () => {
+            return new BeaconStatusMessage()
+        });
+        MeshStatus.register(Opcode.CFG_DEFAULT_TTL_STATUS, () => {
+            return new DefaultTTLStatusMessage()
+        });
         MeshStatus.register(Opcode.CFG_RELAY_STATUS, () => {
             return new RelayStatusMessage()
         });

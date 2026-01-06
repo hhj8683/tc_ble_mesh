@@ -32,7 +32,7 @@ interface NodeSettingAction {
 }
 
 const NODE_SETTING_ACTIONS: NodeSettingAction[] = [
-    { icon: $r("app.media.ic_config"), title: "Device Config - todo", pagePath: "" },
+    { icon: $r("app.media.ic_config"), title: "Device Config", pagePath: "pages/node/NodeConfigPage" },
     { icon: $r("app.media.ic_composition"), title: "Composition Data", pagePath: "pages/node/CompositionDataPage" },
     { icon: $r("app.media.ic_keys"), title: "Network Keys - todo", pagePath: "" },
     { icon: $r("app.media.ic_bridge"), title: "Subnet Bridge Setting - todo", pagePath: "" },
