@@ -447,7 +447,7 @@ public class DeviceConfigActivity extends BaseActivity implements EventListener<
             }
             boolean cmdSent = MeshService.getInstance().sendMeshMessage(message);
             if (cmdSent) {
-                showSendWaitingDialog("setting proxy ...");
+                showSendWaitingDialog("setting  ...");
             } else {
                 toastMsg("set message send error ");
             }

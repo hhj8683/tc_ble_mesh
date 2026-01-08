@@ -159,7 +159,7 @@ struct SelectableProvisionPage {
         nodeInfo.deviceUUID = bytesToHexString(remote.deviceUUID)
         nodeInfo.elementCnt = remote.deviceCapability!.eleNum
         nodeInfo.deviceKey = bytesToHexString(remote.deviceKey!)
-        nodeInfo.netKeyIndexes.push(num2Hex(this.meshInfo.getDefaultNetKey().index))
+        nodeInfo.netKeyIndexes.push(num2Hex(this.meshInfo.getDefaultNetKey().index, 2))
         this.meshInfo.insertDevice(nodeInfo, true)
         this.updateNetworkingState(NetworkingState.STATE_KEY_BINDING)
         this.startKeyBind(remote)

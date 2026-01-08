@@ -34,7 +34,7 @@ import { NodeResetStatusMessage } from './config/NodeResetStatusMessage';
 import { OnDemandPrivateProxyStatusMessage } from './config/ondmdpxy/OnDemandPrivateProxyStatusMessage';
 import { RelayStatusMessage } from './config/RelayStatusMessage';
 import { OnOffStatusMessage } from './generic/OnOffStatusMessage';
-import { LightnessStatusMessage, ModelPublicationStatusMessage } from './Index';
+import { LightnessStatusMessage, ModelPublicationStatusMessage, NetKeyStatusMessage } from './Index';
 import { Opcode } from './Opcode';
 import { SceneRegisterStatusMessage } from './scene/SceneRegisterStatusMessage';
 import { StatusMessage } from './StatusMessage';
@@ -99,7 +99,7 @@ export class MeshStatus {
         MeshStatus.register(Opcode.NODE_ID_STATUS, () => {
             return new NodeIdentityStatusMessage()
         });
-        // MeshStatus.register(Opcode.NETKEY_STATUS, ()=>{return new NetKeyStatusMessage()});
+        MeshStatus.register(Opcode.NETKEY_STATUS, ()=>{return new NetKeyStatusMessage()});
         //
         // MeshStatus.register(Opcode.SUBNET_BRIDGE_STATUS, ()=>{return new SubnetBridgeStatusMessage()});
         // MeshStatus.register(Opcode.BRIDGING_TABLE_STATUS, ()=>{return new BridgingTableStatusMessage()});

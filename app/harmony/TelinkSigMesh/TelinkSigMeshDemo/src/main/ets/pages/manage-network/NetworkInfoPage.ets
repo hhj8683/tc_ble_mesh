@@ -25,11 +25,6 @@ struct NetworkInfoPage {
         }else {
             this.meshInfo = MeshInfoService.getInstance().getCurrentMesh()
         }
-        // let meshId = params.id
-        // if (meshId) {
-        //
-        // } else {
-        // }
     }
 
     @Builder

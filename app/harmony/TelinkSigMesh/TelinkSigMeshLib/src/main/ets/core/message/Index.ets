@@ -24,6 +24,12 @@ export * from './config/DefaultTTLSetMessage'
 
 export * from './config/DefaultTTLStatusMessage'
 
+export * from './config/NetKeyAddMessage'
+
+export * from './config/NetKeyDeleteMessage'
+
+export * from './config/NetKeyStatusMessage'
+
 
 export * from './config/NodeResetMessage'
 

@@ -139,7 +139,7 @@ struct SceneListPage {
     @Builder
     getEmptyView() {
         Column() {
-            getCommonIcon($r('app.media.ic_sad', undefined, $r('app.color.primary')))
+            getCommonIcon($r('app.media.ic_sad'), undefined, $r('app.color.primary'))
             Text('List Empty')
             Button('ADD').buttonStyle(ButtonStyleMode.TEXTUAL).onClick(() => {
                 this.addScene()
