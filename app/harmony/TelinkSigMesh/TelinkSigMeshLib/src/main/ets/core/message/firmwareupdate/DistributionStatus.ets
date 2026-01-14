@@ -20,7 +20,6 @@
  *          See the License for the specific language governing permissions and
  *          limitations under the License.
  *******************************************************************************************************/
-
 /**
  * The DistributionStatus enum represents the possible statuses of a message during the distribution process.
  * Each status has a corresponding code and description.
@@ -40,7 +39,7 @@ export enum DistributionStatus {
     URI_UNREACHABLE = 0x0B,
     NEW_FIRMWARE_NOT_AVAILABLE = 0x0C,
     SUSPEND_FAILED = 0x0D,
-    UNKNOWN_ERROR = 0xFF
+    UNKNOWN_ERROR = 0xFF,
 }
 
 /**
@@ -49,7 +48,7 @@ export enum DistributionStatus {
  * @param code The code to get the description for.
  * @returns The description for the given code, or undefined if not found.
  */
-function getDescriptionByCode(code: number): string | undefined {
+export function getDescriptionByCodeOfDistributionStatus(code: number): string | undefined {
     switch (code) {
         case DistributionStatus.SUCCESS:
             return "The message was processed successfully";

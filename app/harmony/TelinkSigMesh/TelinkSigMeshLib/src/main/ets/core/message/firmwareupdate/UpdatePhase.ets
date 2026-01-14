@@ -46,7 +46,7 @@ export enum UpdatePhase {
  * @param code The code to get the description for.
  * @returns The description for the given code, or undefined if not found.
  */
- function getDescriptionByCode(code: number): string | undefined {
+ export function getDescriptionByCodeOfUpdatePhase(code: number): string | undefined {
     switch (code) {
         case UpdatePhase.IDLE:
             return "No firmware transfer is in progress";

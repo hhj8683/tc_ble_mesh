@@ -40,7 +40,7 @@ export enum DistributionPhase {
  * @param code The code to get the description for.
  * @returns The description for the given code, or undefined if not found.
  */
-function getDescriptionByCode(code: number): string | undefined {
+export function getDescriptionByCodeOfDistributionPhase(code: number): string | undefined {
     switch (code) {
         case DistributionPhase.IDLE:
             return "No firmware distribution is in progress.";

@@ -45,7 +45,7 @@ export enum TransferStatus {
  * @param code The code to get the description for.
  * @returns The description for the given code, or undefined if not found.
  */
-function getDescriptionByCode(code: number): string | undefined {
+export function getDescriptionByCodeOfTransferStatus(code: number): string | undefined {
     switch (code) {
         case TransferStatus.SUCCESS:
             return "The message was processed successfully";

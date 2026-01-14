@@ -39,7 +39,7 @@ export enum AdditionalInformation {
  * @param code The code to get the description for.
  * @returns The description for the given code, or undefined if not found.
  */
-function getDescriptionByCode(code: number): string | undefined {
+export function getDescriptionByCodeOfAdditionalInformation(code: number): string | undefined {
     switch (code) {
         case AdditionalInformation.No_changes:
             return "No changes to node composition data";

@@ -21,18 +21,18 @@
  *          limitations under the License.
  *******************************************************************************************************/
 
-import { AdditionalInformation } from '../core/mesh/core/message/firmwareupdate/AdditionalInformation.ets';
-
-// Static constants for device state
-const STATE_INITIAL = 0;
-const STATE_SUCCESS = 1;
-const STATE_FAIL = 2;
-const STATE_METADATA_RSP = 3;
+import { AdditionalInformation } from '../core/message/firmwareupdate/AdditionalInformation';
 
 /**
  * Represents a device capable of updating a mesh network.
  */
 export class MeshUpdatingDevice {
+    // Static constants for device state
+    public static STATE_INITIAL = 0;
+    public static STATE_SUCCESS = 1;
+    public static STATE_FAIL = 2;
+    public static STATE_METADATA_RSP = 3;
+
     // Unicast address
     public meshAddress: number = 0;
 
@@ -40,16 +40,17 @@ export class MeshUpdatingDevice {
     public updatingEleAddress: number = 0;
 
     // Current state
-    public state: number = STATE_INITIAL;
+    public state: number = MeshUpdatingDevice.STATE_INITIAL;
 
     // PID information
     public pidInfo: string = "";
 
     // Latest firmware ID
-    public firmwareId: number[] = [];
+    // public firmwareId: number[] = [];
+    public firmwareId: Uint8Array = new Uint8Array();
 
     // Additional information in metadata
-    public additionalInformation: AdditionalInformation = null;
+    public additionalInformation: AdditionalInformation | null = null;
 
     // PID value
     public pid: number = 0;
@@ -85,13 +86,13 @@ export class MeshUpdatingDevice {
      */
     public getStateDesc(): string {
         switch (this.state) {
-            case STATE_INITIAL:
+            case MeshUpdatingDevice.STATE_INITIAL:
                 return "INIT";
-            case STATE_FAIL:
+            case MeshUpdatingDevice.STATE_FAIL:
                 return "Update Fail";
-            case STATE_SUCCESS:
+            case MeshUpdatingDevice.STATE_SUCCESS:
                 return "Update Success";
-            case STATE_METADATA_RSP:
+            case MeshUpdatingDevice.STATE_METADATA_RSP:
                 return "Metadata RSP";
             default:
                 return "";

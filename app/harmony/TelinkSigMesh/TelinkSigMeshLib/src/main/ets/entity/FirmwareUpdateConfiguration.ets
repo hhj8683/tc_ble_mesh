@@ -21,8 +21,12 @@
  *          limitations under the License.
  *******************************************************************************************************/
 
+import { BlobTransferType } from '../core/access/fu/BlobTransferType';
+import { DistributorType } from '../core/access/fu/DistributorType';
+import { FUState } from '../core/access/fu/FUState';
+import { UpdatePolicy } from '../core/access/fu/UpdatePolicy';
+import { ExtendBearerMode } from '../core/networking/ExtendBearerMode';
 import { MeshUpdatingDevice } from './MeshUpdatingDevice';
-import { ExtendBearerMode, DistributorType, UpdatePolicy, BlobTransferType, FUState } from '../core/FUConstants';
 
 /**
  * Callback interface for firmware update events
@@ -198,7 +202,7 @@ export class FirmwareUpdateConfiguration {
     /**
      * Set callback
      */
-    public setCallback(callback: FUCallback): void {
+    public setCallback(callback: FUCallback | null): void {
         this.callback = callback;
     }
 

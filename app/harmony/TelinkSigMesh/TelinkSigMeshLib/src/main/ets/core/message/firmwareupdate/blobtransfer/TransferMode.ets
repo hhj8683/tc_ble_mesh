@@ -46,7 +46,7 @@ export enum TransferMode {
  * @param code The code to get the description for.
  * @returns The description for the given code, or undefined if not found.
  */
-function getDescriptionByCode(code: number): string | undefined {
+export function getDescriptionByCodeOfTransferMode(code: number): string {
     switch (code) {
         case TransferMode.NONE:
             return "No Active Transfer";
@@ -57,7 +57,7 @@ function getDescriptionByCode(code: number): string | undefined {
         case TransferMode.PROHIBITED:
             return "Prohibited";
         default:
-            return undefined;
+            return "undefined";
     }
 }
 

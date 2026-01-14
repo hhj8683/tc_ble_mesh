@@ -42,7 +42,7 @@ export enum TransferPhase {
  * @param code The code to get the description for.
  * @returns The description for the given code, or undefined if not found.
  */
-function getDescriptionByCode(code: number): string | undefined {
+export function getDescriptionByCodeOfTransferPhase(code: number): string | undefined {
     switch (code) {
         case TransferPhase.INACTIVE:
             return "The BLOB Transfer Server is awaiting configuration and cannot receive a BLOB.";

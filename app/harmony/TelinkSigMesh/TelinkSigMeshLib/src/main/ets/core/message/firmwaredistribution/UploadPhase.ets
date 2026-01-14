@@ -39,7 +39,7 @@ export enum UploadPhase {
  * @param code The code to get the description for.
  * @returns The description for the given code, or undefined if not found.
  */
-function getDescriptionByCode(code: number): string | undefined {
+export function getDescriptionByCodeOfUploadPhase(code: number): string | undefined {
     switch (code) {
         case UploadPhase.IDLE:
             return "No firmware upload is in progress.";
