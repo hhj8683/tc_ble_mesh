@@ -140,20 +140,36 @@
 - (void)kickOutAction{
     TelinkLogDebug(@"send kickOut.");
     __weak typeof(self) weakSelf = self;
-    _messageHandle = [SDKLibCommand resetNodeWithDestination:self.model.address retryCount:SigDataSource.share.defaultRetryCount responseMaxCount:1 successCallback:^(UInt16 source, UInt16 destination, SigConfigNodeResetStatus * _Nonnull responseMessage) {
+    if (SigMeshLib.share.isBusyNow) {
+        TelinkLogInfo(@"send request for kick out, but busy now.");
+        [self showTips:@"app is busy now, try again later."];
+    } else {
+        TelinkLogInfo(@"send request for kick out address:%d",self.model.address);
+        _messageHandle = [SDKLibCommand resetNodeWithDestination:self.model.address retryCount:SigDataSource.share.defaultRetryCount responseMaxCount:1 successCallback:^(UInt16 source, UInt16 destination, SigConfigNodeResetStatus * _Nonnull responseMessage) {
 
-    } resultCallback:^(BOOL isResponseAll, NSError * _Nullable error) {
-        if (isResponseAll) {
-            TelinkLogDebug(@"kickOut success.");
-            [weakSelf kickOutSuccessAction];
-        } else {
-            TelinkLogDebug(@"kickOut fail.");
-            // v4.1.0.4之后，如果App端没有接收到SigConfigNodeResetStatus，有可能是没有移除成功或者移除成功但回包丢失了，所以新增超时弹框让用户选择是否删除数据。
-            [weakSelf showAlertSureAndCancelWithTitle:kDefaultAlertTitle message:@"The APP did not receive the message NodeResetStatus, confirm to remove device?" sure:^(UIAlertAction *action) {
+        } resultCallback:^(BOOL isResponseAll, NSError * _Nullable error) {
+            if (isResponseAll) {
+                TelinkLogDebug(@"kick out success.");
+#ifdef kIsTelinkCloudSigMeshLib
+            [AppDataSource.share deleteNodeWithAddress:weakSelf.model.address resultBlock:^(NSError * _Nullable error) {
+                TelinkLogInfo(@"error = %@", error);
+            }];
+#endif
                 [weakSelf kickOutSuccessAction];
-            } cancel:nil];
-        }
-    }];
+            } else {
+                TelinkLogDebug(@"kick out fail.");
+                // v4.1.0.4之后，如果App端没有接收到SigConfigNodeResetStatus，有可能是没有移除成功或者移除成功但回包丢失了，所以新增超时弹框让用户选择是否删除数据。
+                [weakSelf showAlertSureAndCancelWithTitle:kDefaultAlertTitle message:@"The APP did not receive the message NodeResetStatus, confirm to remove device?" sure:^(UIAlertAction *action) {
+                    [weakSelf kickOutSuccessAction];
+                } cancel:^(UIAlertAction *action) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [NSObject cancelPreviousPerformRequestsWithTarget:weakSelf];
+                        [ShowTipsHandle.share hidden];
+                    });
+                }];
+            }
+        }];
+    }
 }
 
 - (void)kickOutSuccessAction {

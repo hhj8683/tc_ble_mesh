@@ -306,7 +306,7 @@
                 if (self.messageHandle == nil) {
                     isFail = YES;
                 } else {
-                    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 10.0));
+                    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 3.5 * weakSelf.retryCount));
                 }
                 if (isFail) {
                     break;
@@ -384,7 +384,7 @@
     //优化：LPN设备为低功耗设备，不需要向外广播timeStatus，且低功耗设备的time也不准确，不推荐LPN向外广播timeStatus。
     if (hasTimeServerModel == YES && timeServerModelElementAddress > 0 && SigMeshLib.share.dataSource.needPublishTimeModel && page0.features.lowPowerFeature != SigNodeFeaturesState_enabled) {
         TelinkLogInfo(@"SDK need publish time");
-        //周期，20秒上报一次。ttl:0xff（表示采用节点默认参数），0表示不relay。
+        //周期，30秒上报一次。ttl:0xff（表示采用节点默认参数），0表示不relay。
         SigRetransmit *retransmit = [[SigRetransmit alloc] initWithPublishRetransmitCount:0 intervalSteps:0];
         SigPublish *publish = [[SigPublish alloc] initWithDestination:kMeshAddress_allNodes withKeyIndex:SigMeshLib.share.dataSource.curAppkeyModel.index friendshipCredentialsFlag:0 ttl:0 periodSteps:kTimePublishInterval periodResolution:1 retransmit:retransmit];
         SigConfigModelPublicationSet *timePublication = [[SigConfigModelPublicationSet alloc] initWithPublish:publish toElementAddress:timeServerModelElementAddress modelIdentifier:kSigModel_TimeServer_ID companyIdentifier:0];

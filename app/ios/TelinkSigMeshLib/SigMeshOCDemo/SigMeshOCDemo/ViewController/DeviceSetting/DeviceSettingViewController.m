@@ -104,7 +104,7 @@
 
         } resultCallback:^(BOOL isResponseAll, NSError * _Nullable error) {
             if (isResponseAll) {
-                TelinkLogDebug(@"kickout success.");
+                TelinkLogDebug(@"kick out success.");
 #ifdef kIsTelinkCloudSigMeshLib
             [AppDataSource.share deleteNodeWithAddress:weakSelf.model.address resultBlock:^(NSError * _Nullable error) {
                 TelinkLogInfo(@"error = %@", error);
@@ -112,11 +112,16 @@
 #endif
                 [weakSelf kickOutSuccessAction];
             } else {
-                TelinkLogDebug(@"kickout fail.");
+                TelinkLogDebug(@"kick out fail.");
                 // v4.1.0.4之后，如果App端没有接收到SigConfigNodeResetStatus，有可能是没有移除成功或者移除成功但回包丢失了，所以新增超时弹框让用户选择是否删除数据。
                 [weakSelf showAlertSureAndCancelWithTitle:kDefaultAlertTitle message:@"The APP did not receive the message NodeResetStatus, confirm to remove device?" sure:^(UIAlertAction *action) {
                     [weakSelf kickOutSuccessAction];
-                } cancel:nil];
+                } cancel:^(UIAlertAction *action) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [NSObject cancelPreviousPerformRequestsWithTarget:weakSelf];
+                        [ShowTipsHandle.share hidden];
+                    });
+                }];
             }
         }];
     }

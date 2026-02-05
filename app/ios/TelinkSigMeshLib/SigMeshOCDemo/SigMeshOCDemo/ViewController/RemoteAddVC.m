@@ -114,6 +114,15 @@
             [node addDefaultPublicAddressToRemote];
             [SigDataSource.share saveLocationData];
         }
+        SigModelIDModel *modelId = [node getModelIDModelWithModelID:kSigModel_RemoteProvisionServer_ID];
+        if (modelId) {
+            // get MacAddress from uuid of unProvision.
+            if (scanRspModel.macAddress == nil || scanRspModel.macAddress.length == 0) {
+                if (scanRspModel.advertisementDataServiceData && scanRspModel.advertisementDataServiceData.length >= 6) {
+                    scanRspModel.macAddress = [TelinkLibTools convertDataToHexStr:[TelinkLibTools turnOverData:[scanRspModel.advertisementDataServiceData subdataWithRange:NSMakeRange(scanRspModel.advertisementDataServiceData.length - 6 - 2, 6)]]];
+                }
+            }
+        }
         [weakSelf updateWithPeripheralUUID:peripheral.identifier.UUIDString macAddress:scanRspModel.macAddress address:address keyBindResult:YES scanRemoteModel:nil];
         TelinkLogInfo(@"RP-GATT:keybind success, %@->0X%X",currentAddUUID,currentProvisionAddress);
         [weakSelf startRemoteProvisionScan];
