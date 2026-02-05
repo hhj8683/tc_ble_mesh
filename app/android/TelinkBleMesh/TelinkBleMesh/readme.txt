@@ -3,6 +3,13 @@ version record:
 versionName - version code - date
 
 
+V4.1.0.5 - 12 - 20260205 (released by tc_ble_mesh)
+
+- feat(android): support provision confirm mode
+- feat(android): support adding and editing private device
+
+----------------
+
 V4.1.0.4 - 11 - 20251029 (released by tl_ble_mesh)
 
 - feat(android): support provision confirm mode
