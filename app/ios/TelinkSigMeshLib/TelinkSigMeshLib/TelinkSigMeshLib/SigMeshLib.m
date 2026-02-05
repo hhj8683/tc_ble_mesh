@@ -301,6 +301,7 @@ static SigMeshLib *shareLib = nil;
     command.destination = [[SigMeshAddress alloc] initWithAddress:destination];
     command.initialTtl = initialTtl;
     command.commandType = SigCommandType_configMessage;
+    [self compensationTimeoutOfNLPWithCommand:command];
     [self addCommandToCacheListWithCommand:command];
     SigMessageHandle *messageHandle = [[SigMessageHandle alloc] initForSDKLibCommand:command usingManager:self];
     command.messageHandle = messageHandle;
@@ -405,6 +406,7 @@ static SigMeshLib *shareLib = nil;
     command.initialTtl = initialTtl;
     command.curAppkey = applicationKey;
     command.commandType = SigCommandType_meshMessage;
+    [self compensationTimeoutOfNLPWithCommand:command];
     [self addCommandToCacheListWithCommand:command];
     SigMessageHandle *messageHandle = [[SigMessageHandle alloc] initForSDKLibCommand:command usingManager:self];
     command.messageHandle = messageHandle;
@@ -468,6 +470,7 @@ static SigMeshLib *shareLib = nil;
 
     [self handleResponseMaxCommands];
     command.commandType = SigCommandType_proxyConfigurationMessage;
+    [self compensationTimeoutOfNLPWithCommand:command];
     [self addCommandToCacheListWithCommand:command];
     SigMessageHandle *messageHandle = [[SigMessageHandle alloc] initForSDKLibCommand:command usingManager:self];
     command.messageHandle = messageHandle;
@@ -533,6 +536,7 @@ static SigMeshLib *shareLib = nil;
     }
 
     [self handleResponseMaxCommands];
+    [self compensationTimeoutOfNLPWithCommand:command];
     [self addCommandToCacheListWithCommand:command];
     CBCharacteristic *onlineStatusCharacteristic = [SigBluetooth.share getCharacteristicWithUUIDString:kOnlineStatusCharacteristicsID OfPeripheral:SigBearer.share.getCurrentPeripheral];
     if (onlineStatusCharacteristic != nil) {
@@ -611,6 +615,12 @@ static SigMeshLib *shareLib = nil;
     return busy;
 }
 
+- (void)compensationTimeoutOfNLPWithCommand:(SDKLibCommand *)command {
+    SigNodeModel *destinationNode = [_dataSource getNodeWithAddress:command.destination.address];
+    if (destinationNode && destinationNode.features.lowPowerFeature == SigNodeFeaturesState_enabled) {
+        command.timeout += 2;//2 is Wake up time of NLP.
+    }
+}
 
 /// Add command to cache list `self.commands`
 /// - Parameter command: The SDKLibCommand object.getCommandWithReceiveMessage
