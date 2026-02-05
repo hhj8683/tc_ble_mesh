@@ -2,12 +2,29 @@
 
 ------------------------------------------------------
 
+## v4.2.0.3
+release date:	2026/02/05
+
+>更新日志：
+1.fix(ios): 优化LPN设备指令的超时计算方法。
+2.fix(ios): 优化MeshOTA完成的retrievedUpdatePhase参数的判断。
+3.fix(ios): 优化对非直连节点KeyBind的超时计算方法。
+4.fix(ios): 优化HSL转RGB的方法。
+>
+>release note:
+1.fix(ios): Optimize the timeout calculation method for LPN device instructions.
+2.fix(ios): Optimize the judgment of the retrievedUpdatePhase parameter completed by MeshOTA.
+3.fix(ios): Optimize the timeout calculation method for KeyBind on non-directly connected nodes.
+4.fix(ios): Optimize the method for converting HSL to RGB.
+
+------------------------------------------------------
+
 ## v4.2.0.2
 release date:	2025/10/31
 
 >更新日志：
 1.feat(ios): 支持对节点里面的非primary element设置闹钟。
-2.feat(android): 支持nlc union功能。
+2.feat(ios): 支持nlc union功能。
 3.fix(ios): 优化组播reliable命令的发送机制。
 >
 >release note:
