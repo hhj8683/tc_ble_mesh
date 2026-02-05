@@ -267,6 +267,9 @@
 		9163A3E52B33E842006960B6 /* NetKeyCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 9163A3E22B33E842006960B6 /* NetKeyCell.m */; };
 		9163A3E62B33E842006960B6 /* NetKeyCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9163A3E32B33E842006960B6 /* NetKeyCell.xib */; };
 		9163A3E72B33E842006960B6 /* NetKeyCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9163A3E32B33E842006960B6 /* NetKeyCell.xib */; };
+		916566D22EB4598E007018E7 /* SettingsEditItemCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 9180A7B82C803CD300BA8A15 /* SettingsEditItemCell.m */; };
+		916566EC2EB45DC5007018E7 /* TelinkToolsLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 913691EF2E682B7A004B0A04 /* TelinkToolsLib.framework */; };
+		916566ED2EB45DC5007018E7 /* TelinkToolsLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 913691EF2E682B7A004B0A04 /* TelinkToolsLib.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		916963492AC51D300010D34A /* AutoAddDeviceVC.m in Sources */ = {isa = PBXBuildFile; fileRef = 916963482AC51D300010D34A /* AutoAddDeviceVC.m */; };
 		916FEF2C29E654F800206FE6 /* ProxyFilterCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 916FEF2A29E654F800206FE6 /* ProxyFilterCell.m */; };
 		916FEF2D29E654F800206FE6 /* ProxyFilterCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 916FEF2B29E654F800206FE6 /* ProxyFilterCell.xib */; };
@@ -669,6 +672,17 @@
 			dstSubfolderSpec = 10;
 			files = (
 				913691F72E682B8F004B0A04 /* TelinkToolsLib.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		916566EE2EB45DC5007018E7 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				916566ED2EB45DC5007018E7 /* TelinkToolsLib.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1263,6 +1277,7 @@
 			files = (
 				9124E39F2BE080CF00E44AB2 /* TelinkSigMeshLib.framework in Frameworks */,
 				1608912BA10C0C84C8DD684E /* Pods_SigLoopAddDemo.framework in Frameworks */,
+				916566EC2EB45DC5007018E7 /* TelinkToolsLib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2270,6 +2285,7 @@
 				2590C576285C287D00E19DE9 /* Frameworks */,
 				2590C578285C287D00E19DE9 /* Resources */,
 				5CFEF76370D7F310CFF06997 /* [CP] Embed Pods Frameworks */,
+				916566EE2EB45DC5007018E7 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -3125,6 +3141,7 @@
 				91BF47462B27FFA300254CB6 /* PrivateBeaconCell.m in Sources */,
 				912C6EC22C783874003D4748 /* UIView+Toast.m in Sources */,
 				91DC48022B452727009B07DA /* SelectDeviceCell.m in Sources */,
+				916566D22EB4598E007018E7 /* SettingsEditItemCell.m in Sources */,
 				91BF474A2B27FFA300254CB6 /* TableCell.m in Sources */,
 				912A58072B35660700531DA4 /* ShareNetKeyCell.m in Sources */,
 				91EA21542D23C35100BCFE7E /* LCItemShowCell.m in Sources */,
@@ -3437,7 +3454,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.2.02;
+				MARKETING_VERSION = 4.2.03;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.telink.TelinkSigMesh;
@@ -3485,7 +3502,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.2.02;
+				MARKETING_VERSION = 4.2.03;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.telink.TelinkSigMesh;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3622,7 +3639,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.03;
+				MARKETING_VERSION = 4.2.03;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.telink.SigLoopAddDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3667,7 +3684,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.03;
+				MARKETING_VERSION = 4.2.03;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.telink.SigLoopAddDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3714,7 +3731,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.03;
+				MARKETING_VERSION = 4.2.03;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.telink.TelinkSigMeshCloud;
@@ -3761,7 +3778,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.03;
+				MARKETING_VERSION = 4.2.03;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.telink.TelinkSigMeshCloud;
 				PRODUCT_NAME = "$(TARGET_NAME)";

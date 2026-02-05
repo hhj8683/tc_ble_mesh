@@ -460,7 +460,7 @@
 #pragma mark - 4.3.5 Directed Forwarding Configuration messages
 
 
-#pragma mark 4.3.5.3 DIRECTED_CONTROL_GET, opcode:0xBF30
+#pragma mark 4.3.5.3 DIRECTED_CONTROL_GET, opcode:0x807B
 
 
 /// A DIRECTED_CONTROL_GET message is an acknowledged message used to get
@@ -517,7 +517,7 @@
 @end
 
 
-#pragma mark 4.3.5.4 DIRECTED_CONTROL_SET, opcode:0xBF31
+#pragma mark 4.3.5.4 DIRECTED_CONTROL_SET, opcode:0x807C
 
 
 /// A DIRECTED_CONTROL_SET message is an acknowledged message used to set
@@ -620,7 +620,7 @@
 @end
 
 
-#pragma mark 4.3.5.5 DIRECTED_CONTROL_STATUS, opcode:0xBF32
+#pragma mark 4.3.5.5 DIRECTED_CONTROL_STATUS, opcode:0x807D
 
 
 /// A DIRECTED_CONTROL_STATUS message is an unacknowledged message
@@ -746,7 +746,7 @@
 @end
 
 
-#pragma mark 4.3.5.12 FORWARDING_TABLE_ADD, opcode:0xBF39
+#pragma mark 4.3.5.12 FORWARDING_TABLE_ADD, opcode:0x8084
 
 
 /// A FORWARDING_TABLE_ADD message is an acknowledged message used to add
@@ -801,7 +801,7 @@
 @end
 
 
-#pragma mark 4.3.5.13 FORWARDING_TABLE_DELETE, opcode:0xBF3A
+#pragma mark 4.3.5.13 FORWARDING_TABLE_DELETE, opcode:0x8085
 
 
 /// A FORWARDING_TABLE_DELETE message is an acknowledged message used to delete
@@ -877,7 +877,7 @@
 @end
 
 
-#pragma mark 4.3.5.14 FORWARDING_TABLE_STATUS, opcode:0xBF3B
+#pragma mark 4.3.5.14 FORWARDING_TABLE_STATUS, opcode:0x8086
 
 
 /// A FORWARDING_TABLE_STATUS message is an unacknowledged message used to report the status
@@ -951,7 +951,7 @@
 #pragma mark - 4.3.5 Directed Forwarding Configuration messages
 
 
-#pragma mark 4.3.5.3 DIRECTED_CONTROL_GET, opcode:0xBF30
+#pragma mark 4.3.5.3 DIRECTED_CONTROL_GET, opcode:0x807B
 
 
 /**
@@ -975,7 +975,7 @@
 }
 
 
-#pragma mark 4.3.5.4 DIRECTED_CONTROL_SET, opcode:0xBF31
+#pragma mark 4.3.5.4 DIRECTED_CONTROL_SET, opcode:0x807C
 
 
 /**
@@ -1019,7 +1019,7 @@
 }
 
 
-#pragma mark 4.3.5.12 FORWARDING_TABLE_ADD, opcode:0xBF39
+#pragma mark 4.3.5.12 FORWARDING_TABLE_ADD, opcode:0x8084
 
 
 /**
@@ -1055,7 +1055,7 @@
 }
 
 
-#pragma mark 4.3.5.13 FORWARDING_TABLE_DELETE, opcode:0xBF3A
+#pragma mark 4.3.5.13 FORWARDING_TABLE_DELETE, opcode:0x8085
 
 
 /**

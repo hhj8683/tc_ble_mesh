@@ -3205,7 +3205,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 4.3.9 Opcodes Aggregator messages
 
 
-#pragma mark 4.3.9.2 OPCODES_AGGREGATOR_SEQUENCE, opcode:0xB809
+#pragma mark 4.3.9.2 OPCODES_AGGREGATOR_SEQUENCE, opcode:0x8072
 
 
 /// An OPCODES_AGGREGATOR_STATUS message is an unacknowledged message used to report
@@ -3242,7 +3242,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.9.3 OPCODES_AGGREGATOR_STATUS, opcode:0xB810
+#pragma mark 4.3.9.3 OPCODES_AGGREGATOR_STATUS, opcode:0x8073
 
 
 /// An OPCODES_AGGREGATOR_STATUS message is an unacknowledged message
@@ -3280,7 +3280,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 4.3.12 Mesh Private Beacon messages
 
 
-#pragma mark 4.3.12.1 PRIVATE_BEACON_GET, opcode:0xB711
+#pragma mark 4.3.12.1 PRIVATE_BEACON_GET, opcode:0x8060
 
 
 /// A PRIVATE_BEACON_GET message is an acknowledged message
@@ -3298,7 +3298,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.12.2 PRIVATE_BEACON_SET, opcode:0xB712
+#pragma mark 4.3.12.2 PRIVATE_BEACON_SET, opcode:0x8061
 
 
 /// A PRIVATE_BEACON_SET message is an acknowledged message used to set
@@ -3330,7 +3330,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.12.3 PRIVATE_BEACON_STATUS, opcode:0xB713
+#pragma mark 4.3.12.3 PRIVATE_BEACON_STATUS, opcode:0x8062
 
 
 /// A PRIVATE_BEACON_STATUS message is an unacknowledged message used to report
@@ -3361,7 +3361,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.12.4 PRIVATE_GATT_PROXY_GET, opcode:0xB714
+#pragma mark 4.3.12.4 PRIVATE_GATT_PROXY_GET, opcode:0x8063
 
 
 /// A PRIVATE_GATT_PROXY_GET message is an acknowledged message used to
@@ -3378,7 +3378,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.12.5 PRIVATE_GATT_PROXY_SET, opcode:0xB715
+#pragma mark 4.3.12.5 PRIVATE_GATT_PROXY_SET, opcode:0x8064
 
 
 /// A PRIVATE_GATT_PROXY_SET message is an acknowledged message
@@ -3402,7 +3402,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.12.6 PRIVATE_GATT_PROXY_STATUS, opcode:0xB716
+#pragma mark 4.3.12.6 PRIVATE_GATT_PROXY_STATUS, opcode:0x8065
 
 
 /// A PRIVATE_GATT_PROXY_STATUS message is an unacknowledged message used to
@@ -3427,7 +3427,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.12.7 PRIVATE_NODE_IDENTITY_GET, opcode:0xB718
+#pragma mark 4.3.12.7 PRIVATE_NODE_IDENTITY_GET, opcode:0x8066
 
 
 /// A PRIVATE_NODE_IDENTITY_GET message is an acknowledged message used to get
@@ -3460,7 +3460,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.12.8 PRIVATE_NODE_IDENTITY_SET, opcode:0xB719
+#pragma mark 4.3.12.8 PRIVATE_NODE_IDENTITY_SET, opcode:0x8067
 
 
 /// A PRIVATE_NODE_IDENTITY_SET message is an acknowledged message used to set
@@ -3498,7 +3498,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.12.9 PRIVATE_NODE_IDENTITY_STATUS, opcode:0xB71A
+#pragma mark 4.3.12.9 PRIVATE_NODE_IDENTITY_STATUS, opcode:0x8068
 
 
 /// A PRIVATE_NODE_IDENTITY_STATUS message is an unacknowledged message

@@ -28,7 +28,7 @@
 #if DEBUG
 #define kTelinkSDKDebugLogDataSize ((double)1024*1024*100) //DEBUG默认日志最大存储大小为100M。每10*60秒检查一次日志文件大小。
 #else
-#define kTelinkSDKDebugLogDataSize ((double)1024*1024*50) //RELEASE默认日志最大存储大小为50M。每10*60秒检查一次日志文件大小。
+#define kTelinkSDKDebugLogDataSize ((double)1024*1024*25) //RELEASE默认日志最大存储大小为25M。每10*60秒检查一次日志文件大小。
 #endif
 
 @interface TelinkLogger ()
@@ -334,10 +334,10 @@ extern void TelinkLogWithFile(BOOL show,NSString *format, ...) {
             if (cacheLogArray.count >= TelinkLogger.shared.cacheLogLine) {
                 NSUInteger removeCount = cacheLogArray.count - TelinkLogger.shared.cacheLogLine*0.9 + 1;
                 if (removeCount > 0 && removeCount <= cacheLogArray.count) {
-                    [cacheLogArray removeObjectsInRange:NSMakeRange(0, removeCount)];
+                    [TelinkLogger.shared.cacheLogArray removeObjectsInRange:NSMakeRange(0, removeCount)];
                 }
             }
-            [cacheLogArray addObject:message];
+            [TelinkLogger.shared.cacheLogArray addObject:message];
         }
     }
     

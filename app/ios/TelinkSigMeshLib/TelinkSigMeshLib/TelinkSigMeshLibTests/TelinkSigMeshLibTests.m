@@ -395,4 +395,32 @@
     //input={length = 16, bytes = 0x2d2c2b2a29281d1c1b1a191817161514}
     //output={length = 16, bytes = 0xcfd8bfb5813eeff75b8af49b1450be67}
 }
+
+- (void)testSigBLOBBlockStatus {
+    // 0x8F, 0x22, 0x11, 0x44, 0x33, 0x05
+//    SigBLOBBlockStatus *blobBlockStatus = [[SigBLOBBlockStatus alloc] initWithParameters:[TelinkLibTools nsstringToHex:@"8F2211443305"]];
+//    NSLog(@"%@,status=%X,format=%X,blockNumber=%X,chunkSize=%X,missingChunksList=%@,encodedMissingChunksList=%@", blobBlockStatus, blobBlockStatus.status, blobBlockStatus.format, blobBlockStatus.blockNumber, blobBlockStatus.chunkSize, blobBlockStatus.missingChunksList, blobBlockStatus.encodedMissingChunksList);
+//    XCTAssertEqual(blobBlockStatus.status, 0x0F);
+//    XCTAssertEqual(blobBlockStatus.format, SigBLOBBlockFormatType_someChunksMissing);
+//    XCTAssertEqual(blobBlockStatus.blockNumber, 0x1122);
+//    XCTAssertEqual(blobBlockStatus.chunkSize, 0x3344);
+//    XCTAssertEqualObjects(blobBlockStatus.missingChunksList, @[@(0), @(2)]);
+    
+    // 0xC5, 0x77, 0x66, 0x99, 0x88, 0x31, 0x2C, 0x33, 0x2C, 0x35
+//    SigBLOBBlockStatus *blobBlockStatus = [[SigBLOBBlockStatus alloc] initWithParameters:[TelinkLibTools nsstringToHex:@"C577669988312C332C35"]];
+//    NSLog(@"%@,status=%X,format=%X,blockNumber=%X,chunkSize=%X,missingChunksList=%@,encodedMissingChunksList=%@", blobBlockStatus, blobBlockStatus.status, blobBlockStatus.format, blobBlockStatus.blockNumber, blobBlockStatus.chunkSize, blobBlockStatus.missingChunksList, blobBlockStatus.encodedMissingChunksList);// <SigBLOBBlockStatus: 0x103787f00>,status=5,format=3,blockNumber=6677,chunkSize=8899,missingChunksList=(null),encodedMissingChunksList=(
+//    49,
+//    44,
+//    51,
+//    44,
+//    53
+//)
+//    XCTAssertEqual(blobBlockStatus.status, 0x05);
+//    XCTAssertEqual(blobBlockStatus.format, SigBLOBBlockFormatType_encodedMissingChunks);
+//    XCTAssertEqual(blobBlockStatus.blockNumber, 0x6677);
+//    XCTAssertEqual(blobBlockStatus.chunkSize, 0x8899);
+//    XCTAssertEqualObjects(blobBlockStatus.missingChunksList, @[]);
+//    XCTAssertEqualObjects(blobBlockStatus.missingChunksList, @[@(49), @(44), @(51), @(44), @(53)]);
+}
+
 @end

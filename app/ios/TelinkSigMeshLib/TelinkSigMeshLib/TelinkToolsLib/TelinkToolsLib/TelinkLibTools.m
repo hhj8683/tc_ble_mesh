@@ -787,6 +787,7 @@ static inline uint8_t hexCharToInt(char c) {
  * @return 文件数据（NSData对象），如果未找到文件或发生错误则返回nil
  */
 + (NSData *)getDataWithLastPathComponent:(NSString *)lastPathComponent {
+    lastPathComponent = lastPathComponent.lastPathComponent;
     // 输入验证：检查输入是否为空或空字符串
     if (!lastPathComponent || [lastPathComponent length] == 0) {
         return nil;
@@ -825,6 +826,27 @@ static inline uint8_t hexCharToInt(char c) {
     
     // 未找到匹配文件，返回nil
     return nil;
+}
+
+/// 将 NSData 的文件大小转换为易读的字符串（如 "1.5 MB"）
+/// @param fileData NSData对象
++ (NSString *)formattedFileSizeStringFromData:(NSData *)fileData {
+    long long fileSize = [fileData length]; // 获取字节数
+    return [self formattedFileSizeStringFromFileSize:fileSize];
+}
+
+/// 将 NSData 的文件大小转换为易读的字符串（如 "1.5 MB"）
+/// @param fileSize size of file
++ (NSString *)formattedFileSizeStringFromFileSize:(long long)fileSize {
+    if (fileSize < 1024) {
+        return [NSString stringWithFormat:@"%lld B", fileSize]; // 字节
+    } else if (fileSize < 1024 * 1024) {
+        return [NSString stringWithFormat:@"%.1f KB", (double)fileSize / 1024]; // 千字节
+    } else if (fileSize < 1024 * 1024 * 1024) {
+        return [NSString stringWithFormat:@"%.1f MB", (double)fileSize / (1024 * 1024)]; // 兆字节
+    } else {
+        return [NSString stringWithFormat:@"%.1f GB", (double)fileSize / (1024 * 1024 * 1024)]; // 吉字节
+    }
 }
 
 /// 根据文件名和文件类型获取数据
@@ -1026,6 +1048,35 @@ static inline uint8_t hexCharToInt(char c) {
     }
     
     return freeSpace;
+}
+
+/// 清空临时目录
++ (void)clearTemporaryDirectory {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *tempDir = NSTemporaryDirectory();
+    NSError *error = nil;
+
+    // 获取临时目录下的所有文件
+    NSArray *contents = [fileManager contentsOfDirectoryAtPath:tempDir error:&error];
+    if (error) {
+        NSLog(@"Error reading contents of temporary directory: %@", error.localizedDescription);
+        return;
+    }
+
+    // 遍历并删除所有文件
+    for (NSString *file in contents) {
+        NSString *filePath = [tempDir stringByAppendingPathComponent:file];
+        BOOL isDirectory;
+        if ([fileManager fileExistsAtPath:filePath isDirectory:&isDirectory]) {
+            if (!isDirectory) {
+                if (![fileManager removeItemAtPath:filePath error:&error]) {
+                    NSLog(@"Failed to delete file %@: %@", filePath, error.localizedDescription);
+                } else {
+                    NSLog(@"Deleted file: %@", filePath);
+                }
+            }
+        }
+    }
 }
 
 #pragma mark - 时间处理相关

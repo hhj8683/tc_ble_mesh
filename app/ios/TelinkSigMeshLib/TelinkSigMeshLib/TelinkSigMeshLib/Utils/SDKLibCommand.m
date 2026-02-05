@@ -3130,7 +3130,8 @@
  * @note    6.3.3.2 Light HSL Set and 6.3.3.3 Light HSL Set Unacknowledged, seeAlso: Mesh_Model_Specification v1.0.pdf  (page.213)
  */
 + (SigMessageHandle *)lightHSLSetWithDestination:(UInt16)destination HSLLight:(UInt16)HSLLight HSLHue:(UInt16)HSLHue HSLSaturation:(UInt16)HSLSaturation retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount ack:(BOOL)ack successCallback:(responseLightHSLStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback {
-    return [self lightHSLSetWithDestination:destination HSLLight:HSLLight HSLHue:HSLHue HSLSaturation:HSLSaturation transitionTime:nil delay:0 retryCount:retryCount responseMaxCount:responseMaxCount ack:ack successCallback:successCallback resultCallback:resultCallback];
+    SigTransitionTime *transitionTime = [[SigTransitionTime alloc] initWithSetps:0 stepResolution:SigStepResolution_hundredsOfMilliseconds];
+    return [self lightHSLSetWithDestination:destination HSLLight:HSLLight HSLHue:HSLHue HSLSaturation:HSLSaturation transitionTime:transitionTime delay:0 retryCount:retryCount responseMaxCount:responseMaxCount ack:ack successCallback:successCallback resultCallback:resultCallback];
 }
 
 /**
@@ -4110,11 +4111,12 @@
  */
 + (void)sendSecureNetworkBeacon {
     if (SigMeshLib.share.secureNetworkBeacon) {
-        //APP端已经接收到设备端上报的SecureNetworkBeacon,无需处理。
-
+        //APP端已经接收到设备端上报的SecureNetworkBeacon，此处无需处理。
+        //APP发送数据包后Sequence会累加并检测是否需要发送一次beacon。
     } else {
         //APP端未接收到设备端上报的SecureNetworkBeacon,需要根据APP端的SequenceNumber生成SecureNetworkBeacon。
         if (SigMeshLib.share.dataSource.getSequenceNumberUInt32 >= 0xc00000) {
+            SigMeshLib.share.haveUpdateIvIndex = YES;
             SigSecureNetworkBeacon *beacon = [[SigSecureNetworkBeacon alloc] initWithKeyRefreshFlag:NO ivUpdateActive:YES networkId:SigMeshLib.share.dataSource.curNetkeyModel.networkId ivIndex:SigMeshLib.share.dataSource.curNetkeyModel.ivIndex.index+1 usingNetworkKey:SigMeshLib.share.dataSource.curNetkeyModel];
             SigMeshLib.share.secureNetworkBeacon = beacon;
         } else {
@@ -4134,11 +4136,12 @@
  */
 + (void)sendMeshPrivateBeacon {
     if (SigMeshLib.share.meshPrivateBeacon) {
-        //APP端已经接收到设备端上报的meshPrivateBeacon,无需处理。
-
+        //APP端已经接收到设备端上报的meshPrivateBeacon，此处无需处理。
+        //APP发送数据包后Sequence会累加并检测是否需要发送一次beacon。
     } else {
         //APP端未接收到设备端上报的meshPrivateBeacon,需要根据APP端的SequenceNumber生成meshPrivateBeacon。
         if (SigMeshLib.share.dataSource.getSequenceNumberUInt32 >= 0xc00000) {
+            SigMeshLib.share.haveUpdateIvIndex = YES;
             SigMeshPrivateBeacon *beacon = [[SigMeshPrivateBeacon alloc] initWithKeyRefreshFlag:NO ivUpdateActive:YES ivIndex:SigMeshLib.share.dataSource.curNetkeyModel.ivIndex.index+1 randomData:[TelinkLibTools generateRandomHexDataWithLength:13] usingNetworkKey:SigMeshLib.share.dataSource.curNetkeyModel];
             SigMeshLib.share.meshPrivateBeacon = beacon;
         } else {
@@ -4159,6 +4162,25 @@
     SigSecureNetworkBeacon *beacon = [[SigSecureNetworkBeacon alloc] initWithKeyRefreshFlag:keyRefreshFlag ivUpdateActive:ivUpdateActive networkId:networkId ivIndex:ivIndex usingNetworkKey:networkKey];
     TelinkLogInfo(@"send updateIvIndex SecureNetworkBeacon=%@",[TelinkLibTools convertDataToHexStr:beacon.pduData]);
     [SigBearer.share sendBlePdu:beacon ofType:SigPduType_meshBeacon];
+}
+
+/**
+ * @brief   ivIndex increase one by APP.
+ * @note    SDK will update ivIndex automatically, when sequenceNumber of APP is more than 0xC00000.
+ */
++ (void)ivIndexIncreaseOne {
+    SigMeshLib.share.haveUpdateIvIndex = YES;
+    if (SigMeshLib.share.meshPrivateBeacon && (SigMeshLib.share.sendBeaconType == AppSendBeaconType_auto || SigMeshLib.share.sendBeaconType == AppSendBeaconType_meshPrivateBeacon)) {
+        SigMeshPrivateBeacon *beacon = [[SigMeshPrivateBeacon alloc] initWithKeyRefreshFlag:NO ivUpdateActive:SigMeshLib.share.meshPrivateBeacon.ivUpdateActive ivIndex:SigMeshLib.share.meshPrivateBeacon.ivUpdateActive ? SigMeshLib.share.meshPrivateBeacon.ivIndex : (SigMeshLib.share.meshPrivateBeacon.ivIndex + 1) randomData:[TelinkLibTools generateRandomHexDataWithLength:13] usingNetworkKey:SigMeshLib.share.dataSource.curNetkeyModel];
+        SigMeshLib.share.meshPrivateBeacon = beacon;
+        TelinkLogInfo(@"send PrivateBeacon=%@",beacon);
+        [SigBearer.share sendBlePdu:beacon ofType:SigPduType_meshBeacon];
+    } else if (SigMeshLib.share.secureNetworkBeacon) {
+        SigSecureNetworkBeacon *beacon = [[SigSecureNetworkBeacon alloc] initWithKeyRefreshFlag:NO ivUpdateActive:SigMeshLib.share.secureNetworkBeacon.ivUpdateActive networkId:SigMeshLib.share.dataSource.curNetkeyModel.networkId ivIndex:SigMeshLib.share.secureNetworkBeacon.ivUpdateActive ? SigMeshLib.share.secureNetworkBeacon.ivIndex : (SigMeshLib.share.secureNetworkBeacon.ivIndex + 1) usingNetworkKey:SigMeshLib.share.dataSource.curNetkeyModel];
+        SigMeshLib.share.secureNetworkBeacon = beacon;
+        TelinkLogInfo(@"send SecureNetworkBeacon=%@",beacon);
+        [SigBearer.share sendBlePdu:beacon ofType:SigPduType_meshBeacon];
+    }
 }
 
 /**

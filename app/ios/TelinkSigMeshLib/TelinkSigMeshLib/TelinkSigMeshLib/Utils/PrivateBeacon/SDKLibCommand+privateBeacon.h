@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 4.3.12 Mesh Private Beacon messages
 
 
-#pragma mark 4.3.12.1 PRIVATE_BEACON_GET, opcode:0xB711
+#pragma mark 4.3.12.1 PRIVATE_BEACON_GET, opcode:0x8060
 
 
 /**
@@ -46,7 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)privateBeaconGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responsePrivateBeaconStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.12.2 PRIVATE_BEACON_SET, opcode:0xB712
+#pragma mark 4.3.12.2 PRIVATE_BEACON_SET, opcode:0x8061
 
 
 /**
@@ -87,7 +87,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)privateBeaconSetWithPrivateBeacon:(SigPrivateBeaconState)privateBeacon destination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responsePrivateBeaconStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.12.4 PRIVATE_GATT_PROXY_GET, opcode:0xB714
+#pragma mark 4.3.12.4 PRIVATE_GATT_PROXY_GET, opcode:0x8063
 
 
 /**
@@ -104,7 +104,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)privateGattProxyGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responsePrivateGattProxyStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.12.5 PRIVATE_GATT_PROXY_SET, opcode:0xB715
+#pragma mark 4.3.12.5 PRIVATE_GATT_PROXY_SET, opcode:0x8064
 
 
 /**
@@ -125,7 +125,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)privateGattProxySetWithPrivateGattProxy:(SigPrivateGattProxyState)privateGattProxy destination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responsePrivateGattProxyStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.12.7 PRIVATE_NODE_IDENTITY_GET, opcode:0xB718
+#pragma mark 4.3.12.7 PRIVATE_NODE_IDENTITY_GET, opcode:0x8066
 
 
 /**
@@ -142,7 +142,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)privateNodeIdentityGetWithDestination:(UInt16)destination netKeyIndex:(UInt16)netKeyIndex retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responsePrivateNodeIdentityStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.12.8 PRIVATE_NODE_IDENTITY_SET, opcode:0xB719
+#pragma mark 4.3.12.8 PRIVATE_NODE_IDENTITY_SET, opcode:0x8067
 
 
 /**

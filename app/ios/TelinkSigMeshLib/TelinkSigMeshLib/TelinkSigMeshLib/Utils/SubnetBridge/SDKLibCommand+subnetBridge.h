@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
  The Bridge messages shall be encrypted and authenticated using the DevKey of the Subnet Bridge node.
  */
 
-#pragma mark 4.3.11.1 SUBNET_BRIDGE_GET, opcode:0xBF70
+#pragma mark 4.3.11.1 SUBNET_BRIDGE_GET, opcode:0x80B1
 
 
 /**
@@ -49,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)subnetBridgeGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseSubnetBridgeStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.11.2 SUBNET_BRIDGE_SET, opcode:0xBF71
+#pragma mark 4.3.11.2 SUBNET_BRIDGE_SET, opcode:0x80B2
 
 
 /**
@@ -69,7 +69,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)subnetBridgeSetWithDestination:(UInt16)destination subnetBridge:(SigSubnetBridgeStateValues)subnetBridge retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseSubnetBridgeStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.11.4 BRIDGING_TABLE_ADD, opcode:0xBF73
+#pragma mark 4.3.11.4 BRIDGING_TABLE_ADD, opcode:0x80B4
 
 
 /**
@@ -88,7 +88,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)bridgeTableAddWithDestination:(UInt16)destination subnetBridge:(SigSubnetBridgeModel *)subnetBridge retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseBridgeTableStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.11.5 BRIDGING_TABLE_REMOVE, opcode:0xBF74
+#pragma mark 4.3.11.5 BRIDGING_TABLE_REMOVE, opcode:0x80B5
 
 
 /**
@@ -116,7 +116,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)bridgeTableRemoveWithDestination:(UInt16)destination netKeyIndex1:(UInt16)netKeyIndex1 netKeyIndex2:(UInt16)netKeyIndex2 address1:(UInt16)address1 address2:(UInt16)address2 retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseBridgeTableStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.11.7 BRIDGED_SUBNETS_GET, opcode:0xBF76
+#pragma mark 4.3.11.7 BRIDGED_SUBNETS_GET, opcode:0x80B7
 
 
 /**
@@ -142,7 +142,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)bridgeSubnetsGetWithDestination:(UInt16)destination filter:(SigFilterFieldValues)filter prohibited:(UInt8)prohibited netKeyIndex:(UInt16)netKeyIndex startIndex:(UInt8)startIndex retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseBridgeSubnetsListMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.11.9 BRIDGING_TABLE_GET, opcode:0xBF78
+#pragma mark 4.3.11.9 BRIDGING_TABLE_GET, opcode:0x80B9
 
 
 /**
@@ -168,7 +168,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)bridgeTableGetWithDestination:(UInt16)destination netKeyIndex1:(UInt16)netKeyIndex1 netKeyIndex2:(UInt16)netKeyIndex2 startIndex:(UInt16)startIndex retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseBridgeTableListMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.11.11 BRIDGING_TABLE_SIZE_GET, opcode:0xBF7A
+#pragma mark 4.3.11.11 BRIDGING_TABLE_SIZE_GET, opcode:0x80BB
 
 
 /**

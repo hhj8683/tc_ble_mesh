@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 4.3.9 Opcodes Aggregator messages
 
 
-#pragma mark 4.3.9.2 OPCODES_AGGREGATOR_SEQUENCE, opcode:0xB809
+#pragma mark 4.3.9.2 OPCODES_AGGREGATOR_SEQUENCE, opcode:0x8072
 
 
 /**

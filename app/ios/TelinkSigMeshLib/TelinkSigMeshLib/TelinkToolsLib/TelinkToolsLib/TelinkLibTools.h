@@ -277,6 +277,14 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (NSData *)getDataWithLastPathComponent:(NSString *)lastPathComponent;
 
+/// 将 NSData 的文件大小转换为易读的字符串（如 "1.5 MB"）
+/// @param fileData NSData对象
++ (NSString *)formattedFileSizeStringFromData:(NSData *)fileData;
+
+/// 将 NSData 的文件大小转换为易读的字符串（如 "1.5 MB"）
+/// @param fileSize size of file
++ (NSString *)formattedFileSizeStringFromFileSize:(long long)fileSize;
+
 /// 根据文件名和文件类型获取数据
 ///
 /// @param fileName 文件名
@@ -315,6 +323,9 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// @return 剩余存储空间大小（字节），如果获取失败则返回0
 + (long long)freeDiskSpaceInBytes;
+
+/// 清空临时目录
++ (void)clearTemporaryDirectory;
 
 #pragma mark - 时间处理相关
 

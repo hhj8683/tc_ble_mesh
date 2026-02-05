@@ -25,7 +25,7 @@
 
 #pragma mark - Const string
 
-NSString * const kTelinkToolsLibVersion = @"v1.0.0";
+NSString * const kTelinkToolsLibVersion = @"v1.0.3";
 NSString * const kBootOtaServiceUUID = @"00010203-0405-0607-0809-0A0B0C0D1913";
 NSString * const kBootOtaCharacteristicUUID = @"00010203-0405-0607-0809-0A0B0C0D2B15";
 

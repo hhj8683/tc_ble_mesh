@@ -119,6 +119,8 @@
 		25E60F282435980B00620E29 /* SigFastProvisionAddManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 25E60F262435980B00620E29 /* SigFastProvisionAddManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		25E60F292435980B00620E29 /* SigFastProvisionAddManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 25E60F272435980B00620E29 /* SigFastProvisionAddManager.m */; };
 		491DA189F03FCA5F78ED0C24 /* Pods_TelinkSigMeshLib_TelinkSigMeshLibTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 69CFB423EDF9ABDFDA11B288 /* Pods_TelinkSigMeshLib_TelinkSigMeshLibTests.framework */; };
+		91162B552F346FE50096D421 /* TelinkToolsLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 91162B522F346FD70096D421 /* TelinkToolsLib.framework */; };
+		91162B562F346FEA0096D421 /* TelinkToolsLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 91162B522F346FD70096D421 /* TelinkToolsLib.framework */; };
 		9116F0AF2B18299E00F78621 /* TPeripheralManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 9116F0AD2B18299E00F78621 /* TPeripheralManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9116F0B02B18299E00F78621 /* TPeripheralManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 9116F0AE2B18299E00F78621 /* TPeripheralManager.m */; };
 		9119C6522B1DA82700C21F80 /* SigBluetooth.h in Headers */ = {isa = PBXBuildFile; fileRef = 25B8764B24850474006C76CB /* SigBluetooth.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -263,10 +265,6 @@
 		911B87792CBE68200062048F /* SDKLibCommand+EnOcean.m in Sources */ = {isa = PBXBuildFile; fileRef = 911B87762CBE68200062048F /* SDKLibCommand+EnOcean.m */; };
 		911B877A2CBE68200062048F /* SDKLibCommand+EnOcean.h in Headers */ = {isa = PBXBuildFile; fileRef = 911B87752CBE68200062048F /* SDKLibCommand+EnOcean.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		914D041F2B2AA8CF00824A17 /* TelinkCloudSigMeshLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 914D041E2B2AA8CF00824A17 /* TelinkCloudSigMeshLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		916566B02EB44DD0007018E7 /* TelinkToolsLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 916566AB2EB44D82007018E7 /* TelinkToolsLib.framework */; };
-		916566B12EB44DD0007018E7 /* TelinkToolsLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 916566AB2EB44D82007018E7 /* TelinkToolsLib.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		916566B22EB44DD4007018E7 /* TelinkToolsLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 916566AB2EB44D82007018E7 /* TelinkToolsLib.framework */; };
-		916566B32EB44DD4007018E7 /* TelinkToolsLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 916566AB2EB44D82007018E7 /* TelinkToolsLib.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		916964242AC56AEC0010D34A /* SDKLibCommand+privateBeacon.h in Headers */ = {isa = PBXBuildFile; fileRef = 916963FB2AC56AEC0010D34A /* SDKLibCommand+privateBeacon.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		916964262AC56AEC0010D34A /* SDKLibCommand+privateBeacon.m in Sources */ = {isa = PBXBuildFile; fileRef = 916963FC2AC56AEC0010D34A /* SDKLibCommand+privateBeacon.m */; };
 		916964282AC56AEC0010D34A /* SDKLibCommand+certificate.m in Sources */ = {isa = PBXBuildFile; fileRef = 916963FE2AC56AEC0010D34A /* SDKLibCommand+certificate.m */; };
@@ -309,16 +307,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		916566AA2EB44D82007018E7 /* PBXContainerItemProxy */ = {
+		91162B512F346FD70096D421 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 916566A52EB44D82007018E7 /* TelinkToolsLib.xcodeproj */;
+			containerPortal = 91162B4C2F346FD70096D421 /* TelinkToolsLib.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = 91973CB02E531488002F5BCD;
 			remoteInfo = TelinkToolsLib;
 		};
-		916566AC2EB44D82007018E7 /* PBXContainerItemProxy */ = {
+		91162B532F346FD70096D421 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 916566A52EB44D82007018E7 /* TelinkToolsLib.xcodeproj */;
+			containerPortal = 91162B4C2F346FD70096D421 /* TelinkToolsLib.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = 91973CB82E531488002F5BCD;
 			remoteInfo = TelinkToolsLibTests;
@@ -332,7 +330,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				916566B12EB44DD0007018E7 /* TelinkToolsLib.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -343,7 +340,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				916566B32EB44DD4007018E7 /* TelinkToolsLib.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -456,6 +452,7 @@
 		5FACF88F2133603B711A0075 /* Pods_TelinkSigMeshLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_TelinkSigMeshLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		69CFB423EDF9ABDFDA11B288 /* Pods_TelinkSigMeshLib_TelinkSigMeshLibTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_TelinkSigMeshLib_TelinkSigMeshLibTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		84EDE7DDE5598D768CDAA597 /* Pods-TelinkSigMeshLib.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TelinkSigMeshLib.release.xcconfig"; path = "Target Support Files/Pods-TelinkSigMeshLib/Pods-TelinkSigMeshLib.release.xcconfig"; sourceTree = "<group>"; };
+		91162B4C2F346FD70096D421 /* TelinkToolsLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = TelinkToolsLib.xcodeproj; path = TelinkToolsLib/TelinkToolsLib.xcodeproj; sourceTree = "<group>"; };
 		9116F0AD2B18299E00F78621 /* TPeripheralManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPeripheralManager.h; sourceTree = "<group>"; };
 		9116F0AE2B18299E00F78621 /* TPeripheralManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPeripheralManager.m; sourceTree = "<group>"; };
 		9119C73A2B1DA82700C21F80 /* TelinkCloudSigMeshLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TelinkCloudSigMeshLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -468,7 +465,6 @@
 		911B87752CBE68200062048F /* SDKLibCommand+EnOcean.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SDKLibCommand+EnOcean.h"; sourceTree = "<group>"; };
 		911B87762CBE68200062048F /* SDKLibCommand+EnOcean.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "SDKLibCommand+EnOcean.m"; sourceTree = "<group>"; };
 		914D041E2B2AA8CF00824A17 /* TelinkCloudSigMeshLib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TelinkCloudSigMeshLib.h; sourceTree = "<group>"; };
-		916566A52EB44D82007018E7 /* TelinkToolsLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = TelinkToolsLib.xcodeproj; path = TelinkToolsLib/TelinkToolsLib.xcodeproj; sourceTree = "<group>"; };
 		916963FB2AC56AEC0010D34A /* SDKLibCommand+privateBeacon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "SDKLibCommand+privateBeacon.h"; sourceTree = "<group>"; };
 		916963FC2AC56AEC0010D34A /* SDKLibCommand+privateBeacon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "SDKLibCommand+privateBeacon.m"; sourceTree = "<group>"; };
 		916963FE2AC56AEC0010D34A /* SDKLibCommand+certificate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "SDKLibCommand+certificate.m"; sourceTree = "<group>"; };
@@ -518,8 +514,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91162B552F346FE50096D421 /* TelinkToolsLib.framework in Frameworks */,
 				F8AE31569C1A93119F7212CC /* Pods_TelinkSigMeshLib.framework in Frameworks */,
-				916566B02EB44DD0007018E7 /* TelinkToolsLib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -535,8 +531,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91162B562F346FEA0096D421 /* TelinkToolsLib.framework in Frameworks */,
 				02C2BA606518017211D7B5D5 /* Pods_TelinkCloudSigMeshLib.framework in Frameworks */,
-				916566B22EB44DD4007018E7 /* TelinkToolsLib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -755,8 +751,8 @@
 			isa = PBXGroup;
 			children = (
 				91850C6F2EB0C57B0070B5BC /* PrivacyInfo.xcprivacy */,
-				916566A52EB44D82007018E7 /* TelinkToolsLib.xcodeproj */,
 				2567D88524B84BD00075E7E8 /* Script.sh */,
+				91162B4C2F346FD70096D421 /* TelinkToolsLib.xcodeproj */,
 				25C0AFDB235D597400846CFB /* TelinkSigMeshLib */,
 				25CE4E59254A910E004E6F12 /* TelinkSigMeshLibTests */,
 				25C0AFDA235D597400846CFB /* Products */,
@@ -821,6 +817,15 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		91162B4D2F346FD70096D421 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				91162B522F346FD70096D421 /* TelinkToolsLib.framework */,
+				91162B542F346FD70096D421 /* TelinkToolsLibTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		9119C73C2B1DADC400C21F80 /* Cloud */ = {
 			isa = PBXGroup;
 			children = (
@@ -841,15 +846,6 @@
 				911B87762CBE68200062048F /* SDKLibCommand+EnOcean.m */,
 			);
 			path = EnOcean;
-			sourceTree = "<group>";
-		};
-		916566A62EB44D82007018E7 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				916566AB2EB44D82007018E7 /* TelinkToolsLib.framework */,
-				916566AD2EB44D82007018E7 /* TelinkToolsLibTests.xctest */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		916963FA2AC56AEC0010D34A /* PrivateBeacon */ = {
@@ -1220,8 +1216,8 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 916566A62EB44D82007018E7 /* Products */;
-					ProjectRef = 916566A52EB44D82007018E7 /* TelinkToolsLib.xcodeproj */;
+					ProductGroup = 91162B4D2F346FD70096D421 /* Products */;
+					ProjectRef = 91162B4C2F346FD70096D421 /* TelinkToolsLib.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -1235,18 +1231,18 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		916566AB2EB44D82007018E7 /* TelinkToolsLib.framework */ = {
+		91162B522F346FD70096D421 /* TelinkToolsLib.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
 			path = TelinkToolsLib.framework;
-			remoteRef = 916566AA2EB44D82007018E7 /* PBXContainerItemProxy */;
+			remoteRef = 91162B512F346FD70096D421 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		916566AD2EB44D82007018E7 /* TelinkToolsLibTests.xctest */ = {
+		91162B542F346FD70096D421 /* TelinkToolsLibTests.xctest */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.cfbundle;
 			path = TelinkToolsLibTests.xctest;
-			remoteRef = 916566AC2EB44D82007018E7 /* PBXContainerItemProxy */;
+			remoteRef = 91162B532F346FD70096D421 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
