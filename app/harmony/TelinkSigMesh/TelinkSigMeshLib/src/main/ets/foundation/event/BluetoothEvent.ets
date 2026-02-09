@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BluetoothEvent.java
+ * @file BluetoothEvent.ets
  *
  * @brief for TLSR chips
  *

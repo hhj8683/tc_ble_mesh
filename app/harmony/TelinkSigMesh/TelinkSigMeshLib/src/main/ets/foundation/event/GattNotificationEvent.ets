@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file GattNotificationEvent.java
+ * @file GattNotificationEvent.ets
  *
  * @brief for TLSR chips
  *

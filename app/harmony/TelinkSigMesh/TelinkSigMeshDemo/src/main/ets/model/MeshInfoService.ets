@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshInfoService.java
+ * @file MeshInfoService.ets
  *
  * @brief for TLSR chips
  *

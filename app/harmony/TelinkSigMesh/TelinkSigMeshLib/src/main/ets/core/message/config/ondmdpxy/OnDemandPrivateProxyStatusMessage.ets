@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file OnDemandPrivateProxyStatusMessage.java
+ * @file OnDemandPrivateProxyStatusMessage.ets
  *
  * @brief for TLSR chips
  *

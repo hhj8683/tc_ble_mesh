@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ProvisioningBridge.java
+ * @file ProvisioningBridge.ets
  *
  * @brief for TLSR chips
  *

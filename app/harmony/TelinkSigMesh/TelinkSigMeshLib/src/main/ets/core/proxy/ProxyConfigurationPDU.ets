@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ProxyConfigurationPDU.java
+ * @file ProxyConfigurationPDU.ets
  *
  * @brief for TLSR chips
  *

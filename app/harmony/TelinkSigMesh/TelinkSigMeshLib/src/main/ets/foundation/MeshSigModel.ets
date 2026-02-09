@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshSigModel.java
+ * @file MeshSigModel.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file OnlineStatusEvent.java
+ * @file OnlineStatusEvent.ets
  *
  * @brief for TLSR chips
  *

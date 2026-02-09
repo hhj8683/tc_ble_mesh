@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file SecureNetworkBeacon.java
+ * @file SecureNetworkBeacon.ets
  *
  * @brief for TLSR chips
  *

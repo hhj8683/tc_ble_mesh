@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file OpcodeAggregatorStatusMessage.java
+ * @file OpcodeAggregatorStatusMessage.ets
  *
  * @brief for TLSR chips
  *

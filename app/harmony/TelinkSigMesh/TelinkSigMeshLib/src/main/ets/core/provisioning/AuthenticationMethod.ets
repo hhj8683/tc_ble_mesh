@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file AuthenticationMethod.java
+ * @file AuthenticationMethod.ets
  *
  * @brief for TLSR chips
  *

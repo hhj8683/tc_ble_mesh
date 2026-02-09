@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file SegmentAcknowledgmentMessage.java
+ * @file SegmentAcknowledgmentMessage.ets
  *
  * @brief for TLSR chips
  *

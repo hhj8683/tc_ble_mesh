@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file UpperTransportControlPDU.java
+ * @file UpperTransportControlPDU.ets
  *
  * @brief for TLSR chips
  *

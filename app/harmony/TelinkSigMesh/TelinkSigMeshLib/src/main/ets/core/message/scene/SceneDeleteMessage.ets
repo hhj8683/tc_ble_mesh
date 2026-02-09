@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file SceneStoreMessage.java
+ * @file SceneStoreMessage.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file SchedulerActionStatusMessage.java
+ * @file SchedulerActionStatusMessage.ets
  *
  * @brief for TLSR chips
  *

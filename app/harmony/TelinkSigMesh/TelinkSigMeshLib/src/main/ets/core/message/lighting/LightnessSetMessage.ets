@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file LightnessSetMessage.java
+ * @file LightnessSetMessage.ets
  *
  * @brief for TLSR chips
  *

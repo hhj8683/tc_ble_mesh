@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file TransitionTime.java
+ * @file TransitionTime.ets
  *
  * @brief for TLSR chips
  *

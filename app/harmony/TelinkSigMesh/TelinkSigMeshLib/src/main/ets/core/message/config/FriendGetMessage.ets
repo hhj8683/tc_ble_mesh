@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file FriendGetMessage.java
+ * @file FriendGetMessage.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file TimeSetMessage.java
+ * @file TimeSetMessage.ets
  *
  * @brief for TLSR chips
  *

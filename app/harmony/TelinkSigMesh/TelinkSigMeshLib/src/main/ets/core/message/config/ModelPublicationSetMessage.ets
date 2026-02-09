@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ModelPublicationSetMessage.java
+ * @file ModelPublicationSetMessage.ets
  *
  * @brief for TLSR chips
  *

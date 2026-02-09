@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BridgingTableAddMessage.java
+ * @file BridgingTableAddMessage.ets
  *
  * @brief for TLSR chips
  *

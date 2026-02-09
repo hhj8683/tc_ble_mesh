@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file AppKeyAddMessage.java
+ * @file AppKeyAddMessage.ets
  *
  * @brief for TLSR chips
  *

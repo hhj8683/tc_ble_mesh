@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file AccessLayerPDU.java
+ * @file AccessLayerPDU.ets
  *
  * @brief for TLSR chips
  *

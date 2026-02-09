@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file GattProxyGetMessage.java
+ * @file GattProxyGetMessage.ets
  *
  * @brief for TLSR chips
  *

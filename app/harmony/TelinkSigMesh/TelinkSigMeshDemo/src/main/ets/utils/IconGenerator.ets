@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file IconGenerator.java
+ * @file IconGenerator.ets
  *
  * @brief for TLSR chips
  *

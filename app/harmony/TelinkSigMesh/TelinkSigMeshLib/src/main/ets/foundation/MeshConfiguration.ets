@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshConfiguration.java
+ * @file MeshConfiguration.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ConnectionFilter.java
+ * @file ConnectionFilter.ets
  *
  * @brief for TLSR chips
  *

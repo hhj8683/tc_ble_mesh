@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ProxyAddAddressMessage.java
+ * @file ProxyAddAddressMessage.ets
  *
  * @brief for TLSR chips
  *

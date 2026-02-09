@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file SegmentedAccessMessagePDU.java
+ * @file SegmentedAccessMessagePDU.ets
  *
  * @brief for TLSR chips
  *

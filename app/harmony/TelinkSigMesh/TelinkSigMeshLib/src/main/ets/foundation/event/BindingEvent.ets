@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BindingEvent.java
+ * @file BindingEvent.ets
  *
  * @brief for TLSR chips
  *

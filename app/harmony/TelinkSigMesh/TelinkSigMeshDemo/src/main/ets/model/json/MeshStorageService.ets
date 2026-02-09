@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshStorageService.java
+ * @file MeshStorageService.ets
  *
  * @brief for TLSR chips
  *
@@ -284,7 +284,7 @@ export class MeshStorageService {
     }
 
 
-    // convert nodeInfo(mesh.java) to node(json)
+    // convert nodeInfo(mesh.ets) to node(json)
     public static convertDeviceInfoToNode(deviceInfo: NodeInfo, appKeyIndex: number): Node {
         let node = new Node();
         let levelServiceEnable = PreferencesHelper.isLevelServiceEnable(TelinkSigMeshDemoAbility.getContext());

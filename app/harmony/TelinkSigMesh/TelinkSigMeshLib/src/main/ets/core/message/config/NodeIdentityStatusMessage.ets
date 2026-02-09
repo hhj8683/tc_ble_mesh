@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NodeIdentityStatusMessage.java
+ * @file NodeIdentityStatusMessage.ets
  *
  * @brief for TLSR chips
  *

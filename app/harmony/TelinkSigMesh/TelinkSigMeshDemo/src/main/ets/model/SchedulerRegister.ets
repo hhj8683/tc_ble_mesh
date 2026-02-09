@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file SchedulerRegister.java
+ * @file SchedulerRegister.ets
  *
  * @brief for TLSR chips
  *

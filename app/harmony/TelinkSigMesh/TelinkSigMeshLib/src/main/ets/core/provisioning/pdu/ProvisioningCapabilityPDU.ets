@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ProvisioningCapabilityPDU.java
+ * @file ProvisioningCapabilityPDU.ets
  *
  * @brief for TLSR chips
  *

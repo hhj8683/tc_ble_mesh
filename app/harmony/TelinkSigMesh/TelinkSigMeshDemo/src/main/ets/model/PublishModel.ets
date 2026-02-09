@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file PublishModel.java
+ * @file PublishModel.ets
  *
  * @brief for TLSR chips
  *

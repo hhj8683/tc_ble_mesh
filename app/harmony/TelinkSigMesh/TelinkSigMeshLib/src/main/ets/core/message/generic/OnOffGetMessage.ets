@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file OnOffGetMessage.java
+ * @file OnOffGetMessage.ets
  *
  * @brief for TLSR chips
  *

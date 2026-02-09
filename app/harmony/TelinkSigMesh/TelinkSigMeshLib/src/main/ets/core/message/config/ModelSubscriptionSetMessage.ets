@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ModelSubscriptionSetMessage.java
+ * @file ModelSubscriptionSetMessage.ets
  *
  * @brief for TLSR chips
  *

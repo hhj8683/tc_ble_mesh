@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NetworkingController.java
+ * @file NetworkingController.ets
  *
  * @brief for TLSR chips
  *

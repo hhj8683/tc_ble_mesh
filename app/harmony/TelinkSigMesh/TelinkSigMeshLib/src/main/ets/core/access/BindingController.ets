@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BindingController.java
+ * @file BindingController.ets
  *
  * @brief for TLSR chips
  *

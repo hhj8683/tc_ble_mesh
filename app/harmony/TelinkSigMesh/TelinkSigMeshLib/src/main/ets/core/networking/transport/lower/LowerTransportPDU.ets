@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file LowerTransportPDU.java
+ * @file LowerTransportPDU.ets
  *
  * @brief for TLSR chips
  *

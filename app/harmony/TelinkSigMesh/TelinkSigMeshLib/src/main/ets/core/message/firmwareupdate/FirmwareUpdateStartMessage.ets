@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file FirmwareUpdateStartMessage.java
+ * @file FirmwareUpdateStartMessage.ets
  *
  * @brief for TLSR chips
  *

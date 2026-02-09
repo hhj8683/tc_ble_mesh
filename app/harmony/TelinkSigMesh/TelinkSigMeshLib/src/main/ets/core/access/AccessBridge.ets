@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file AccessBridge.java
+ * @file AccessBridge.ets
  *
  * @brief for TLSR chips
  *

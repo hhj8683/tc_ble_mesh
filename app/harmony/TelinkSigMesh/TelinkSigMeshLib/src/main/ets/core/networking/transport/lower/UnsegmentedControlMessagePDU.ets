@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file UnsegmentedControlMessagePDU.java
+ * @file UnsegmentedControlMessagePDU.ets
  *
  * @brief for TLSR chips
  *

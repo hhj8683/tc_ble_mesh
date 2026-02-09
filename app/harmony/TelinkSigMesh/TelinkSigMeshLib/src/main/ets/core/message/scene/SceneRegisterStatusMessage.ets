@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file SceneRegisterStatusMessage.java
+ * @file SceneRegisterStatusMessage.ets
  *
  * @brief for TLSR chips
  *

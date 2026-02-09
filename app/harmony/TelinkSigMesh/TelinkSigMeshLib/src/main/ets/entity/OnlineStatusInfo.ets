@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file OnlineStatusInfo.java
+ * @file OnlineStatusInfo.ets
  *
  * @brief for TLSR chips
  *

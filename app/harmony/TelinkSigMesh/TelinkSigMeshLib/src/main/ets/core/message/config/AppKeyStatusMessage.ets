@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file AppKeyStatusMessage.java
+ * @file AppKeyStatusMessage.ets
  *
  * @brief for TLSR chips
  *

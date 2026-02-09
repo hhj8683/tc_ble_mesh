@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ScanParameters.java
+ * @file ScanParameters.ets
  *
  * @brief for TLSR chips
  *

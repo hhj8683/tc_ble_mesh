@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file AutoConnectEvent.java
+ * @file AutoConnectEvent.ets
  *
  * @brief for TLSR chips
  *

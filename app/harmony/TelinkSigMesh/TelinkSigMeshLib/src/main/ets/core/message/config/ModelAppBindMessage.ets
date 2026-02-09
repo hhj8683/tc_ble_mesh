@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ModelAppBindMessage.java
+ * @file ModelAppBindMessage.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NetworkInfoUpdateEvent.java
+ * @file NetworkInfoUpdateEvent.ets
  *
  * @brief for TLSR chips
  *

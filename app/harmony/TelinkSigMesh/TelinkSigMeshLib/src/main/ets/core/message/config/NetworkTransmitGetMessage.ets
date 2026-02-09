@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NetworkTransmitGetMessage.java
+ * @file NetworkTransmitGetMessage.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file HslSetMessage.java
+ * @file HslSetMessage.ets
  *
  * @brief for TLSR chips
  *

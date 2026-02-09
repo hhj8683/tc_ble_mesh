@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ProxySetFilterTypeMessage.java
+ * @file ProxySetFilterTypeMessage.ets
  *
  * @brief for TLSR chips
  *

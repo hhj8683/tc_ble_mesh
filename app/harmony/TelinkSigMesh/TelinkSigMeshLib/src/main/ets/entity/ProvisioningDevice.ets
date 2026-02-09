@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ProvisioningDevice.java
+ * @file ProvisioningDevice.ets
  *
  * @brief for TLSR chips
  *

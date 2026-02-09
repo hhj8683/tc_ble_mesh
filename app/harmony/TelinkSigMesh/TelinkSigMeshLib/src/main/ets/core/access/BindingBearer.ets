@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BindingBearer.java
+ * @file BindingBearer.ets
  *
  * @brief for TLSR chips
  *

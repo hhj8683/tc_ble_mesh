@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NodeResetMessage.java
+ * @file NodeResetMessage.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file AutoConnectParameters.java
+ * @file AutoConnectParameters.ets
  *
  * @brief for TLSR chips
  *

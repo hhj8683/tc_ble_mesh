@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshScanRecord.java
+ * @file MeshScanRecord.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshSecurity.java
+ * @file MeshSecurity.ets
  *
  * @brief for TLSR chips
  *

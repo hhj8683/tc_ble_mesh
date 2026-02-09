@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NodeStatusChangedEvent.java
+ * @file NodeStatusChangedEvent.ets
  *
  * @brief for TLSR chips
  *

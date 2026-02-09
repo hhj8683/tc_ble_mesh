@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ExtendBearerMode.java
+ * @file ExtendBearerMode.ets
  *
  * @brief for TLSR chips
  *

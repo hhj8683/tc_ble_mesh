@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshBeaconPDU.java
+ * @file MeshBeaconPDU.ets
  *
  * @brief for TLSR chips
  *

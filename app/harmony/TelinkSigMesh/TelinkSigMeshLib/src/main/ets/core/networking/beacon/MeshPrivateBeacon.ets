@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshPrivateBeacon.java
+ * @file MeshPrivateBeacon.ets
  *
  * @brief for TLSR chips
  *

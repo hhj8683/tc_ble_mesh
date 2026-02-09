@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NetKeyAddMessage.java
+ * @file NetKeyAddMessage.ets
  *
  * @brief for TLSR chips
  *

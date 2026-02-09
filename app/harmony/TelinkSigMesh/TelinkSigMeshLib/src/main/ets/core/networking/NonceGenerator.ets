@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NonceGenerator.java
+ * @file NonceGenerator.ets
  *
  * @brief for TLSR chips
  *

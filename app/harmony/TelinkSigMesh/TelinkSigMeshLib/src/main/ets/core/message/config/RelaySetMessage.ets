@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file RelaySetMessage.java
+ * @file RelaySetMessage.ets
  *
  * @brief for TLSR chips
  *

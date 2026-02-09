@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file TransportControlMessagePDU.java
+ * @file TransportControlMessagePDU.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file FriendStatusMessage.java
+ * @file FriendStatusMessage.ets
  *
  * @brief for TLSR chips
  *

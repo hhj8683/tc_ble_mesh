@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ReliableMessageProcessEvent.java
+ * @file ReliableMessageProcessEvent.ets
  *
  * @brief for TLSR chips
  *

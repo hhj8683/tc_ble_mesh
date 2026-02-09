@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file StatusMessage.java
+ * @file StatusMessage.ets
  *
  * @brief for TLSR chips
  *

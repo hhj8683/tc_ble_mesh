@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MeshAdvFilter.java
+ * @file MeshAdvFilter.ets
  *
  * @brief for TLSR chips
  *

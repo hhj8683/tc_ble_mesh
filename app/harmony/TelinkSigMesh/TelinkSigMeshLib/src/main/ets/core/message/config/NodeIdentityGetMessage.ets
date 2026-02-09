@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NodeIdentityGetMessage.java
+ * @file NodeIdentityGetMessage.ets
  *
  * @brief for TLSR chips
  *

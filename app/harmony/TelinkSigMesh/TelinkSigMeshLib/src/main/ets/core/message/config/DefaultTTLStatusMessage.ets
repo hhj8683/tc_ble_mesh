@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file DefaultTTLStatusMessage.java
+ * @file DefaultTTLStatusMessage.ets
  *
  * @brief for TLSR chips
  *

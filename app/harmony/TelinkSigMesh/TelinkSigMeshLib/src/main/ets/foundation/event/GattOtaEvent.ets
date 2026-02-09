@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file GattOtaEvent.java
+ * @file GattOtaEvent.ets
  *
  * @brief for TLSR chips
  *

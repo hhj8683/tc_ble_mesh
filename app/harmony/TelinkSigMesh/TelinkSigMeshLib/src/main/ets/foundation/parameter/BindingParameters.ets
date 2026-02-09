@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BindingParameters.java
+ * @file BindingParameters.ets
  *
  * @brief for TLSR chips
  *

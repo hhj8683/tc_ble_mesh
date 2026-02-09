@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file KeyRefreshPhaseStatusMessage.java
+ * @file KeyRefreshPhaseStatusMessage.ets
  *
  * @brief for TLSR chips
  *

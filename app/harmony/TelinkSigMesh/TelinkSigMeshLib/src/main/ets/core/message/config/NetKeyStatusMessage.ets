@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NetKeyStatusMessage.java
+ * @file NetKeyStatusMessage.ets
  *
  * @brief for TLSR chips
  *

@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NetworkingPDU.java
+ * @file NetworkingPDU.ets
  *
  * @brief for TLSR chips
  *

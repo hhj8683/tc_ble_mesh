@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BeaconStatusMessage.java
+ * @file BeaconStatusMessage.ets
  *
  * @brief for TLSR chips
  *

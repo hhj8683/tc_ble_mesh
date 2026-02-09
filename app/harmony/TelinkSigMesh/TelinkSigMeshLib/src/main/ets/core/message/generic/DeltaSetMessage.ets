@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file DeltaSetMessage.java
+ * @file DeltaSetMessage.ets
  *
  * @brief for TLSR chips
  *

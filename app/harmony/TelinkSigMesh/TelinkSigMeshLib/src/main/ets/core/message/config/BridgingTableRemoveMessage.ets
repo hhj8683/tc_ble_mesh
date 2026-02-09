@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BridgingTableRemoveMessage.java
+ * @file BridgingTableRemoveMessage.ets
  *
  * @brief for TLSR chips
  *

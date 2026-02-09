@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NetworkingBridge.java
+ * @file NetworkingBridge.ets
  *
  * @brief for TLSR chips
  *

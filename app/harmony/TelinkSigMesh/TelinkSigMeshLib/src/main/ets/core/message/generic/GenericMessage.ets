@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file GenericMessage.java
+ * @file GenericMessage.ets
  *
  * @brief for TLSR chips
  *

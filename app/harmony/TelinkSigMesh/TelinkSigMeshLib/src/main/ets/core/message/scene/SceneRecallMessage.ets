@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file SceneRecallMessage.java
+ * @file SceneRecallMessage.ets
  *
  * @brief for TLSR chips
  *

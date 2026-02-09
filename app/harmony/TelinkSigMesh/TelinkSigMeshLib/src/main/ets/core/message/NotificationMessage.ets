@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NotificationMessage.java
+ * @file NotificationMessage.ets
  *
  * @brief for TLSR chips
  *

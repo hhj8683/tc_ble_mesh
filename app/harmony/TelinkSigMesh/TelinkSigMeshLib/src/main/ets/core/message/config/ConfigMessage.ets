@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ConfigMessage.java
+ * @file ConfigMessage.ets
  *
  * @brief for TLSR chips
  *

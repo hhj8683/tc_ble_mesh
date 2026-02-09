@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file BindingDevice.java
+ * @file BindingDevice.ets
  *
  * @brief for TLSR chips
  *

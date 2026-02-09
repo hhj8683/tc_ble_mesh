@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file AggregatorItem.java
+ * @file AggregatorItem.ets
  *
  * @brief for TLSR chips
  *

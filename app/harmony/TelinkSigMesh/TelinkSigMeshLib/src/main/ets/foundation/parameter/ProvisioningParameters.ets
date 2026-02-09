@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ProvisioningParameters.java
+ * @file ProvisioningParameters.ets
  *
  * @brief for TLSR chips
  *

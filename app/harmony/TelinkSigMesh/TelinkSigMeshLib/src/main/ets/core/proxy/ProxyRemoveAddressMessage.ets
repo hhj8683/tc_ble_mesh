@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file ProxyRemoveAddressMessage.java
+ * @file ProxyRemoveAddressMessage.ets
  *
  * @brief for TLSR chips
  *

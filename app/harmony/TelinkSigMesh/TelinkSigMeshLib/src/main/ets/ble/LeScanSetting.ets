@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file LeScanSetting.java
+ * @file LeScanSetting.ets
  *
  * @brief for TLSR chips
  *

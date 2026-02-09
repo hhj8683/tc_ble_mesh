@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file NetworkTransmitStatusMessage.java
+ * @file NetworkTransmitStatusMessage.ets
  *
  * @brief for TLSR chips
  *

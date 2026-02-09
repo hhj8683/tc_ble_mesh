@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file CtlTemperatureSetMessage.java
+ * @file CtlTemperatureSetMessage.ets
  *
  * @brief for TLSR chips
  *
