@@ -884,6 +884,7 @@
     [SigMeshLib.share.dataSource.nodeSequenceNumberCacheList removeAllObjects];
     SigMeshLib.share.secureNetworkBeacon = nil;
     SigMeshLib.share.meshPrivateBeacon = nil;
+    SigMeshLib.share.haveUpdateIvIndex = NO;
     if ([peripheral isEqual:self.currentPeripheral]) {
         [self addConnectedPeripheralToLocations:peripheral];
         [self connectPeripheralFinish];

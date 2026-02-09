@@ -180,32 +180,9 @@ typedef enum : NSUInteger {
                         return;
                     }
                     if (successful) {
-                        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                            [SDKLibCommand setFilterForProvisioner:SigDataSource.share.curProvisionerModel successCallback:^(UInt16 source, UInt16 destination, SigFilterStatus * _Nonnull responseMessage) {
-
-                            } finishCallback:^(BOOL isResponseAll, NSError * _Nullable error) {
-                                if (error) {
-                                    TelinkLogVerbose(@"setFilter失败");
-                                    [weakSelf scanNode];
-                                } else {
-                                    UInt16 unicastAddressOfConnected = SigDataSource.share.unicastAddressOfConnected;
-                                    TelinkLogVerbose(@"setFilter成功，unicastAddressOfConnected=0x%X",unicastAddressOfConnected);
-                                    BOOL success = NO;
-                                    for (SigNodeModel *node in weakSelf.connectNodeList) {
-                                        if (node.address == unicastAddressOfConnected) {
-                                            success = YES;
-                                            break;
-                                        }
-                                    }
-                                    if (success) {
-                                        TelinkLogVerbose(@"连接到正确的节点");
-                                        [weakSelf successAction];
-                                    } else {
-                                        TelinkLogVerbose(@"未连接到正确的节点，开始setNodeIdentity");
-                                        [weakSelf setNodeIdentity];
-                                    }
-                                }
-                            }];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [NSObject cancelPreviousPerformRequestsWithTarget:weakSelf selector:@selector(delaySetFilter) object:nil];
+                            [weakSelf performSelector:@selector(delaySetFilter) withObject:nil afterDelay:0.5];
                         });
                     } else {
                         TelinkLogVerbose(@"连接失败或者读服务失败");
@@ -221,6 +198,35 @@ typedef enum : NSUInteger {
         TelinkLogVerbose(@"扫描超时");
         [self scanNode];
     }
+}
+
+- (void)delaySetFilter {
+    __weak typeof(self) weakSelf = self;
+    [SDKLibCommand setFilterForProvisioner:SigDataSource.share.curProvisionerModel successCallback:^(UInt16 source, UInt16 destination, SigFilterStatus * _Nonnull responseMessage) {
+
+    } finishCallback:^(BOOL isResponseAll, NSError * _Nullable error) {
+        if (error) {
+            TelinkLogVerbose(@"setFilter失败");
+            [weakSelf scanNode];
+        } else {
+            UInt16 unicastAddressOfConnected = SigDataSource.share.unicastAddressOfConnected;
+            TelinkLogVerbose(@"setFilter成功，unicastAddressOfConnected=0x%X",unicastAddressOfConnected);
+            BOOL success = NO;
+            for (SigNodeModel *node in weakSelf.connectNodeList) {
+                if (node.address == unicastAddressOfConnected) {
+                    success = YES;
+                    break;
+                }
+            }
+            if (success) {
+                TelinkLogVerbose(@"连接到正确的节点");
+                [weakSelf successAction];
+            } else {
+                TelinkLogVerbose(@"未连接到正确的节点，开始setNodeIdentity");
+                [weakSelf setNodeIdentity];
+            }
+        }
+    }];
 }
 
 - (void)setNodeIdentity {
@@ -297,7 +303,9 @@ typedef enum : NSUInteger {
     dispatch_async(dispatch_get_main_queue(), ^{
         [NSObject cancelPreviousPerformRequestsWithTarget:self];
     });
+    [SDKLibCommand stopScan];
     [SDKLibCommand stopMeshConnectWithComplete:self.stopMeshConnectCallback];
+    [SigMeshLib.share cleanAllCommandsAndRetryWhenMeshDisconnected];
     if (self.startMeshConnectCallback) {
         self.startMeshConnectCallback(NO);
     }
@@ -314,13 +322,9 @@ typedef enum : NSUInteger {
     });
     if (SigMeshLib.share.dataSource.hasNodeExistTimeModelID && SigMeshLib.share.dataSource.needPublishTimeModel) {
         [SDKLibCommand statusNowTime];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            if ([SigBearer.share.dataDelegate respondsToSelector:@selector(bearerDidOpen:)]) {
-                [SigBearer.share.dataDelegate bearerDidOpen:SigBearer.share];
-            }
-            if (self.startMeshConnectCallback) {
-                self.startMeshConnectCallback(YES);
-            }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(delatCallbackBearerDidOpen) object:nil];
+            [self performSelector:@selector(delatCallbackBearerDidOpen) withObject:nil afterDelay:0.3];
         });
     }else{
         if ([SigBearer.share.dataDelegate respondsToSelector:@selector(bearerDidOpen:)]) {
@@ -329,6 +333,15 @@ typedef enum : NSUInteger {
         if (self.startMeshConnectCallback) {
             self.startMeshConnectCallback(YES);
         }
+    }
+}
+
+- (void)delatCallbackBearerDidOpen {
+    if ([SigBearer.share.dataDelegate respondsToSelector:@selector(bearerDidOpen:)]) {
+        [SigBearer.share.dataDelegate bearerDidOpen:SigBearer.share];
+    }
+    if (self.startMeshConnectCallback) {
+        self.startMeshConnectCallback(YES);
     }
 }
 

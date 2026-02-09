@@ -75,6 +75,68 @@
 
 @implementation ColorManager
 
+typedef struct{
+    float h;
+    float s;
+    float l;
+}HSL_set;
+
+typedef struct{
+    UInt16 r;
+    UInt16 g;
+    UInt16 b;
+}RGB_set;
+
+void HslToRgb(HSL_set hsl, RGB_set *rgb);
+
+float Hue_2_RGB(float v1,float v2,float vH)
+{
+    if(vH < 0){
+        vH+=1;
+    }
+    if(vH > 1){
+        vH-=1;
+    }
+    if((6.0*vH)<1){
+        return (v1+(v2-v1)*6.0f*vH);
+    }
+    if((2.0*vH)<1){
+        return (v2);
+    }
+    if((3.0*vH)<2){
+        return (v1+(v2-v1)*((2.0f/3.0f)-vH)*6.0f);
+    }
+    return(v1);
+}
+
+#define RGB_RANGE    (0xFFFF)
+
+/**
+ * @brief       This function switch HSL to RGB
+ * @param[in]   hsl    - HSL
+ * @param[in]   rgb    - RGB
+ */
+void HslToRgb(HSL_set hsl, RGB_set *rgb)
+{
+    float m1,m2;
+    if(hsl.s==0){
+        rgb->r=rgb->g=rgb->b=(UInt8)(hsl.l*RGB_RANGE);
+    }
+    else
+    {
+        if(hsl.l<0.5){
+            m2=hsl.l*(1+hsl.s);
+        }
+        else{
+            m2=hsl.l+hsl.s-hsl.l*hsl.s;
+        }
+        m1=2*hsl.l-m2;
+        rgb->r=(UInt16)(RGB_RANGE*Hue_2_RGB(m1,m2,hsl.h+(1.0f/3.0f)));
+        rgb->g=(UInt16)(RGB_RANGE*Hue_2_RGB(m1,m2,hsl.h));
+        rgb->b=(UInt16)(RGB_RANGE*Hue_2_RGB(m1,m2,hsl.h-(1.0f/3.0f)));
+    }
+}
+
 + (HSVModel *)getHSVWithColor:(UIColor *)color{
     HSVModel *tem = [[HSVModel alloc] init];
     CGFloat h=0,s=0,b=0,a=0;
@@ -137,76 +199,81 @@
 }
 
 + (UIColor *)getRGBWithHSLColor:(HSLModel *)hsl{
-    CGFloat h,s,l,q,p,Tr,Tg,Tb,COLOR_R,COLOR_G,COLOR_B;
-
-    h = hsl.hue;
-    s = hsl.saturation;
-    l = hsl.lightness;
-
-    if (h<0 || h>=1 || s<0 || s>1 || l<0 || l>1) {
-        TelinkLogDebug(@"警告：传入的HSLModel为非法值");
-        return [UIColor colorWithRed:0 green:0 blue:0 alpha:1.0];
-    }
-    if (s == 0) {
-        return [UIColor colorWithRed:l green:l blue:l alpha:1.0];
-    }
-
-    if (l < 0.5) {
-        q = l * (1 + s);
-    }else{
-        q = l + s - (l * s);
-    }
-    p = 2 * l - q;
-    Tr = h + 1/3.0;
-    Tg = h;
-    Tb = h - 1/3.0;
-
-    if (Tr < 0) {
-        Tr = Tr + 1.0;
-    }else if (Tr > 1) {
-        Tr = Tr - 1.0;
-    }
-    if (Tg < 0) {
-        Tg = Tg + 1.0;
-    }else if (Tg > 1) {
-        Tg = Tg - 1.0;
-    }
-    if (Tb < 0) {
-        Tb = Tb + 1.0;
-    }else if (Tb > 1) {
-        Tb = Tb - 1.0;
-    }
-
-    if (Tr < 1/6.0) {
-        COLOR_R = p + ((q - p) * 6 * Tr);
-    }else if (Tr >= 1/6.0 && Tr < 1/2.0) {
-        COLOR_R = q;
-    }else if (Tr >= 1/2.0 && Tr < 2/3.0) {
-        COLOR_R = p + ((q - p) * 6 * (2/3.0 - Tr));
-    }else{
-        COLOR_R = p;
-    }
-
-    if (Tg < 1/6.0) {
-        COLOR_G = p + ((q - p) * 6 * Tg);
-    }else if (Tg >= 1/6.0 && Tg < 1/2.0) {
-        COLOR_G = q;
-    }else if (Tg >= 1/2.0 && Tg < 2/3.0) {
-        COLOR_G = p + ((q - p) * 6 * (2/3.0 - Tg));
-    }else{
-        COLOR_G = p;
-    }
-
-    if (Tb < 1/6.0) {
-        COLOR_B = p + ((q - p) * 6 * Tb);
-    }else if (Tb >= 1/6.0 && Tb < 1/2.0) {
-        COLOR_B = q;
-    }else if (Tb >= 1/2.0 && Tb < 2/3.0) {
-        COLOR_B = p + ((q - p) * 6 * (2/3.0 - Tb));
-    }else{
-        COLOR_B = p;
-    }
-    return [UIColor colorWithRed:COLOR_R green:COLOR_G blue:COLOR_B alpha:1.0];
+    HSL_set hsl_t = {hsl.hue, hsl.saturation, hsl.lightness};
+    RGB_set rgb_t = {};
+    HslToRgb(hsl_t, &rgb_t);
+    return [UIColor colorWithRed:rgb_t.r/(float)RGB_RANGE green:rgb_t.g/(float)RGB_RANGE blue:rgb_t.b/(float)RGB_RANGE alpha:1.0];
+    
+//    CGFloat h,s,l,q,p,Tr,Tg,Tb,COLOR_R,COLOR_G,COLOR_B;
+//
+//    h = hsl.hue;
+//    s = hsl.saturation;
+//    l = hsl.lightness;
+//
+//    if (h<0 || h>=1 || s<0 || s>1 || l<0 || l>1) {
+//        TelinkLogDebug(@"警告：传入的HSLModel为非法值");
+//        return [UIColor colorWithRed:0 green:0 blue:0 alpha:1.0];
+//    }
+//    if (s == 0) {
+//        return [UIColor colorWithRed:l green:l blue:l alpha:1.0];
+//    }
+//
+//    if (l < 0.5) {
+//        q = l * (1 + s);
+//    }else{
+//        q = l + s - (l * s);
+//    }
+//    p = 2 * l - q;
+//    Tr = h + 1/3.0;
+//    Tg = h;
+//    Tb = h - 1/3.0;
+//
+//    if (Tr < 0) {
+//        Tr = Tr + 1.0;
+//    }else if (Tr > 1) {
+//        Tr = Tr - 1.0;
+//    }
+//    if (Tg < 0) {
+//        Tg = Tg + 1.0;
+//    }else if (Tg > 1) {
+//        Tg = Tg - 1.0;
+//    }
+//    if (Tb < 0) {
+//        Tb = Tb + 1.0;
+//    }else if (Tb > 1) {
+//        Tb = Tb - 1.0;
+//    }
+//
+//    if (Tr < 1/6.0) {
+//        COLOR_R = p + ((q - p) * 6 * Tr);
+//    }else if (Tr >= 1/6.0 && Tr < 1/2.0) {
+//        COLOR_R = q;
+//    }else if (Tr >= 1/2.0 && Tr < 2/3.0) {
+//        COLOR_R = p + ((q - p) * 6 * (2/3.0 - Tr));
+//    }else{
+//        COLOR_R = p;
+//    }
+//
+//    if (Tg < 1/6.0) {
+//        COLOR_G = p + ((q - p) * 6 * Tg);
+//    }else if (Tg >= 1/6.0 && Tg < 1/2.0) {
+//        COLOR_G = q;
+//    }else if (Tg >= 1/2.0 && Tg < 2/3.0) {
+//        COLOR_G = p + ((q - p) * 6 * (2/3.0 - Tg));
+//    }else{
+//        COLOR_G = p;
+//    }
+//
+//    if (Tb < 1/6.0) {
+//        COLOR_B = p + ((q - p) * 6 * Tb);
+//    }else if (Tb >= 1/6.0 && Tb < 1/2.0) {
+//        COLOR_B = q;
+//    }else if (Tb >= 1/2.0 && Tb < 2/3.0) {
+//        COLOR_B = p + ((q - p) * 6 * (2/3.0 - Tb));
+//    }else{
+//        COLOR_B = p;
+//    }
+//    return [UIColor colorWithRed:COLOR_R green:COLOR_G blue:COLOR_B alpha:1.0];
 }
 
 + (RGBModel *)getRGBWithColor:(UIColor *)color{

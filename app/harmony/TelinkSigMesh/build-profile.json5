@@ -7,11 +7,11 @@
         "material": {
           "certpath": "C:\\Users\\admin\\.ohos\\config\\default_TelinkSigMesh_KkgQ2ECmaniYVoo3TGNMwlSIPWr_gOvSO9lM5GU9JcI=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B83A7611AE93D7060E8BC5E6D7757315945208403E1078F955812F815AE3479D7BDF80BA61DE015",
+          "keyPassword": "0000001B80120962CDFED2319C79C5C82C0E532234D7D5C5F690F43E7E5D154039E88E5ABAD6DE85D68F79",
           "profile": "C:\\Users\\admin\\.ohos\\config\\default_TelinkSigMesh_KkgQ2ECmaniYVoo3TGNMwlSIPWr_gOvSO9lM5GU9JcI=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\admin\\.ohos\\config\\default_TelinkSigMesh_KkgQ2ECmaniYVoo3TGNMwlSIPWr_gOvSO9lM5GU9JcI=.p12",
-          "storePassword": "0000001BB78672CB701B8602DA374C8B83FF26E169491E59B37EA11F93F19807D7C68A0B594121BFBA7A82"
+          "storePassword": "0000001B9EC21C07FD6B2B40891217410FFE43BF3A1AE7D4AFA9FA74FDEC922E37F44D8E41C6E41CF29602"
         }
       }
     ],

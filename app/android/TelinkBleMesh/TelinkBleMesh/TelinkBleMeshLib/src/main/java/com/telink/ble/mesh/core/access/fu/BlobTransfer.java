@@ -816,7 +816,7 @@ class BlobTransfer {
             final int unsegLen = getSegmentLen();
             final int segLen = unsegLen + 1;
             int segmentCnt = chunkMsgLen == unsegLen ? 1 : (chunkMsgLen % segLen == 0 ? chunkMsgLen / segLen : (chunkMsgLen / segLen + 1));
-            result = segmentCnt * NetworkingController.netPktSendInterval + 240;
+            result = segmentCnt * NetworkingController.netPktSendInterval + 100; // changed ( 240 -> 100 ) to reduce time cost
 //        final long min = 5 * 1000;
             // use 5000 when DLE disabled, use 300 when DLE enabled => changed to 3000
             final long min = unsegLen == NetworkingController.UNSEGMENTED_ACCESS_PAYLOAD_MAX_LENGTH_DEFAULT ? 3000 : 300;

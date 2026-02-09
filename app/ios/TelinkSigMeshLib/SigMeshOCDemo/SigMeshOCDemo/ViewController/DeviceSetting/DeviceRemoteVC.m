@@ -76,20 +76,6 @@
     [self tipAndTryConnectRemote];
 }
 
-- (void)viewWillDisappear:(BOOL)animated {
-    [super viewWillDisappear:animated];
-    if([self isBeingDismissed] || [self isMovingFromParentViewController]) {
-        // pop / dismiss
-        // 退出该界面则无需再直连遥控器，因为遥控器不具备proxy功能。
-        SigBearer.share.isAllowConnectSwitch = NO;
-        // 如果直连了遥控器，需要在首页断开,此处无需断开。非遥控器则无需断开，停止自动setNodeIdentity即可。
-        if (SigDataSource.share.unicastAddressOfConnected != self.model.address) {
-            [ConnectTools.share endConnectTools];
-        }
-    } else {
-        // push /present from here
-    }
-}
 - (void)tipAndTryConnectRemote {
     //判断直连节点，重试直连遥控器
     if (SigBearer.share.isOpen && SigDataSource.share.unicastAddressOfConnected == self.model.address) {
@@ -105,7 +91,7 @@
 }
 
 - (void)connectAction {
-    [self showAlertSureAndCancelWithTitle:kDefaultAlertTitle message:@"Switch not connected, pls set device to adv mode" sure:nil cancel:nil];
+    [self showAlertSureWithTitle:kDefaultAlertTitle message:@"Switch not connected, pls set device to adv mode" sure:nil];
     [self.connectTipButton setTitle:@"device connecting..." forState:UIControlStateNormal];
     self.connectTipButton.userInteractionEnabled = YES;
     __weak typeof(self) weakSelf = self;

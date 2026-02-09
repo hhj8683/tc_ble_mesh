@@ -25,7 +25,7 @@
 
 #pragma mark - Const string
 
-NSString * const kTelinkSigMeshLibVersion = @"v4.2.0.2";
+NSString * const kTelinkSigMeshLibVersion = @"v4.2.0.3";
 NSString * const kNotifyCommandIsBusyOrNot = @"CommandIsBusyOrNot";
 NSString * const kCommandIsBusyKey = @"IsBusy";
 NSString * const AccessError_invalidSource = @"Local Provisioner does not have Unicast Address specified.";
@@ -56,6 +56,7 @@ NSString * const kFirmwareRevisionCharacteristicsID = @"2A26";
 NSString * const kScanList_key = @"scanList_key";
 NSString * const kJsonMeshUUID_key = @"MeshUUID";
 NSString * const kCurrentProvisionerUUID_key = @"currentProvisionerUUID_key";
+NSString * const kCurrenProvisionerSno_key = @"currenProvisionerSno_key";
 NSString * const kLocationIvIndexAndSequenceNumberDictionary_key = @"locationIvIndexAndSequenceNumberDictionary_key";
 NSString * const kLocalSolicitationSequenceNumberDictionary_key = @"kLocalSolicitationSequenceNumberDictionary_key";
 NSString * const kLocalNetworkPrivateBeaconDictionary_key = @"kLocalNetworkPrivateBeaconDictionary_key";//缓存private beacon页面的数据。

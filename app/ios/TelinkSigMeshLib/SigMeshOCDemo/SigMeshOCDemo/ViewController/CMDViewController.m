@@ -30,7 +30,7 @@
 /**
  Attention: more detail about ini packet can look document 《SIG Mesh iOS APP(OC版本)使用以及开发手册.docx》k.自定义ini指令组包结构说明
  */
-@interface CMDViewController()<UITextFieldDelegate>
+@interface CMDViewController()<UITextFieldDelegate, SigMessageDelegate>
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
 @property (strong, nonatomic) IBOutlet UITextView *showTextView;
 @property (weak, nonatomic) IBOutlet UIImageView *showMoreImageView;
@@ -48,6 +48,7 @@
 
 - (void)normalSetting {
     [super normalSetting];
+    SigMeshLib.share.delegateForDeveloper = self;
     //init commandList
     self.commandList = [NSMutableArray array];
     //init nameList
@@ -310,11 +311,8 @@
     [self.view endEditing:YES];
     if ([self validateCommandParameters]) {
         [self showNewLogMessage:[NSString stringWithFormat:@"send message: opcode -- %@ params -- %@",[self getHexStringOpcodeOfCommand:self.currentCommand], [TelinkLibTools convertDataToHexStr:self.currentCommand.commandData]]];
-        __weak typeof(self) weakSelf = self;
         [SDKLibCommand sendIniCommandModel:self.currentCommand successCallback:^(UInt16 source, UInt16 destination, SigMeshMessage * _Nonnull responseMessage) {
-            NSString *str = [NSString stringWithFormat:@"notify: opcode -- %@ params -- %@", [TelinkLibTools convertDataToHexStr:[TelinkLibTools turnOverData:[TelinkLibTools nsstringToHex:[NSString stringWithFormat:@"%X", responseMessage.opCode]]]], [TelinkLibTools convertDataToHexStr:responseMessage.parameters]];
-            TelinkLogVerbose(@"%@",str);
-            [weakSelf showNewLogMessage:str];
+            //get response and refresh UI in `- (void)didReceiveMessage:(SigMeshMessage *)message sentFromSource:(UInt16)source toDestination:(UInt16)destination`
         } resultCallback:^(BOOL isResponseAll, NSError * _Nullable error) {
             TelinkLogVerbose(@"finish");
         }];
@@ -500,6 +498,39 @@
         self.showTextView.text = self.logString;
         [self.showTextView scrollRangeToVisible:NSMakeRange(self.showTextView.text.length, 1)];
     });
+}
+
+#pragma mark - SigMessageDelegate
+
+/// A callback called whenever a Mesh Message has been received from the mesh network.
+/// @param message The received message.
+/// @param source The Unicast Address of the Element from which the message was sent.
+/// @param destination The address to which the message was sent.
+- (void)didReceiveMessage:(SigMeshMessage *)message sentFromSource:(UInt16)source toDestination:(UInt16)destination {
+    NSString *str = [NSString stringWithFormat:@"notify: opcode -- %@ params -- %@", [TelinkLibTools convertDataToHexStr:[TelinkLibTools turnOverData:[TelinkLibTools nsstringToHex:[NSString stringWithFormat:@"%X", message.opCode]]]], [TelinkLibTools convertDataToHexStr:message.parameters]];
+    TelinkLogVerbose(@"%@",str);
+    [self showNewLogMessage:str];
+
+#ifdef kIsTelinkCloudSigMeshLib
+    CloudNodeModel *node = [AppDataSource.share getCloudNodeModelWithNodeAddress:source];
+    if (node) {
+        NSString *status = nil;
+        if ([message isKindOfClass:[SigGenericOnOffStatus class]]) {
+            SigGenericOnOffStatus *onOffStatus = (SigGenericOnOffStatus *)message;
+            status = onOffStatus.targetState == YES ? @"ON" : @"OFF";
+        } else if ([message isKindOfClass:[SigTelinkOnlineStatusMessage class]]) {
+            SigTelinkOnlineStatusMessage *onOffStatus = (SigTelinkOnlineStatusMessage *)message;
+            status = onOffStatus.state == DeviceStateOutOfLine ? @"OFFLINE" : (onOffStatus.state == DeviceStateOn ? @"ON" : @"OFF");
+        }
+        if (status != nil) {
+            [TelinkHttpTool uploadRecordRequestWithNodeId:node.nodeId status:status didLoadData:^(id  _Nullable result, NSError * _Nullable err) {
+                if (err) {
+                    TelinkLogInfo(@"uploadRecord error = %@", err);
+                }
+            }];
+        }
+    }
+#endif
 }
 
 @end

@@ -110,7 +110,7 @@
                         return;
                     }
                 }
-                TelinkLogError(@"Invalid or unsupported beacon type.");
+                TelinkLogError(@"Invalid or unsupported beacon type=%d, pdu=%@.", beaconType, [TelinkLibTools convertDataToHexStr:pdu]);
             }
             break;
         case SigPduType_proxyConfiguration:

@@ -83,7 +83,7 @@ typedef void (^TelinkHttpBlock) (TelinkHttpRequest * _Nonnull request,id _Nullab
             NSInteger statusCode = [r statusCode];
             if (statusCode != 200) {
                 NSDictionary *result = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-                if (result.count>0) {
+                if (result.count > 0 && [result.allKeys containsObject:@"status"] && [result.allKeys containsObject:@"message"]) {
                     NSError *err = [NSError errorWithDomain:TelinkHttpManager.share.baseUrl code:[[result objectForKey:@"status"] integerValue] userInfo:@{NSLocalizedDescriptionKey : [result objectForKey:@"message"]}];
                     if (weakSelf.httpBlock) {
                         weakSelf.httpBlock(weakSelf, nil, err);

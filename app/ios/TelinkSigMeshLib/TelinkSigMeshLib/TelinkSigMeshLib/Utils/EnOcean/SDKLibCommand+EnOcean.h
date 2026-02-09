@@ -21,7 +21,12 @@
  *          limitations under the License.
  *******************************************************************************************************/
 
+#ifdef kIsTelinkCloudSigMeshLib
+#import <TelinkCloudSigMeshLib/TelinkCloudSigMeshLib.h>
+#else
 #import <TelinkSigMeshLib/TelinkSigMeshLib.h>
+#endif
+
 
 NS_ASSUME_NONNULL_BEGIN
 

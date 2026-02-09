@@ -181,6 +181,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic,assign) AppSendBeaconType sendBeaconType;
 /// Identify whether to retry group commands using unResponse unicast addresses. The default value is NO.
 @property (nonatomic,assign) BOOL retryGroupMessageByUnicastAddress;
+/// Flag to indicate  whether the ivIndex has been updated.
+@property (nonatomic,assign) BOOL haveUpdateIvIndex;
 
 + (instancetype)new __attribute__((unavailable("please initialize by use .share or .share()")));
 - (instancetype)init __attribute__((unavailable("please initialize by use .share or .share()")));

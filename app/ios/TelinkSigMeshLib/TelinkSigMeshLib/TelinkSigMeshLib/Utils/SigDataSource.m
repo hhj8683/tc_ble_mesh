@@ -291,7 +291,7 @@
     _timestamp = timestamp;
     [self setIvIndexUInt32:kDefaultIvIndex];
     [self setSequenceNumberUInt32:0];
-    [self saveCurrentIvIndex:kDefaultIvIndex sequenceNumber:0];
+//    [self saveCurrentIvIndex:kDefaultIvIndex sequenceNumber:0];//会导致沙盒存储很多无效Sequence数据
     _filterModel = [[SigProxyFilterModel alloc] init];
     [self addExtendGroupList];
 }
@@ -830,6 +830,9 @@
         UInt16 maxAddr = range.lowIntAddress;
         NSMutableArray <SigNodeModel *>*nodeList = [NSMutableArray arrayWithArray:[self getNodesOfProvisioner:self.curProvisionerModel]];
         if (nodeList && nodeList.count > 0) {
+            [nodeList sortUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+                return [(SigNodeModel *)obj1 address] > [(SigNodeModel *)obj2 address];
+            }];
             SigNodeModel *node = nodeList.lastObject;
             if (node.address + node.elements.count <= range.heightIntAddress) {
                 maxAddr = node.address + node.elements.count;
@@ -1064,6 +1067,9 @@
         // 新逻辑，步长达到才本地缓存一次SequenceNumber
         [self saveCurrentIvIndex:[self getIvIndexUInt32] sequenceNumber:sequenceNumberUInt32];
     }
+    if (sequenceNumberUInt32 > 0xC00000 && !SigMeshLib.share.haveUpdateIvIndex) {
+        [SDKLibCommand ivIndexIncreaseOne];
+    }
 }
 
 /**
@@ -1082,6 +1088,7 @@
     if (!exist) {
         //don't exist mesh.json, create and init mesh
         [self initMeshData];
+        [self saveCurrentIvIndex:kDefaultIvIndex sequenceNumber:0];
         TelinkLogInfo(@"creat mesh_sample.json success");
         [self saveLocationData];
     }else{
@@ -1096,11 +1103,26 @@
     [self loadScanList];
 }
 
+- (void)fixSequenceNumberCacheData {
+    NSNumber *oldSaveSequenceNumber = [[NSUserDefaults standardUserDefaults] objectForKey:kCurrenProvisionerSno_key];
+    if (oldSaveSequenceNumber != nil) {
+        if (self.meshUUID != nil && self.curProvisionerModel.UUID != nil && self.curLocationNodeModel.unicastAddress != nil) {
+            UInt32 newSaveSequence = SigDataSource.share.getLocalSequenceNumberUInt32;
+            if (newSaveSequence < oldSaveSequenceNumber.intValue) {
+                [self saveCurrentIvIndex:self.getIvIndexUInt32 sequenceNumber:oldSaveSequenceNumber.intValue];
+            }
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:kCurrenProvisionerSno_key];
+            [[NSUserDefaults standardUserDefaults] synchronize];
+        }
+    }
+}
+
 /**
  * @brief   Check SigDataSource.provisioners.
  * @note    This api will auto create a provisioner when SigDataSource.provisioners hasn't provisioner corresponding to app's UUID.
  */
 - (void)checkExistLocationProvisioner {
+    [self fixSequenceNumberCacheData];
     //1.clean the match advertisementDataServiceData cache.
     if (_encryptedArray) {
         [_encryptedArray removeAllObjects];
@@ -2282,6 +2304,7 @@
         /// Initialize self.
         [self initData];
         [self initMeshData];
+        [self saveCurrentIvIndex:kDefaultIvIndex sequenceNumber:0];
     }
     return self;
 }
@@ -2766,6 +2789,8 @@
     if (dict == nil) {
         dict = @{};
     }
+    [self setSequenceNumberUInt32:sequenceNumber];
+    [self setIvIndexUInt32:ivIndex];
     NSMutableDictionary *mDict = [NSMutableDictionary dictionaryWithDictionary:dict];
     NSString *key = [NSString stringWithFormat:@"%@+%@+%@", self.meshUUID, self.curProvisionerModel.UUID, self.curLocationNodeModel.unicastAddress];
     NSString *value = [NSString stringWithFormat:@"%@+%@", self.ivIndex, self.sequenceNumber];

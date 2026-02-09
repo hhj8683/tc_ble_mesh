@@ -22,7 +22,6 @@
  *******************************************************************************************************/
 
 #import "HomeViewController.h"
-#import "LogViewController.h"
 #import "CMDViewController.h"
 #import "ReKeyBindViewController.h"
 #import "HomeItemCell.h"

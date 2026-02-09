@@ -34,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 
 
-#pragma mark 8.4.1.1 Firmware Update Information Get, opcode:0xB601
+#pragma mark 8.4.1.1 Firmware Update Information Get, opcode:0x8308
 
 
 /// The Firmware Update Information Get message is an acknowledged
@@ -65,7 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareUpdateInformationGetWithDestination:(UInt16)destination firstIndex:(UInt8)firstIndex entriesLimit:(UInt8)entriesLimit retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount expectedResponseNodeList:( NSArray <NSNumber *>* _Nullable )expectedResponseNodeList successCallback:(responseFirmwareInformationStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.1.3 Firmware Update Firmware Metadata Check, opcode:0xB603
+#pragma mark 8.4.1.3 Firmware Update Firmware Metadata Check, opcode:0x830A
 
 
 /// The Firmware Update Firmware Metadata Check message is an acknowledged
@@ -96,7 +96,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareUpdateFirmwareMetadataCheckWithDestination:(UInt16)destination updateFirmwareImageIndex:(UInt8)updateFirmwareImageIndex incomingFirmwareMetadata:(nullable NSData *)incomingFirmwareMetadata retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareUpdateFirmwareMetadataStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.1.5 Firmware Update Get, opcode:0xB605
+#pragma mark 8.4.1.5 Firmware Update Get, opcode:0x830C
 
 
 /// The Firmware Update Get message is an acknowledged message
@@ -118,7 +118,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareUpdateGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount expectedResponseNodeList:( NSArray <NSNumber *>* _Nullable )expectedResponseNodeList successCallback:(responseFirmwareUpdateStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.1.6 Firmware Update Start, opcode:0xB606
+#pragma mark 8.4.1.6 Firmware Update Start, opcode:0x830D
 
 
 /// The Firmware Update Start message is an acknowledged message used to
@@ -154,7 +154,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareUpdateStartWithDestination:(UInt16)destination updateTTL:(UInt8)updateTTL updateTimeoutBase:(UInt16)updateTimeoutBase updateBLOBID:(UInt64)updateBLOBID updateFirmwareImageIndex:(UInt8)updateFirmwareImageIndex incomingFirmwareMetadata:(nullable NSData *)incomingFirmwareMetadata retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareUpdateStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.1.7 Firmware Update Cancel, opcode:0xB607
+#pragma mark 8.4.1.7 Firmware Update Cancel, opcode:0x830E
 
 
 /// The Firmware Update Cancel message is an acknowledged message
@@ -176,7 +176,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareUpdateCancelWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareUpdateStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.1.8 Firmware Update Apply, opcode:0xB608
+#pragma mark 8.4.1.8 Firmware Update Apply, opcode:0x830F
 
 
 /// The Firmware Update Apply message is an acknowledged message
@@ -198,7 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareUpdateApplyWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareUpdateStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.1 Firmware Distribution Receivers Add, opcode:0xB611
+#pragma mark 8.4.2.1 Firmware Distribution Receivers Add, opcode:0x8311
 
 
 /// The Firmware Distribution Receivers Add message is an acknowledged message sent
@@ -221,7 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionReceiversAddWithDestination:(UInt16)destination receiverEntriesList:(NSArray <SigReceiverEntryModel *>*)receiverEntriesList retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionReceiversStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.2 Firmware Distribution Receivers Delete All, opcode:0xB612
+#pragma mark 8.4.2.2 Firmware Distribution Receivers Delete All, opcode:0x8312
 
 
 /// The Firmware Distribution Receivers Delete All message is an acknowledged
@@ -243,7 +243,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionReceiversDeleteAllWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionReceiversStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.4 Firmware Distribution Receivers Get, opcode:0xB60F
+#pragma mark 8.4.2.4 Firmware Distribution Receivers Get, opcode:0x8314
 
 
 /// The Firmware Distribution Receivers Get message is an acknowledged message
@@ -273,7 +273,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionReceiversGetWithDestination:(UInt16)destination firstIndex:(UInt16)firstIndex entriesLimit:(UInt16)entriesLimit retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionReceiversListMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.6 Firmware Distribution Capabilities Get, opcode:0xB614
+#pragma mark 8.4.2.6 Firmware Distribution Capabilities Get, opcode:0x8316
 
 
 /// The Firmware Distribution Capabilities Get message is an acknowledged message
@@ -298,7 +298,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 8.4.2 Firmware Distribution model messages
 
 
-#pragma mark 8.4.2.8 Firmware Distribution Get, opcode:0xB60A
+#pragma mark 8.4.2.8 Firmware Distribution Get, opcode:0x8318
 
 
 /// The Firmware Distribution Get message is an acknowledged message
@@ -320,7 +320,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.9 Firmware Distribution Start, opcode:0xB60B
+#pragma mark 8.4.2.9 Firmware Distribution Start, opcode:0x8319
 
 
 /// The Firmware Distribution Start message is an acknowledged message
@@ -368,7 +368,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionStartWithDestination:(UInt16)destination distributionAppKeyIndex:(UInt16)distributionAppKeyIndex distributionTTL:(UInt8)distributionTTL distributionTimeoutBase:(UInt16)distributionTimeoutBase distributionTransferMode:(SigTransferModeState)distributionTransferMode updatePolicy:(SigUpdatePolicyType)updatePolicy RFU:(UInt8)RFU distributionFirmwareImageIndex:(UInt16)distributionFirmwareImageIndex distributionMulticastAddress:(NSData *)distributionMulticastAddress retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.10 Firmware Distribution Cancel, opcode:0xB60C
+#pragma mark 8.4.2.10 Firmware Distribution Cancel, opcode:0x831B
 
 
 /// The Firmware Distribution Cancel message is an acknowledged message
@@ -390,7 +390,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionCancelWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.11 Firmware Distribution Apply, opcode:0xB60D
+#pragma mark 8.4.2.11 Firmware Distribution Apply, opcode:0x831C
 
 
 /// The Firmware Distribution Apply message is an acknowledged message
@@ -412,7 +412,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionApplyWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.13 Firmware Distribution Upload Get, opcode:0xB616
+#pragma mark 8.4.2.13 Firmware Distribution Upload Get, opcode:0x831E
 
 
 /// The Firmware Distribution Upload Get message is an acknowledged
@@ -434,7 +434,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionUploadGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionUploadStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.14 Firmware Distribution Upload Start, opcode:0xB617
+#pragma mark 8.4.2.14 Firmware Distribution Upload Start, opcode:0x831F
 
 
 /// The Firmware Distribution Upload Start message is an acknowledged message sent
@@ -479,7 +479,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionUploadStartWithDestination:(UInt16)destination uploadTTL:(UInt8)uploadTTL uploadTimeoutBase:(UInt16)uploadTimeoutBase uploadBLOBID:(UInt64)uploadBLOBID uploadFirmwareSize:(UInt32)uploadFirmwareSize uploadFirmwareMetadataLength:(UInt8)uploadFirmwareMetadataLength uploadFirmwareMetadata:(NSData *)uploadFirmwareMetadata uploadFirmwareID:(NSData *)uploadFirmwareID retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionUploadStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.15 Firmware Distribution Upload OOB Start, opcode:0xB618
+#pragma mark 8.4.2.15 Firmware Distribution Upload OOB Start, opcode:0x8320
 
 
 /// The Firmware Distribution Upload OOB Start message is an acknowledged message
@@ -508,7 +508,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionUploadOOBStartWithDestination:(UInt16)destination uploadURILength:(UInt8)uploadURILength uploadURI:(NSData *)uploadURI uploadFirmwareID:(NSData *)uploadFirmwareID retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionUploadStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.16 Firmware Distribution Upload Cancel, opcode:0xB619
+#pragma mark 8.4.2.16 Firmware Distribution Upload Cancel, opcode:0x8321
 
 
 /// The Firmware Distribution Upload Cancel message is an acknowledged
@@ -530,7 +530,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionUploadCancelWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionUploadStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.18 Firmware Distribution Firmware Get, opcode:0xB61B
+#pragma mark 8.4.2.18 Firmware Distribution Firmware Get, opcode:0x8323
 
 
 /// The Firmware Distribution Firmware Get message is an acknowledged message
@@ -552,7 +552,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionFirmwareGetWithDestination:(UInt16)destination firmwareID:(NSData *)firmwareID retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionFirmwareStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.19 Firmware Distribution Firmware Get By Index, opcode:0xB61D
+#pragma mark 8.4.2.19 Firmware Distribution Firmware Get By Index, opcode:0x8324
 
 
 /// The Firmware Distribution Firmware Get By Index message is an acknowledged message
@@ -576,7 +576,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionFirmwareGetByIndexWithDestination:(UInt16)destination distributionFirmwareImageIndex:(UInt16)distributionFirmwareImageIndex retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionFirmwareStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.20 Firmware Distribution Firmware Delete, opcode:0xB61E
+#pragma mark 8.4.2.20 Firmware Distribution Firmware Delete, opcode:0x8325
 
 
 /// The Firmware Distribution Firmware Delete message is an acknowledged message
@@ -600,7 +600,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)firmwareDistributionFirmwareDeleteWithDestination:(UInt16)destination firmwareID:(NSData *)firmwareID retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseFirmwareDistributionFirmwareStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 8.4.2.21 Firmware Distribution Firmware Delete All, opcode:0xB61F
+#pragma mark 8.4.2.21 Firmware Distribution Firmware Delete All, opcode:0x8326
 
 
 /// The Firmware Distribution Firmware Delete All message is an acknowledged message
@@ -625,7 +625,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 7.3.1 BLOB Transfer messages
 
 
-#pragma mark 7.3.1.1 BLOB Transfer Get, opcode:0xB701
+#pragma mark 7.3.1.1 BLOB Transfer Get, opcode:0x8300
 
 
 /// BLOB Transfer Get is an acknowledged message used to get
@@ -647,7 +647,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)BLOBTransferGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount expectedResponseNodeList:( NSArray <NSNumber *>* _Nullable )expectedResponseNodeList successCallback:(responseBLOBTransferStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 7.3.1.2 BLOB Transfer Start, opcode:0xB702
+#pragma mark 7.3.1.2 BLOB Transfer Start, opcode:0x8301
 
 
 /// BLOB Transfer Start is an acknowledged message used to start
@@ -686,7 +686,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)BLOBTransferStartWithDestination:(UInt16)destination transferMode:(SigTransferModeState)transferMode BLOBID:(UInt64)BLOBID BLOBSize:(UInt32)BLOBSize BLOBBlockSizeLog:(UInt8)BLOBBlockSizeLog MTUSize:(UInt16)MTUSize retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseBLOBTransferStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 7.3.1.3 BLOB Transfer Cancel, opcode:0xB703
+#pragma mark 7.3.1.3 BLOB Transfer Cancel, opcode:0x8302
 
 
 /// BLOB Transfer Cancel is an acknowledged message used to cancel
@@ -708,7 +708,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)BLOBTransferCancelWithDestination:(UInt16)destination BLOBID:(UInt64)BLOBID retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseBLOBTransferStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 3.1.3.1.5 BLOB Block Get, opcode:0xB707
+#pragma mark 3.1.3.1.5 BLOB Block Get, opcode:0x8305
 
 
 /// BLOB Block Get is an acknowledged message used to retrieve the phase
@@ -734,7 +734,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)BLOBBlockGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount expectedResponseNodeList:( NSArray <NSNumber *>* _Nullable )expectedResponseNodeList successCallback:(responseBLOBBlockStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 3.1.3.1.6 BLOB Block Start, opcode:0xB705
+#pragma mark 3.1.3.1.6 BLOB Block Start, opcode:0x8304
 
 
 /// BLOB Block Start is an acknowledged message used to start
@@ -764,7 +764,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)BLOBBlockStartWithDestination:(UInt16)destination blockNumber:(UInt16)blockNumber chunkSize:(UInt16)chunkSize retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount expectedResponseNodeList:( NSArray <NSNumber *>* _Nullable )expectedResponseNodeList successCallback:(responseBLOBBlockStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 3.1.3.1.8 BLOB Chunk Transfer, opcode:0x7D
+#pragma mark 3.1.3.1.8 BLOB Chunk Transfer, opcode:0x66
 
 
 /// BLOB Chunk Transfer is an unacknowledged message used to
@@ -791,7 +791,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (SigMessageHandle *)BLOBChunkTransferWithDestination:(UInt16)destination chunkNumber:(UInt16)chunkNumber chunkData:(NSData *)chunkData sendBySegmentPdu:(BOOL)sendBySegmentPdu retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 7.3.1.10 BLOB Information Get, opcode:0xB70A
+#pragma mark 7.3.1.10 BLOB Information Get, opcode:0x8306
 
 
 /// BLOB Information Get is an acknowledged message used to get

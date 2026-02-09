@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Const string
 
-UIKIT_EXTERN NSString * const kTelinkToolsLibVersion;//@"v1.0.0"
+UIKIT_EXTERN NSString * const kTelinkToolsLibVersion;//@"v1.0.3"
 UIKIT_EXTERN NSString * const kBootOtaServiceUUID;//@"00010203-0405-0607-0809-0A0B0C0D1913"
 UIKIT_EXTERN NSString * const kBootOtaCharacteristicUUID;//@"00010203-0405-0607-0809-0A0B0C0D2B15"
 
