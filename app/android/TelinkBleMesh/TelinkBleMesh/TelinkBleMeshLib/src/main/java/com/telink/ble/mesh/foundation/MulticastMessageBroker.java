@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file MessageBroker.java
+ * @file MulticastMessageBroker.java
  *
  * @brief for TLSR chips
  *
