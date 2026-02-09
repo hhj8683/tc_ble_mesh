@@ -1,12 +1,13 @@
 /********************************************************************************************************
- * @file    battery_check.c
+ * @file	battery_check.c
  *
- * @brief   This is the source file for BLE SDK
+ * @brief	for TLSR chips
  *
- * @author  BLE GROUP
- * @date    06,2020
+ * @author	telink
+ * @date	Sep. 30, 2010
  *
- * @par     Copyright (c) 2020, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
+ * @par     Copyright (c) 2017, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
+ *          All rights reserved.
  *
  *          Licensed under the Apache License, Version 2.0 (the "License");
  *          you may not use this file except in compliance with the License.
