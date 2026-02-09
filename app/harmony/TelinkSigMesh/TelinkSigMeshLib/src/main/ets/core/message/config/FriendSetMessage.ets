@@ -20,7 +20,6 @@
  *          See the License for the specific language governing permissions and
  *          limitations under the License.
  *******************************************************************************************************/
-import { EventBus } from '@nutpi/eventbus';
 import { Opcode } from '../Opcode';
 import { ConfigMessage } from './ConfigMessage';
 
