@@ -48,12 +48,12 @@
 #define ERR_CODE_CYCLE_TIMING_FORMAT_ERR				0x87
 
 
-#define ALI_MESH_TIME_CHECK_INTERVAL					(CLOCK_SYS_CLOCK_1S)
+#define ALI_MESH_TIME_CHECK_INTERVAL					(CLOCK_SYS_TIMER_CLK_1S)
 #define ALI_TIMING_OP_GROUP_MAX							1
 #define ALI_TIMING_INFO_NUM								40
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	u16 period_time;
 	u8 retry_delay;
 	u8 retry_times;
@@ -65,12 +65,12 @@ typedef enum {
 	TIMING_TYPE_SINGLE, TIMING_TYPE_CYCLE,
 } timing_type_t;
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	u16 attr_type;
 	u8 attr_para;
 } timing_op_group_t;
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	u32 active_time;
 	u32 time;
 	timing_type_t type;
@@ -80,7 +80,7 @@ typedef struct {
 } ali_timing_info_t;
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	ali_unix_sntp_para_t sntp_para;
 	ali_timing_info_t timing_infos[ALI_TIMING_INFO_NUM];
 } model_vd_ali_time_t;

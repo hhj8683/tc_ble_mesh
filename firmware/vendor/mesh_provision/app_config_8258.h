@@ -157,7 +157,7 @@ extern "C" {
 #endif
 
 //----------------------- keyboard --------------------------------
-#if SMART_PROVISION_ENABLE
+#if (SMART_PROVISION_ENABLE || MESH_RX_TEST)
 #define UI_KEYBOARD_ENABLE				1
 #endif
 
@@ -228,20 +228,20 @@ extern "C" {
 
 //---------------  LED / PWM
 #if(PCBA_8258_SEL == PCBA_8258_DONGLE_48PIN)
-#define PWM_R       GPIO_PWM1A3		//red
-#define PWM_G       GPIO_PWM0A2		//green
-#define PWM_B       GPIO_PWM3B0		//blue
-#define PWM_W       GPIO_PWM4B1		//white
+#define PWM_R       GPIO_PA3		//red
+#define PWM_G       GPIO_PA2		//green
+#define PWM_B       GPIO_PB0		//blue
+#define PWM_W       GPIO_PB1		//white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_0)   // PCBA_8258_DEVELOPMENT_BOARD
-#define PWM_R       GPIO_PWM1ND3	//red
-#define PWM_G       GPIO_PWM2ND4	//green
+#define PWM_R       GPIO_PD3	//red
+#define PWM_G       GPIO_PD4	//green
 #define PWM_B       GPIO_PD5		//blue
-#define PWM_W       GPIO_PWM3D2		//white
+#define PWM_W       GPIO_PD2		//white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_2)
 #define PWM_R       GPIO_PD5	//red
-#define PWM_G       GPIO_PWM1ND3	//green
-#define PWM_B       GPIO_PWM3D2		//blue
-#define PWM_W       GPIO_PWM2ND4		//white
+#define PWM_G       GPIO_PD3	//green
+#define PWM_B       GPIO_PD2		//blue
+#define PWM_W       GPIO_PD4		//white
 
 #endif
 

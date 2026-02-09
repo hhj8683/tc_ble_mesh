@@ -23,9 +23,7 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#include "proj_lib/ble/ll/ll.h"
-#include "proj_lib/ble/blt_config.h"
-#include "proj_lib/ble/service/ble_ll_ota.h"
+#include "stack/ble/ble.h"
 #include "../common/app_provison.h"
 #include "../common/app_proxy.h"
 #include "proj_lib/sig_mesh/app_mesh.h"
@@ -182,54 +180,50 @@ void module_onReceiveData(rf_packet_att_write_t *p)
 #endif
 // Include attribute (Battery service)
 //static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
-//const u8 ATT_PERMISSIONS_READ_AUTHOR
-u8 att_perm_auth_read = ATT_PERMISSIONS_READ_AUTHOR;
-u8 att_perm_auth_write = ATT_PERMISSIONS_WRITE_AUTHOR;
-u8 att_perm_auth_rdwd  = ATT_PERMISSIONS_RDWD_AUTHOR;
 
 
 #define MESH_PROVISON_DATA	{0xce,0x7f}
 #define MESH_PROXY_DATA		{0xcf,0x7f}
 
-const u8 my_OtaServiceUUID[16]		= TELINK_OTA_UUID_SERVICE;
-const u8 my_OtaUUID[16]		= TELINK_SPP_DATA_OTA;
+const u8 my_OtaServiceUUID[16]		= WRAPPING_BRACES(TELINK_OTA_UUID_SERVICE);
+const u8 my_OtaUUID[16]		= WRAPPING_BRACES(TELINK_SPP_DATA_OTA);
 
 static u8 my_OtaProp		= CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP | CHAR_PROP_NOTIFY;
 const u8  my_OtaName[] = {'O', 'T', 'A'};
 u8	 	my_OtaData 		= 0x00;
 // pb-gatt 
-u8 my_pb_gattUUID[2]=SIG_MESH_PROVISION_SERVICE;
+u8 my_pb_gattUUID[2] = WRAPPING_BRACES(SIG_MESH_PROVISION_SERVICE);
 
-const u8 my_pb_gatt_out_UUID[2]= SIG_MESH_PROVSIION_DATA_OUT;
+const u8 my_pb_gatt_out_UUID[2]= WRAPPING_BRACES(SIG_MESH_PROVSIION_DATA_OUT);
 //static u8 my_pb_gatt_out_prop = CHAR_PROP_NOTIFY;
 static u8 my_pb_gatt_out_prop = CHAR_PROP_NOTIFY;
 
 const u8 my_pb_gattOutName[]={'P','B','G','A','T','T','-','O','U','T'};
 u8 	my_pb_gattOutData[2] =MESH_PROVISON_DATA;
 
-const u8 my_pb_gatt_in_UUID[2]= SIG_MESH_PROVISION_DATA_IN;
+const u8 my_pb_gatt_in_UUID[2]= WRAPPING_BRACES(SIG_MESH_PROVISION_DATA_IN);
 static u8 my_pb_gatt_in_prop =  CHAR_PROP_WRITE_WITHOUT_RSP;
 const u8 my_pb_gattInName[]={'P','B','G','A','T','T','-','I','N'};
 u8 	my_pb_gattInData[2] =MESH_PROVISON_DATA;
 
-u8 my_proxy_gattUUID[2]= SIG_MESH_PROXY_SERVICE;
+u8 my_proxy_gattUUID[2]= WRAPPING_BRACES(SIG_MESH_PROXY_SERVICE);
 
-const u8 my_proxy_out_UUID[2]= SIG_MESH_PROXY_DATA_OUT;
+const u8 my_proxy_out_UUID[2]= WRAPPING_BRACES(SIG_MESH_PROXY_DATA_OUT);
 static u8 my_proxy_out_prop = CHAR_PROP_NOTIFY;
 const u8 my_proxy_out_Name[]={'P','R','O','X','Y','-','O','U','T'};
 u8 my_proxy_outData[2] =MESH_PROXY_DATA;
 
-const u8 my_proxy_in_UUID[2]= SIG_MESH_PROXY_DATA_IN;
+const u8 my_proxy_in_UUID[2]= WRAPPING_BRACES(SIG_MESH_PROXY_DATA_IN);
 static u8 my_proxy_in_prop = CHAR_PROP_WRITE_WITHOUT_RSP;
 const u8 my_proxy_in_Name[]={'P','R','O','X','Y','-','I','N'};
 u8 my_proxy_inData[2] =MESH_PROXY_DATA;
 
 #if USER_DEFINE_SET_CCC_ENABLE
-const  u8 my_userdefine_service_UUID[16]= TELINK_USERDEFINE_GATT;
+const  u8 my_userdefine_service_UUID[16]= WRAPPING_BRACES(TELINK_USERDEFINE_GATT);
 static u8 my_userdefine_prop		= CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP|CHAR_PROP_NOTIFY|CHAR_PROP_INDICATE;
 u8	 	  my_userdefine_dat 		= 0x00;
 const u8  my_userderdefine[4] = {'U', 'S', 'E','R'};
-const u8  my_userdefine_UUID[16]= TELINK_USERDEFINE_UUID;
+const u8  my_userdefine_UUID[16]= WRAPPING_BRACES(TELINK_USERDEFINE_UUID);
 #endif
 
 const u16  mi_generic_service  = SERVICE_UUID_GENERIC_ATTRIBUTE;
@@ -241,50 +235,6 @@ u8 mi_service_change_ccc[2]=	{0x00,0x00};
 u8 mi_service_change_char_perm = ATT_PERMISSIONS_READ;
 u8 mi_service_change_buf_perm = ATT_PERMISSIONS_READ;
 u8 mi_service_change_ccc_perm = ATT_PERMISSIONS_RDWR;
-
-#if MI_API_ENABLE 
-const u16 mi_primary_service_uuid = 0xfe95;
-u8 mi_pri_service_perm = ATT_PERMISSIONS_READ_AUTHOR;
-
-const u16 mi_version_uuid = 0x0004;
-static u8 mi_version_prop = CHAR_PROP_READ;
-static u8 mi_version_buf[20]="0.0.1_0000";
-const u8 mi_version_str[]="Version";
-u8 mi_version_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-
-const u16 mi_ctrlp_uuid = 0x0010;
-static u8 mi_ctrlp_prop = CHAR_PROP_WRITE_WITHOUT_RSP|CHAR_PROP_NOTIFY;
-static u8 mi_ctrlp_buf[4];
-const u8 mi_ctrlp_str[]="control point";
-u8 mi_sec_ctrlp_ccc[2]=	{0x00,0x00};
-u8 mi_sec_ctrlp_buf_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-u8 mi_sec_ctrlp_ccc_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-
-
-const u16 mi_sec_auth_uuid = 0x0016;
-static u8 mi_sec_auth_prop = CHAR_PROP_WRITE_WITHOUT_RSP|CHAR_PROP_NOTIFY;
-static u8 mi_sec_auth_buf[20];
-const u8 mi_sec_auth_str[]="Security Auth";
-u8 mi_sec_auth_ccc[2]=	{0x00,0x00};
-u8 mi_sec_auth_buf_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-u8 mi_sec_auth_ccc_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-
-const u16 mi_ota_ctrl_uuid = 0x0017;
-static u8 mi_ota_ctrl_prop = CHAR_PROP_WRITE|CHAR_PROP_NOTIFY;
-static u8 mi_ota_ctrl_buf[20];
-const u8 mi_ota_ctrl_str[]="Ota ctrl";
-u8 mi_ota_ctrl_ccc[2]=	{0x00,0x00};
-u8 mi_ota_ctrl_buf_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-u8 mi_ota_ctrl_ccc_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-
-const u16 mi_ota_data_uuid = 0x0018;
-static u8 mi_ota_data_prop = CHAR_PROP_WRITE_WITHOUT_RSP|CHAR_PROP_NOTIFY;
-static u8 mi_ota_data_buf[20];
-const u8 mi_ota_data_str[]="Ota data";
-u8 mi_ota_data_ccc[2]=	{0x00,0x00};
-u8 mi_ota_data_buf_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-u8 mi_ota_data_ccc_perm = ATT_PERMISSIONS_RDWD_AUTHOR;
-#endif 
 
 #if(AIS_ENABLE)
 const u16 ais_pri_service_uuid = 0xfeb3;
@@ -303,6 +253,32 @@ const u8 ais_service_desc[]="Alibaba IoT Service";
 u8 ais_data_buf[2];
 #endif
 
+#if(ONLINE_STATUS_EN)
+const u8 online_st_service_uuid[16] = WRAPPING_BRACES(TELINK_ONLINE_ST_UUID_SERVICE);  // confirm later
+const u8 online_st_data_uuid[16] = WRAPPING_BRACES(TELINK_ONLINE_ST_DATA_UUID);               // confirm later
+const u8 online_st_prop = CHAR_PROP_READ | CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RSP | CHAR_PROP_NOTIFY;
+const u8 online_st_service_desc[]="Online Status";
+const u8 online_st_ccc[2];
+
+u8 online_st_att_data_buf[4];
+
+int online_st_att_write(void *pw)
+{
+    if(!pair_login_ok){
+        return 1;
+    }
+    
+	rf_packet_att_write_t *p = pw;
+	if(p->value <= 1){  // (0x02--0xff) reserve
+    	if(p->l2capLen > (3 + 1)){
+    	    mesh_report_status_enable_mask (&(p->value), p->l2capLen - 3);
+    	}else{
+    	    mesh_report_status_enable (p->value);
+    	}
+	}
+	return 1;
+}
+#endif
 
 #define MAX_SERVICE_GAP                 (7)
 #define MAX_SERVICE_DEVICE_INFO         (5)
@@ -310,10 +286,10 @@ u8 ais_data_buf[2];
 #define MAX_SERVICE_PROVISION           (9)
 #define MAX_SERVICE_PROXY               (9)
 #define MAX_USER_DEFINE_SET_CCC_ATT_NUM (USER_DEFINE_SET_CCC_ENABLE ? 4 : 0)
-#define MAX_MI_ATT_NUM                  (MI_API_ENABLE ? 20 : 0)
+#define MAX_MI_ATT_NUM                  (0)
 #define MAX_SERVICE_CHANGE_ATT_NUM      (5)
 #define MAX_AIS_ATT_NUM 	            (AIS_ENABLE ? 12 : 0)
-#define MAX_ONLINE_ST_ATT_NUM 	        (ONLINE_STATUS_EN ? 4 : 0)	// ONLINE_STATUS_EN always 0 now.
+#define MAX_ONLINE_ST_ATT_NUM 	        (ONLINE_STATUS_EN ? 5 : 0)	// ONLINE_STATUS_EN always 0 now.
 
 //---
 #define ATT_NUM_START_GAP                   (1)     // line of ATT, start from 0.
@@ -549,125 +525,102 @@ const u8 ONLINE_ST_ATT_HANDLE_SLAVE = (ATT_NUM_START_ONLINE_ST + 2);
 #define MY_ATTRIBUTE_BASE0           \
     {ATTRIBUTE_TOTAL_NUM,0,0,0,0,0}, /* total num of attribute*/   \
 	/* 0001 - 0007	gap*/   \
-    {MAX_SERVICE_GAP,&att_perm_auth_read,2,2,(u8*)(&my_primaryServiceUUID),   (u8*)(&my_gapServiceUUID), 0},\
-    {0,&att_perm_auth_read,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_devNameCharacter), 0},\
-    {0,&att_perm_auth_read,2,MAX_DEV_NAME_LEN, (u8*)(&my_devNameUUID), (u8*)(&ble_devName), 0},\
-    {0,&att_perm_auth_read,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_appearanceCharacter), 0},\
-    {0,&att_perm_auth_read,2,sizeof (my_appearance), (u8*)(&my_appearanceUIID),     (u8*)(&my_appearance), 0},\
-    {0,&att_perm_auth_read,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_periConnParamChar), 0},\
-    {0,&att_perm_auth_read,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID),   (u8*)(&my_periConnParameters), 0},\
+    {MAX_SERVICE_GAP,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID),   (u8*)(&my_gapServiceUUID), 0},\
+    {0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_devNameCharacter), 0},\
+    {0,ATT_PERMISSIONS_READ,2,MAX_DEV_NAME_LEN, (u8*)(&my_devNameUUID), (u8*)(&ble_devName), 0},\
+    {0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_appearanceCharacter), 0},\
+    {0,ATT_PERMISSIONS_READ,2,sizeof (my_appearance), (u8*)(&my_appearanceUIID),     (u8*)(&my_appearance), 0},\
+    {0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_periConnParamChar), 0},\
+    {0,ATT_PERMISSIONS_READ,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID),   (u8*)(&my_periConnParameters), 0},\
     /* 0008 - 000c  device Information Service*/   \
-    {MAX_SERVICE_DEVICE_INFO,&att_perm_auth_read,2,2,(u8*)(&my_primaryServiceUUID),   (u8*)(&my_devServiceUUID), 0},\
-    {0,&att_perm_auth_read,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_PnPCharacter), 0},\
-    {0,&att_perm_auth_read,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},\
+    {MAX_SERVICE_DEVICE_INFO,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID),   (u8*)(&my_devServiceUUID), 0},\
+    {0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_PnPCharacter), 0},\
+    {0,ATT_PERMISSIONS_READ,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},\
 	\
-    {0,&att_perm_auth_read,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_fwRevisionCharacter), 0},\
-    {0,&att_perm_auth_read,2,FW_REVISION_VALUE_LEN,(u8*)(&my_fwRevisionUUID), (u8*)(my_fwRevision_value), 0},\
+    {0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID),        (u8*)(&my_fwRevisionCharacter), 0},\
+    {0,ATT_PERMISSIONS_READ,2,FW_REVISION_VALUE_LEN,(u8*)(&my_fwRevisionUUID), (u8*)(my_fwRevision_value), 0},\
     /* 000d - 0010  OTA*/   \
-    {MAX_SERVICE_GATT_OTA,&att_perm_auth_read, 2,16,(u8*)(&my_primaryServiceUUID),     (u8*)(&my_OtaServiceUUID), 0},\
-    {0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_OtaProp), 0}, /*prop*/   \
-    {0,&att_perm_auth_rdwd,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),    (&my_OtaData), &otaWrite, &otaRead}, /*value*/   \
-    {0,&att_perm_auth_read, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
+    {MAX_SERVICE_GATT_OTA,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID),     (u8*)(&my_OtaServiceUUID), 0},\
+    {0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_OtaProp), 0}, /*prop*/   \
+    {0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),    (&my_OtaData), &otaWrite, 0}, /*value*/   \
+    {0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 
 #define MY_ATTRIBUTE_PB_GATT_CHAR           \
-    {0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_pb_gatt_out_prop), 0}, /*prop*/   \
-    {0,&att_perm_auth_rdwd, 2,sizeof(my_pb_gattOutData),(u8*)(&my_pb_gatt_out_UUID),    (my_pb_gattOutData), 0, 0}, /*value*/   \
-    {0,&att_perm_auth_read, 2,sizeof (my_pb_gattOutName),(u8*)(&userdesc_UUID), (u8*)(my_pb_gattOutName), 0},\
-    {0,&att_perm_auth_rdwd, 2, sizeof(provision_Out_ccc),(u8*)(&clientCharacterCfgUUID),    (u8*)(provision_Out_ccc), &pb_gatt_provision_out_ccc_cb,0}, /*value*/   \
+    {0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_pb_gatt_out_prop), 0}, /*prop*/   \
+    {0,ATT_PERMISSIONS_RDWR, 2,sizeof(my_pb_gattOutData),(u8*)(&my_pb_gatt_out_UUID),    (my_pb_gattOutData), 0, 0}, /*value*/   \
+    {0,ATT_PERMISSIONS_READ, 2,sizeof (my_pb_gattOutName),(u8*)(&userdesc_UUID), (u8*)(my_pb_gattOutName), 0},\
+    {0,ATT_PERMISSIONS_RDWR, 2, sizeof(provision_Out_ccc),(u8*)(&clientCharacterCfgUUID),    (u8*)(provision_Out_ccc), &pb_gatt_provision_out_ccc_cb,0}, /*value*/   \
 	\
-    {0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_pb_gatt_in_prop), 0}, /*prop*/   \
-    {0,&att_perm_auth_rdwd, 2,sizeof(my_pb_gattInData),(u8*)(&my_pb_gatt_in_UUID),  (my_pb_gattInData), &pb_gatt_Write, 0}, /*value*/   \
-    {0,&att_perm_auth_read, 2,sizeof (my_pb_gattInName),(u8*)(&userdesc_UUID), (u8*)(my_pb_gattInName), 0},\
-    {0,&att_perm_auth_rdwd, 2, sizeof(provision_In_ccc),(u8*)(&clientCharacterCfgUUID),     (u8*)(provision_In_ccc), 0}, /*value*/
+    {0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_pb_gatt_in_prop), 0}, /*prop*/   \
+    {0,ATT_PERMISSIONS_RDWR, 2,sizeof(my_pb_gattInData),(u8*)(&my_pb_gatt_in_UUID),  (my_pb_gattInData), &pb_gatt_Write, 0}, /*value*/   \
+    {0,ATT_PERMISSIONS_READ, 2,sizeof (my_pb_gattInName),(u8*)(&userdesc_UUID), (u8*)(my_pb_gattInName), 0},\
+    {0,ATT_PERMISSIONS_RDWR, 2, sizeof(provision_In_ccc),(u8*)(&clientCharacterCfgUUID),     (u8*)(provision_In_ccc), 0}, /*value*/
 
 #define MY_ATTRIBUTE_PROXY_GATT_CHAR           \
-    {0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_proxy_out_prop), 0}, /*prop*/   \
-    {0,&att_perm_auth_rdwd, 2,1,(u8*)(&my_proxy_out_UUID),  (my_proxy_outData), 0, 0}, /*value*/   \
-    {0,&att_perm_auth_read, 2,sizeof (my_proxy_out_Name),(u8*)(&userdesc_UUID), (u8*)(my_proxy_out_Name), 0},\
-    {0,&att_perm_auth_rdwd, 2, sizeof(proxy_Out_ccc),(u8*)(&clientCharacterCfgUUID),    (u8*)(proxy_Out_ccc), &proxy_out_ccc_cb,0}, /*value*/   \
+    {0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_proxy_out_prop), 0}, /*prop*/   \
+    {0,ATT_PERMISSIONS_RDWR, 2,1,(u8*)(&my_proxy_out_UUID),  (my_proxy_outData), 0, 0}, /*value*/   \
+    {0,ATT_PERMISSIONS_READ, 2,sizeof (my_proxy_out_Name),(u8*)(&userdesc_UUID), (u8*)(my_proxy_out_Name), 0},\
+    {0,ATT_PERMISSIONS_RDWR, 2, sizeof(proxy_Out_ccc),(u8*)(&clientCharacterCfgUUID),    (u8*)(proxy_Out_ccc), &proxy_out_ccc_cb,0}, /*value*/   \
 	\
-    {0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_proxy_in_prop), 0}, /*prop*/   \
-    {0,&att_perm_auth_rdwd, 2,1,(u8*)(&my_proxy_in_UUID),   (my_proxy_inData), &proxy_gatt_Write, 0}, /*value*/   \
-    {0,&att_perm_auth_read, 2,sizeof (my_proxy_in_Name),(u8*)(&userdesc_UUID), (u8*)(my_proxy_in_Name), 0},\
-    {0,&att_perm_auth_rdwd, 2, sizeof(proxy_In_ccc),(u8*)(&clientCharacterCfgUUID),     (u8*)(proxy_In_ccc), 0}, /*value*/   
+    {0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),      (u8*)(&my_proxy_in_prop), 0}, /*prop*/   \
+    {0,ATT_PERMISSIONS_RDWR, 2,1,(u8*)(&my_proxy_in_UUID),   (my_proxy_inData), &proxy_gatt_Write, 0}, /*value*/   \
+    {0,ATT_PERMISSIONS_READ, 2,sizeof (my_proxy_in_Name),(u8*)(&userdesc_UUID), (u8*)(my_proxy_in_Name), 0},\
+    {0,ATT_PERMISSIONS_RDWR, 2, sizeof(proxy_In_ccc),(u8*)(&clientCharacterCfgUUID),     (u8*)(proxy_In_ccc), 0}, /*value*/   
 
 #if USER_DEFINE_SET_CCC_ENABLE
 #define MY_ATTRIBUTE_USER_DEFINE_SET_CCC           \
-	{MAX_USER_DEFINE_SET_CCC_ATT_NUM,&att_perm_auth_read, 2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_userdefine_service_UUID), 0},\
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&my_userdefine_prop), 0}, /*prop*/   \
-	{0,&att_perm_auth_rdwd,16,sizeof(my_userdefine_dat),(u8*)(&my_userdefine_UUID), (&my_userdefine_dat), &pb_gatt_provision_out_ccc_cb, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2,sizeof (my_userderdefine),(u8*)(&userdesc_UUID), (u8*)(my_userderdefine), 0},
-#endif
-
-#if MI_API_ENABLE
-#define MY_ATTRIBUTE_MI_API                        \
-	{MAX_MI_ATT_NUM,&mi_pri_service_perm, 2,2,(u8*)(&my_primaryServiceUUID),	(u8*)(&mi_primary_service_uuid), 0},\
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&mi_version_prop), 0}, /*prop*/   \
-	{0,&mi_version_perm, 2,sizeof(mi_version_buf),(u8*)(&mi_version_uuid),	(mi_version_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2,sizeof (mi_version_str),(u8*)(&userdesc_UUID), (u8*)(mi_version_str), 0},\
-    \
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&mi_ctrlp_prop), 0}, /*prop*/   \
-	{0,&mi_sec_ctrlp_buf_perm, 2,sizeof(mi_ctrlp_buf),(u8*)(&mi_ctrlp_uuid),	(mi_ctrlp_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2,sizeof (mi_ctrlp_str),(u8*)(&userdesc_UUID), (u8*)(mi_ctrlp_str), 0},\
-	{0,&mi_sec_ctrlp_ccc_perm, 2, sizeof(mi_sec_ctrlp_ccc),(u8*)(&clientCharacterCfgUUID), 	(u8*)(mi_sec_ctrlp_ccc), 0}, /*value*/   \
-    \
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&mi_sec_auth_prop), 0}, /*prop*/   \
-	{0,&mi_sec_auth_buf_perm, 2,sizeof(mi_sec_auth_buf),(u8*)(&mi_sec_auth_uuid),	(mi_sec_auth_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2,sizeof (mi_sec_auth_str),(u8*)(&userdesc_UUID), (u8*)(mi_sec_auth_str), 0},	\
-	{0,&mi_sec_auth_ccc_perm, 2, sizeof(mi_sec_auth_ccc),(u8*)(&clientCharacterCfgUUID),	(u8*)(mi_sec_auth_ccc), 0}, /*value*/   \
-    \
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&mi_ota_ctrl_prop), 0}, /*prop*/   \
-	{0,&mi_ota_ctrl_buf_perm, 2,sizeof(mi_ota_ctrl_buf),(u8*)(&mi_ota_ctrl_uuid),	(mi_ota_ctrl_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2,sizeof (mi_ota_ctrl_str),(u8*)(&userdesc_UUID), (u8*)(mi_ota_ctrl_str), 0},	\
-	{0,&mi_ota_ctrl_ccc_perm, 2, sizeof(mi_ota_ctrl_ccc),(u8*)(&clientCharacterCfgUUID),	(u8*)(mi_ota_ctrl_ccc), 0}, /*value*/   \
-    \
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&mi_ota_data_prop), 0}, /*prop*/   \
-	{0,&mi_ota_data_buf_perm, 2,sizeof(mi_ota_data_buf),(u8*)(&mi_ota_data_uuid),	(mi_ota_data_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2,sizeof (mi_ota_data_str),(u8*)(&userdesc_UUID), (u8*)(mi_ota_data_str), 0},	\
-	{0,&mi_ota_data_ccc_perm, 2, sizeof(mi_ota_data_ccc),(u8*)(&clientCharacterCfgUUID),	(u8*)(mi_ota_data_ccc), 0}, /*value*/   
+	{MAX_USER_DEFINE_SET_CCC_ATT_NUM,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_userdefine_service_UUID), 0},\
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&my_userdefine_prop), 0}, /*prop*/   \
+	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_userdefine_dat),(u8*)(&my_userdefine_UUID), (&my_userdefine_dat), &pb_gatt_provision_out_ccc_cb, 0}, /*value*/   \
+	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_userderdefine),(u8*)(&userdesc_UUID), (u8*)(my_userderdefine), 0},
 #endif
 
 #define MY_ATTRIBUTE_SERVICE_CHANGE                        \
-	{MAX_SERVICE_CHANGE_ATT_NUM,&att_perm_auth_read,2,2,(u8*)(&my_primaryServiceUUID),	(u8*)(&mi_generic_service), 0},\
-	{0,&mi_service_change_char_perm, 2, 1,(u8*)(&my_characterUUID), 	(u8*)(&mi_service_change_prop), 0}, /*prop*/   \
-	{0,&mi_service_change_buf_perm, 2,sizeof(mi_service_change_buf),(u8*)(&mi_service_change_uuid), (mi_service_change_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2,sizeof (mi_service_change_str),(u8*)(&userdesc_UUID), (u8*)(mi_service_change_str), 0},	\
-	{0,&mi_service_change_ccc_perm, 2, sizeof(mi_service_change_ccc),(u8*)(&clientCharacterCfgUUID),	(u8*)(mi_service_change_ccc), 0}, /*value*/   
+	{MAX_SERVICE_CHANGE_ATT_NUM,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID),	(u8*)(&mi_generic_service), 0},\
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID), 	(u8*)(&mi_service_change_prop), 0}, /*prop*/   \
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(mi_service_change_buf),(u8*)(&mi_service_change_uuid), (mi_service_change_buf), 0, 0}, /*value*/   \
+	{0,ATT_PERMISSIONS_READ, 2,sizeof (mi_service_change_str),(u8*)(&userdesc_UUID), (u8*)(mi_service_change_str), 0},	\
+	{0,ATT_PERMISSIONS_RDWR, 2, sizeof(mi_service_change_ccc),(u8*)(&clientCharacterCfgUUID),	(u8*)(mi_service_change_ccc), 0}, /*value*/   
 
 #if (AIS_ENABLE)
 #define MY_ATTRIBUTE_AIS                        \
-	{MAX_AIS_ATT_NUM,&att_perm_auth_read, 2,2,(u8*)(&my_primaryServiceUUID),	(u8*)(&ais_pri_service_uuid), 0},\
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_read_prop), 0}, /*prop*/   \
-	{0,&att_perm_auth_rdwd, 2,sizeof(ais_data_buf),(u8*)(&ais_read_uuid),	(ais_data_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_write_prop), 0}, /*prop*/   \
-	{0,&att_perm_auth_rdwd, 2,sizeof(ais_data_buf),(u8*)(&ais_write_uuid),	(ais_data_buf), &ais_write_pipe, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_indicate_prop), 0}, /*prop*/   \
-	{0,&att_perm_auth_read, 2,sizeof(ais_data_buf),(u8*)(&ais_indicate_uuid),	(ais_data_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_write_without_rsp_prop), 0}, /*prop*/   \
-	{0,&att_perm_auth_rdwd, 2,sizeof(ais_data_buf),(u8*)(&ais_write_without_rsp_uuid),	(ais_data_buf), &ais_otaWrite, &otaRead}, /*value*/   \
-	{0,&att_perm_auth_read, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_notify_prop), 0}, /*prop*/   \
-	{0,&att_perm_auth_read, 2,sizeof(ais_data_buf),(u8*)(&ais_notify_uuid),	(ais_data_buf), 0, 0}, /*value*/   \
-	{0,&att_perm_auth_read, 2,sizeof (ais_service_desc),(u8*)(&userdesc_UUID), (u8*)(ais_service_desc), 0},
+	{MAX_AIS_ATT_NUM,ATT_PERMISSIONS_READ, 2,2,(u8*)(&my_primaryServiceUUID),	(u8*)(&ais_pri_service_uuid), 0},\
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_read_prop), 0}, /*prop*/   \
+	{0,ATT_PERMISSIONS_RDWR, 2,sizeof(ais_data_buf),(u8*)(&ais_read_uuid),	(ais_data_buf), 0, 0}, /*value*/   \
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_write_prop), 0}, /*prop*/   \
+	{0,ATT_PERMISSIONS_RDWR, 2,sizeof(ais_data_buf),(u8*)(&ais_write_uuid),	(ais_data_buf), &ais_write_pipe, 0}, /*value*/   \
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_indicate_prop), 0}, /*prop*/   \
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(ais_data_buf),(u8*)(&ais_indicate_uuid),	(ais_data_buf), 0, 0}, /*value*/   \
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_write_without_rsp_prop), 0}, /*prop*/   \
+	{0,ATT_PERMISSIONS_RDWR, 2,sizeof(ais_data_buf),(u8*)(&ais_write_without_rsp_uuid),	(ais_data_buf), &ais_otaWrite, 0}, /*value*/   \
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&ais_notify_prop), 0}, /*prop*/   \
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(ais_data_buf),(u8*)(&ais_notify_uuid),	(ais_data_buf), 0, 0}, /*value*/   \
+	{0,ATT_PERMISSIONS_READ, 2,sizeof (ais_service_desc),(u8*)(&userdesc_UUID), (u8*)(ais_service_desc), 0},
 #endif
+
+#if (ONLINE_STATUS_EN)
+#define MY_ATTRIBUTE_ONLINE_STATUS                        \
+	{MAX_ONLINE_ST_ATT_NUM,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID),	(u8*)(online_st_service_uuid), 0},\
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID),		(u8*)(&online_st_prop), 0}, /*prop*/   \
+	{0,ATT_PERMISSIONS_RDWR,16,sizeof(online_st_att_data_buf),(u8*)(online_st_data_uuid),	(online_st_att_data_buf), &online_st_att_write, 0}, /*value*/   \
+	{0,ATT_PERMISSIONS_READ, 2,sizeof (online_st_service_desc),(u8*)(&userdesc_UUID), (u8*)(online_st_service_desc), 0}, \
+	{0,ATT_PERMISSIONS_RDWR, 2, sizeof(online_st_ccc),(u8*)(&clientCharacterCfgUUID),	(u8*)(online_st_ccc), 0}, /*value*/ 
+#endif   
 
 const attribute_t my_Attributes[] = {
 	MY_ATTRIBUTE_BASE0
 	
     /* 0011 - 0019      PB-GATT*/
-    {9,&att_perm_auth_read, 2,2,(u8*)(&my_primaryServiceUUID),  (u8*)(&my_pb_gattUUID), 0},
+    {9,ATT_PERMISSIONS_READ, 2,2,(u8*)(&my_primaryServiceUUID),  (u8*)(&my_pb_gattUUID), 0},
     MY_ATTRIBUTE_PB_GATT_CHAR
     
     /* 001a - 0022  PROXY_GATT PART*/
-    {9,&att_perm_auth_read, 2,2,(u8*)(&my_primaryServiceUUID),  (u8*)(&my_proxy_gattUUID), 0},
+    {9,ATT_PERMISSIONS_READ, 2,2,(u8*)(&my_primaryServiceUUID),  (u8*)(&my_proxy_gattUUID), 0},
     MY_ATTRIBUTE_PROXY_GATT_CHAR
 
 #if USER_DEFINE_SET_CCC_ENABLE
 	// 0023 - 0026	userdefine 
 	MY_ATTRIBUTE_USER_DEFINE_SET_CCC
-#endif
-
-#if MI_API_ENABLE
-    MY_ATTRIBUTE_MI_API
 #endif
 
     MY_ATTRIBUTE_SERVICE_CHANGE
@@ -676,7 +629,11 @@ const attribute_t my_Attributes[] = {
 	// 002c - 0037
 	MY_ATTRIBUTE_AIS
 #endif
-	
+
+#if (ONLINE_STATUS_EN)
+    MY_ATTRIBUTE_ONLINE_STATUS
+#endif
+
 #if (MESH_CDTP_ENABLE)//(BLC_AUDIO_OTP_ROLE_SWITCH_ENABLE)
 		////////////////////////////////////// OTS /////////////////////////////////////////////////////
 	#if 1//(BLC_AUDIO_OTS_ENABLE)
@@ -732,13 +689,13 @@ void my_att_init(u8 mode)
 	bls_att_setDeviceName(device_name, sizeof(DEV_NAME));
 	bls_att_setAttributeTable ((u8 *)my_Attributes);
 #if ATT_TAB_SWITCH_ENABLE
-    u8 unused_gattUUID[2] = SIG_MESH_ATT_UNUSED;
+    u8 unused_gattUUID[2] = WRAPPING_BRACES(SIG_MESH_ATT_UNUSED);
 	if(mode == GATT_PROVISION_MODE){
-        u8 pb_gattUUID[2]=SIG_MESH_PROVISION_SERVICE;
+        u8 pb_gattUUID[2] = WRAPPING_BRACES(SIG_MESH_PROVISION_SERVICE);
 		memcpy(my_pb_gattUUID, pb_gattUUID, sizeof(my_pb_gattUUID));
 		memcpy(my_proxy_gattUUID, unused_gattUUID, sizeof(my_proxy_gattUUID));
 	}else if(mode == GATT_PROXY_MODE){
-        u8 proxy_gattUUID[2]= SIG_MESH_PROXY_SERVICE;
+        u8 proxy_gattUUID[2] = WRAPPING_BRACES(SIG_MESH_PROXY_SERVICE);
 		memcpy(my_pb_gattUUID, unused_gattUUID, sizeof(my_pb_gattUUID));
 		memcpy(my_proxy_gattUUID, proxy_gattUUID, sizeof(my_proxy_gattUUID));
 	}

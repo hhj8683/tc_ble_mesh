@@ -23,7 +23,7 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#if WIN32 
+#ifdef WIN32 
 #include "../../../reference/tl_bulk/lib_file/app_config.h"
 #include "../../../reference/tl_bulk/lib_file/gatt_provision.h"
 #endif
@@ -33,8 +33,6 @@
 #include "app_privacy_beacon.h"
 #include "directed_forwarding.h"
 #include "blt_soft_timer.h"
-#include "vendor/common/mi_api/telink_sdk_mible_api.h"
-
 
 /**
  * @brief       This function tx beacon in adv adv bearer.
@@ -46,7 +44,7 @@
 int mesh_bear_tx_beacon_adv_channel_only(u8 *bear, u8 trans_par_val)
 {
 	#if FEATURE_RELAY_EN	// use relay buffer should be better
-	mesh_adv_fifo_relay.num = mesh_adv_fifo_relay.num;	// will be optimized, just for sure that relay buffer is existed.
+	//mesh_adv_fifo_relay.num = mesh_adv_fifo_relay.num;	// will be optimized, just for sure that relay buffer is existed.
 	mesh_cmd_bear_t *p_bear = (mesh_cmd_bear_t *)bear;
 	p_bear->trans_par_val = trans_par_val;
 	
@@ -68,10 +66,25 @@ int mesh_bear_tx_beacon_adv_channel_only(u8 *bear, u8 trans_par_val)
  * @return      0: tx success; -1: fifo full
  * @note        
  */
-int mesh_beacon_send_proc()
+int mesh_beacon_send_proc(void)
 {
 	int err = -1;
-#if !WIN32
+#ifndef WIN32
+    if(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
+        if (proxy_Out_ccc[0]==1 && proxy_Out_ccc[1]==0){
+            if(is_provision_success() && beacon_send.conn_handle){
+                err = mesh_tx_sec_private_beacon_proc(1);// send conn beacon to the provisioner
+
+                if(0 == err){
+                    beacon_send.conn_handle = 0;
+                    #if (MD_DF_CFG_SERVER_EN)
+                    mesh_directed_proxy_capa_report_upon_connection(beacon_send.conn_handle); // report after security network beacon.
+                    #endif
+                }
+            }
+        }
+    }
+
 	// dispatch when connected whether it need to send the unprovisioned beacon 
 	if(beacon_send.en && clock_time_exceed(beacon_send.tick ,beacon_send.inter)&&!is_provision_success()){
 		beacon_send.tick = clock_time();
@@ -241,7 +254,7 @@ int unprov_beacon_send(u8 mode ,u8 blt_sts)
 		beacon_data_init_without_uri(&beaconData ,prov_para.device_uuid,prov_para.oob_info);
 	}else{}
 	if(blt_sts){
-	    #if (!WIN32)
+	    #ifndef WIN32
 		#if BLE_MULTIPLE_CONNECTION_ENABLE
 		for(int i = ACL_CENTRAL_MAX_NUM; i < ACL_CENTRAL_MAX_NUM + ACL_PERIPHR_MAX_NUM; i++){
 			if(conn_dev_list[i].conn_state){				
@@ -296,7 +309,7 @@ int mesh_tx_sec_nw_beacon(mesh_net_key_t *p_nk_base, u8 blt_sts)
 	#endif
     mesh_sec_beacon_auth(p_netkey->bk, (u8 *)&p_bc_sec->flag, 0);
     if(blt_sts){
-    	#if WIN32
+    	#ifdef WIN32
 		err = prov_write_data_trans((u8 *)(&bc_bear.beacon.type),sizeof(mesh_beacon_sec_nw_t)+1,MSG_MESH_BEACON);
 		#else
 			#if BLE_MULTIPLE_CONNECTION_ENABLE
@@ -334,7 +347,7 @@ Proxy Privacy parameter				Behavior
 int mesh_tx_sec_nw_beacon_all_net(u8 blt_sts)
 {
 	int err = 0;
-	if(!is_provision_success()|| is_iv_index_invalid() || MI_API_ENABLE){// if not provisioned it will not send secure beacon .
+	if(!is_provision_success() || is_iv_index_invalid()){// if not provisioned it will not send secure beacon .
 		return err;
 	}
 	
@@ -351,7 +364,7 @@ int mesh_tx_sec_nw_beacon_all_net(u8 blt_sts)
 		/* in the pts private beacon proxy bv-07c , it should not send 
 		two secure beacon on gatt connection , other wise the filter sts will fail*/
 		err = mesh_tx_sec_nw_beacon(p_netkey_base, blt_sts);
-		if(blt_sts && beacon_send.conn_beacon_flag ){
+		if(blt_sts && beacon_send.conn_handle ){
 			break;
 		}
 		#else

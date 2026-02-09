@@ -59,8 +59,8 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_NONE
 
 #if (HCI_ACCESS==HCI_USE_UART)
-#define UART_TX_PIN		UART_TX_PB1
-#define UART_RX_PIN		UART_RX_PB0
+#define UART_TX_PIN		UART_TX_PD7
+#define UART_RX_PIN		UART_RX_PA0
 #endif
 
 #define HCI_LOG_FW_EN   (0 || DEBUG_LOG_SETTING_DEVELOP_MODE_EN)
@@ -91,6 +91,18 @@ extern "C" {
 
 /////////////////// mesh project config /////////////////////////////////
 #define TRANSITION_TIME_DEFAULT_VAL (0x00)  // 0x41: 1 second // 0x00: means no default transition time
+
+#if EXTENDED_ADV_ENABLE
+#define MESH_DLE_MODE               MESH_DLE_MODE_EXTEND_BEAR
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION) // must MAX_OCTETS_DATA_LEN_EXTENSION
+#define DLE_LEN_MAX_TX              (40)
+#else
+#define MESH_DLE_MODE               0 //MESH_DLE_MODE_EXTEND_BEAR // MESH_DLE_MODE_GATT
+    #if MESH_DLE_MODE
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION)
+#define DLE_LEN_MAX_TX              (40)
+    #endif
+#endif
 
 /////////////////// MODULE /////////////////////////////////
 #if (SWITCH_ALWAYS_MODE_GATT_EN)

@@ -23,15 +23,8 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#include "proj_lib/rf_drv.h"
-#include "proj_lib/pm.h"
-#include "proj_lib/ble/service/ble_ll_ota.h"
-#include "proj/drivers/adc.h"
-#if(MCU_CORE_TYPE == MCU_CORE_8258)
 #include "stack/ble/ble.h"
-#elif(MCU_CORE_TYPE == MCU_CORE_8278)
-#include "stack/ble_8278/ble.h"
-#endif
+#include "drivers.h"
 #include "proj_lib/mesh_crypto/mesh_crypto.h"
 #include "proj_lib/mesh_crypto/mesh_md5.h"
 
@@ -44,11 +37,7 @@
 #include "app.h"
 #include "vendor/common/blt_soft_timer.h"
 #include "vendor/common/nlc/mesh_nlc.h"
-#include "proj/drivers/rf_pa.h"
 
-#if (HCI_ACCESS==HCI_USE_UART)
-#include "proj/drivers/uart.h"
-#endif
 
 #if AIS_ENABLE
 #define BLT_RX_BUF_NUM	16
@@ -57,8 +46,12 @@
 #else
 #define BLT_RX_BUF_NUM	8
 #endif
-MYFIFO_INIT(blt_rxfifo, 64, BLT_RX_BUF_NUM);
-MYFIFO_INIT(blt_txfifo, 40, 16);
+
+#define BLT_RX_FIFO_SIZE        (MESH_DLE_MODE ? DLE_RX_FIFO_SIZE : 64)
+#define BLT_TX_FIFO_SIZE        (MESH_DLE_MODE ? DLE_TX_FIFO_SIZE : 40)
+
+MYFIFO_INIT(blt_rxfifo, BLT_RX_FIFO_SIZE, BLT_RX_BUF_NUM);
+MYFIFO_INIT(blt_txfifo, BLT_TX_FIFO_SIZE, 8);
 
 //----------------------- handle BLE event ---------------------------------------------
 int app_event_handler (u32 h, u8 *p, int n)
@@ -127,9 +120,7 @@ int app_event_handler (u32 h, u8 *p, int n)
 		else if(pd->reason == HCI_ERR_REMOTE_USER_TERM_CONN){  //0x13
 
 		}
-		else if(pd->reason == SLAVE_TERMINATE_CONN_ACKED || pd->reason == SLAVE_TERMINATE_CONN_TIMEOUT){
 
-		}
 		#if DEBUG_BLE_EVENT_ENABLE
 		rf_link_light_event_callback(LGT_CMD_BLE_ADV);
 		#endif 
@@ -162,7 +153,7 @@ void main_loop ()
 	tick_loop ++;
 #if (BLT_SOFTWARE_TIMER_ENABLE)
 	blt_soft_timer_process(MAINLOOP_ENTRY);
-	if(BLS_LINK_STATE_ADV == blc_ll_getCurrentState() || SWITCH_ALWAYS_MODE_GATT_EN){ // if no soft timer add, retransmit interval will be ADV interval.
+	if(1 || SWITCH_ALWAYS_MODE_GATT_EN){ // if no soft timer add, retransmit interval will be ADV interval.
 		if(my_fifo_data_cnt_get(&mesh_adv_cmd_fifo)){
 			if(!is_soft_timer_exist(&mesh_switch_send_mesh_adv)){
 				blt_soft_timer_add(&mesh_switch_send_mesh_adv,get_mesh_adv_interval());	
@@ -243,7 +234,7 @@ void user_init()
 	//	 is about to exceed the sector threshold, this sector must be erased, and all useful information
 	//	 should re_stored) , so it must be done after battery check
 #if (BLE_REMOTE_SECURITY_ENABLE)
-	bls_smp_configParingSecurityInfoStorageAddr(FLASH_ADR_SMP_PARA_START); // must before blc_smp_peripheral_init().
+	bls_smp_configPairingSecurityInfoStorageAddr(FLASH_ADR_SMP_PARA_START); // must before blc_smp_peripheral_init().
 	blc_smp_peripheral_init();
 
 	//Hid device on android7.0/7.1 or later version
@@ -252,12 +243,17 @@ void user_init()
 	blc_smp_configSecurityRequestSending(SecReq_IMM_SEND, SecReq_PEND_SEND, 1000); //if not set, default is:  send "security request" immediately after link layer connection established(regardless of new connection or reconnection )
 #endif
 
-#if(MCU_CORE_TYPE == MCU_CORE_8269)
-	blc_ll_initBasicMCU(tbl_mac);   //mandatory
-#elif((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
 	blc_ll_initBasicMCU();                      //mandatory
 	blc_ll_initStandby_module(tbl_mac);				//mandatory
+
+#if (EXTENDED_ADV_ENABLE)
+    mesh_blc_ll_initExtendedAdv();
 #endif
+
+#if BLE_GATT_CHANNEL_SELECTION_ALGORITHM2_ENABLE // enable as default, and need 222 byte ramcode.
+    blc_ll_initChannelSelectionAlgorithm_2_feature();
+#endif
+
 	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
 #if BLE_REMOTE_PM_ENABLE
@@ -274,9 +270,12 @@ void user_init()
 
 	//l2cap initialization
 	//blc_l2cap_register_handler (blc_l2cap_packet_receive);
-	blc_l2cap_register_handler (app_l2cap_packet_receive);	
-	///////////////////// USER application initialization ///////////////////
+	blc_l2cap_register_handler (app_l2cap_packet_receive);
 
+	///////////////////// USER application initialization ///////////////////
+#if EXTENDED_ADV_ENABLE
+    /*u8 status = */mesh_blc_ll_setExtAdvParamAndEnable();
+#endif
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_MIN, ADV_INTERVAL_MAX, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
@@ -309,14 +308,16 @@ void user_init()
 #if ADC_ENABLE
 	adc_drv_init();	// still init even though BATT_CHECK_ENABLE is enable, because battery check may not be called in user init.
 #endif
+
+#if PA_ENABLE
 	rf_pa_init();
+#endif
+
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, (blt_event_callback_t)&mesh_ble_connect_cb);
 	blc_hci_registerControllerEventHandler(app_event_handler);		//register event callback
 	//bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 	bls_set_advertise_prepare (app_advertise_prepare_handler);
 	//bls_set_update_chn_cb(chn_conn_update_dispatch);
-	bls_ota_registerStartCmdCb(entry_ota_mode);
-	bls_ota_registerResultIndicateCb(show_ota_result);
 
 	// mesh_mode and layer init
 	mesh_init_all();
@@ -325,18 +326,26 @@ void user_init()
 	#if (DUAL_MODE_ADAPT_EN && (0 == FW_START_BY_LEGACY_BOOTLOADER_EN) || DUAL_MODE_WITH_TLK_MESH_EN)
 	if(DUAL_MODE_NOT_SUPPORT == dual_mode_state)
 	#endif
-	{bls_ota_clearNewFwDataArea(0);	 //must
+	{
+        #if (UART_PRINT_DEBUG_ENABLE)
+            blc_debug_addStackLog(STK_LOG_OTA_FLOW);
+        #endif
+        blc_ota_initOtaServer_module(); // call bls_ota_clearNewFwDataArea(0) in it
+        
+        blc_ota_setOtaProcessTimeout(600);   //OTA process timeout:  600 seconds
+        //blc_ota_setOtaDataPacketTimeout(5);   //OTA data packet timeout: default 5 seconds
+        bls_ota_registerStartCmdCb(entry_ota_mode);
+        bls_ota_registerResultIndicateCb(show_ota_result);
 	}
+
 	mesh_switch_init();
 #if SWITCH_ALWAYS_MODE_GATT_EN
 	switch_mode_set(SWITCH_MODE_GATT);
 #endif
 	switch_trigger_iv_search_mode(1);
 	//blc_ll_initScanning_module(tbl_mac);
-	#if((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
 	blc_gap_peripheral_init();    //gap initialization
-	#endif
-	
+
 	mesh_scan_rsp_init();
 	my_att_init (provision_mag.gatt_mode);
 	blc_att_setServerDataPendingTime_upon_ClientCmd(10);
@@ -357,7 +366,7 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 
 	blc_ll_recoverDeepRetention();	
 	if(blc_ll_getCurrentState() == BLS_LINK_STATE_ADV){
-		if(!(((blt_advExpectTime-clock_time())<blta.adv_interval) || ((clock_time()-blt_advExpectTime)<blta.adv_interval))){	
+		if(!(((blt_advExpectTime - clock_time()) < (GET_ADV_INTERVAL_MS(blc_ll_getAdvInterval()) * 1000 * sys_tick_per_us)) || ((clock_time() - blt_advExpectTime) < (GET_ADV_INTERVAL_MS(blc_ll_getAdvInterval()) * 1000 * sys_tick_per_us)))){
 			blt_advExpectTime = clock_time();
 		}
 	}

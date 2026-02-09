@@ -23,22 +23,8 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#include "proj_lib/rf_drv.h"
-#include "proj_lib/pm.h"
-#include "proj_lib/ble/ll/ll.h"
-#include "proj_lib/ble/blt_config.h"
-#include "proj_lib/ble/ll/ll_whitelist.h"
-#include "proj_lib/ble/trace.h"
-#include "proj_lib/ble/ble_common.h"
-#include "proj/mcu/pwm.h"
-#include "proj_lib/ble/service/ble_ll_ota.h"
-#include "proj/drivers/adc.h"
-#include "proj_lib/ble/blt_config.h"
-#if(MCU_CORE_TYPE == MCU_CORE_8258)
 #include "stack/ble/ble.h"
-#elif(MCU_CORE_TYPE == MCU_CORE_8278)
-#include "stack/ble_8278/ble.h"
-#endif
+#include "drivers.h"
 #include "proj_lib/mesh_crypto/mesh_crypto.h"
 #include "proj_lib/mesh_crypto/mesh_md5.h"
 #include "proj_lib/mesh_crypto/sha256_telink.h"
@@ -49,32 +35,22 @@
 #include "../common/app_health.h"
 #include "../common/vendor_model.h"
 #include "../common/subnet_bridge.h"
-#include "proj/drivers/keyboard.h"
 #include "app.h"
 #include "app_ui.h"
 #include "vendor/common/blt_soft_timer.h"
-#include "proj/drivers/rf_pa.h"
 #include "../common/remote_prov.h"
 #include "../common/mesh_access_layer.h"
-#if MI_API_ENABLE
-#include "vendor/common/mi_api/telink_sdk_mible_api.h"
-#include "vendor/common/mi_api/libs/mijia_profiles/mi_service_server.h"
-#include "vendor/common/mi_api/libs/mesh_auth/mible_mesh_auth.h"
-#include "vendor/common/mi_api/telink_sdk_mesh_api.h"
-#include "gatt_dfu/mible_dfu_main.h"
-#include "mible_log.h"
-#endif 
-#if (HCI_ACCESS==HCI_USE_UART)
-#include "proj/drivers/uart.h"
-#endif
 
 #if DU_ENABLE
 #include "vendor/common/user_du.h"
-#include "vendor/common/mi_api/telink_sdk_mible_api.h"
 #endif
 
 #if (LIGHT_TYPE_SEL == LIGHT_TYPE_NLC_SENSOR)
 #include "vendor/common/sensors_model.h"
+#endif
+
+#if ENERGY_HARVEST_RX_EN
+#include "vendor/common/energy_harvest_eno.h"
 #endif
 
 #define BLT_RX_FIFO_SIZE        (MESH_DLE_MODE ? DLE_RX_FIFO_SIZE : 64)
@@ -119,19 +95,6 @@ int soft_timer_test0(void)
 	soft_timer_cnt0++;
 	return 0;
 }
-#endif
-#if MI_SWITCH_LPN_EN
-void mi_mesh_switch_sys_mode(u32 clk)
-{
-	// ignore hard ware uart function ,and it need to reset all the param part 
-	if(clk == 16000000){
-		clock_init(SYS_CLK_16M_Crystal);
-
-	}else if (clk == 48000000){
-		clock_init(SYS_CLK_48M_Crystal);
-	}else{}
-}
-
 #endif
 
 #define TEST_FORWARD_ADDR_FILTER_EN     0
@@ -194,9 +157,6 @@ int app_event_handler (u32 h, u8 *p, int n)
 	if (h == (HCI_FLAG_EVENT_BT_STD | HCI_EVT_LE_META))		//LE event
 	{
 		u8 subcode = p[0];
-		#if MI_API_ENABLE
-		telink_ble_mi_app_event(subcode,p,n);
-		#endif 
 	//------------ ADV packet --------------------------------------------
 		if (subcode == HCI_SUB_EVT_LE_ADVERTISING_REPORT)	// ADV packet
 		{
@@ -222,7 +182,14 @@ int app_event_handler (u32 h, u8 *p, int n)
 				#endif
 				
 				return 0;
+			}else{
+    			#if ENERGY_HARVEST_RX_EN
+    			if(1 == energy_harvest_msg_rx_handle((u8 *)pa, 0)){
+                    return 0; // BLE beacon and was processed completed
+                }
+    			#endif
 			}
+            
 			#if TEST_FORWARD_ADDR_FILTER_EN
 			if(!find_mac_in_filter_list(pa->mac)){
 				return 0;
@@ -246,26 +213,6 @@ int app_event_handler (u32 h, u8 *p, int n)
 	//------------ connection complete -------------------------------------
 		else if (subcode == HCI_SUB_EVT_LE_CONNECTION_COMPLETE)	// connection complete
 		{
-			#if MI_SWITCH_LPN_EN
-			mi_mesh_switch_sys_mode(48000000);
-			bls_ll_setAdvParam( ADV_INTERVAL_MIN, ADV_INTERVAL_MAX, \
-			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
-			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
-			#endif
-			#if MI_API_ENABLE
-			mible_status_t status = MI_SUCCESS;
-            if (NULL == mible_conn_timer){
-                status = mible_timer_create(&mible_conn_timer, mible_conn_timeout_cb,
-                                                               MIBLE_TIMER_SINGLE_SHOT);
-            }
-			if (MI_SUCCESS != status){
-                MI_LOG_ERROR("mible_conn_timer: fail, timer is not created");
-            }else{
-        		mible_conn_handle = 1;
-                mible_timer_start(mible_conn_timer, 20*1000, NULL);
-                MI_LOG_DEBUG("mible_conn_timer: succ, timer is created");
-            }
-			#endif
 			event_connection_complete_t *pc = (event_connection_complete_t *)p;
 			if (!pc->status)							// status OK
 			{
@@ -274,13 +221,7 @@ int app_event_handler (u32 h, u8 *p, int n)
 				//peer_type = pc->peer_adr_type;
 				//memcpy (peer_mac, pc->mac, 6);
 			}
-			#if DU_LPN_EN
-	        LOG_MSG_INFO(TL_LOG_NODE_SDK,0,0,"connect suc");	
-				#if !LPN_CONTROL_EN
-			blc_ll_setScanEnable (0, 0);
-			mi_mesh_state_set(0);
-				#endif
-			#endif
+
 			#if DEBUG_BLE_EVENT_ENABLE
 			rf_link_light_event_callback(LGT_CMD_BLE_CONN);
 			#endif
@@ -295,10 +236,6 @@ int app_event_handler (u32 h, u8 *p, int n)
 			#if !DU_ENABLE
 			mesh_service_change_report(BLS_CONN_HANDLE);
 			#endif
-			#if LPN_CONTROL_EN
-			bls_l2cap_requestConnParamUpdate (48, 56, 10, 500);
-			#endif
-			
 		}
 
 	//------------ connection update complete -------------------------------
@@ -313,11 +250,8 @@ int app_event_handler (u32 h, u8 *p, int n)
 	//------------ disconnect -------------------------------------
 	else if (h == (HCI_FLAG_EVENT_BT_STD | HCI_EVT_DISCONNECTION_COMPLETE))		//disconnect
 	{
-		#if MI_SWITCH_LPN_EN
-		mi_mesh_switch_sys_mode(16000000);
-		#endif
 		#if DU_ENABLE
-		blc_ll_setScanEnable (BLS_FLAG_SCAN_ENABLE | BLS_FLAG_ADV_IN_SLAVE_MODE, 0);
+		mesh_set_scan_enable(1, 0);
 		if(p_ota->ota_suc){
 			//LOG_MSG_INFO(TL_LOG_NODE_SDK,0,0,"ota reboot ,when ble is disconnct!");
 			du_ota_suc_reboot();			
@@ -325,11 +259,6 @@ int app_event_handler (u32 h, u8 *p, int n)
 		#endif
 		event_disconnection_t	*pd = (event_disconnection_t *)p;
 		//app_led_en (pd->handle, 0);
-		#if MI_API_ENABLE
-		telink_ble_mi_app_event(HCI_EVT_DISCONNECTION_COMPLETE,p,n);
-		mible_conn_handle = 0xffff;
-		mible_timer_stop(mible_conn_timer);
-		#endif 
 		//terminate reason
 		if(pd->reason == HCI_ERR_CONN_TIMEOUT){
 
@@ -337,9 +266,7 @@ int app_event_handler (u32 h, u8 *p, int n)
 		else if(pd->reason == HCI_ERR_REMOTE_USER_TERM_CONN){  //0x13
 
 		}
-		else if(pd->reason == SLAVE_TERMINATE_CONN_ACKED || pd->reason == SLAVE_TERMINATE_CONN_TIMEOUT){
 
-		}
 		LOG_MSG_INFO(TL_LOG_NODE_SDK,0,0,"disconnect reason is %x",pd->reason);
 		#if DEBUG_BLE_EVENT_ENABLE
 		rf_link_light_event_callback(LGT_CMD_BLE_ADV);
@@ -478,38 +405,15 @@ void main_loop ()
 	#if DU_ENABLE
 	du_loop_proc();
 	#endif
-	#if !DU_LPN_EN
+
 	proc_ui();
 	proc_led();
-		#if (!PM_DEEPSLEEP_RETENTION_ENABLE)
+	#if (!PM_DEEPSLEEP_RETENTION_ENABLE)
 	factory_reset_cnt_check();
-		#endif
 	#endif
-	#if DU_LPN_EN
-		#if LPN_CONTROL_EN
-		extern u8 save_power_mode ;
-	if(is_provision_success()||save_power_mode == 0)
-		#else
-	if(is_provision_success()||mi_mesh_get_state())
-		#endif
-	{
-		mesh_loop_process();
-	}else{
-		#if RTC_USE_32K_RC_ENABLE
-		system_time_run();
-		#endif
-	} 
-	#else
+
 	mesh_loop_process();
-	#endif
-	#if MI_API_ENABLE
-	ev_main();
-	#if XIAOMI_MODULE_ENABLE
-	mi_api_loop_run();
-	#endif
-	mi_schd_process();
-	#endif 
-	
+
 	#if ADC_ENABLE
 	static u32 adc_check_time;
     if(clock_time_exceed(adc_check_time, 1000*1000)){
@@ -531,9 +435,7 @@ void main_loop ()
 	#if DEBUG_IV_UPDATE_TEST_EN
 	iv_index_test_button_firmware();
 	#endif
-	#if (MI_SWITCH_LPN_EN||DU_LPN_EN)
-	mi_mesh_lowpower_loop();
-	#endif	
+
 	#if MESH_MONITOR_EN
     if(is_provision_success() && node_binding_tick && clock_time_exceed(node_binding_tick, 3*1000*1000)){
 		monitor_mode_en = 1;
@@ -545,7 +447,7 @@ void main_loop ()
 void light_hw_timer1_config(void){
     reg_irq_mask |= FLD_IRQ_TMR1_EN;
     reg_tmr1_tick = 0;
-    reg_tmr1_capt = CLOCK_MCU_RUN_CODE_1US * IRQ_TIME1_INTERVAL ;
+    reg_tmr1_capt = CLOCK_SYS_CLOCK_1US * IRQ_TIME1_INTERVAL ;
     reg_tmr_ctrl |= FLD_TMR1_EN;
 }
 #endif
@@ -577,11 +479,11 @@ int app_host_event_callback (u32 h, u8 *para, int n)
 
 	switch(event)
 	{
-#if BLE_GATT_2M_PHY_ENABLE
 		case GAP_EVT_ATT_EXCHANGE_MTU: 
+            #if BLE_GATT_2M_PHY_ENABLE
 			blc_ll_setPhy(BLS_CONN_HANDLE, PHY_TRX_PREFER, PHY_PREFER_2M, 	 PHY_PREFER_2M,    CODED_PHY_PREFER_NONE);
+            #endif
 			break;
-#endif
 #if BLE_REMOTE_SECURITY_ENABLE
 		case GAP_EVT_SMP_PARING_BEAGIN:
 		{
@@ -591,7 +493,7 @@ int app_host_event_callback (u32 h, u8 *para, int n)
 
 		case GAP_EVT_SMP_PARING_SUCCESS:
 		{
-			gap_smp_paringSuccessEvt_t* p = (gap_smp_paringSuccessEvt_t*)para;
+			gap_smp_pairingSuccessEvt_t* p = (gap_smp_pairingSuccessEvt_t*)para;
 			LOG_MSG_LIB(TL_LOG_NODE_SDK, 0, 0, "Pairing success:bond flg %s", p->bonding ?"true":"false");
 			if(p->bonding_result){
 				LOG_MSG_LIB(TL_LOG_NODE_SDK, 0, 0, "save smp key succ");
@@ -604,7 +506,7 @@ int app_host_event_callback (u32 h, u8 *para, int n)
 
 		case GAP_EVT_SMP_PARING_FAIL:
 		{
-			gap_smp_paringFailEvt_t* p = (gap_smp_paringFailEvt_t*)para;
+			gap_smp_pairingFailEvt_t* p = (gap_smp_pairingFailEvt_t*)para;
 			LOG_MSG_LIB(TL_LOG_NODE_SDK, 0, 0, "Pairing failed:rsn:0x%x\n", p->reason);
 		}
 		break;
@@ -691,10 +593,9 @@ void user_init()
 	
 	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
+#if (HCI_ACCESS==HCI_USE_USB)
 	usb_id_init();
-	usb_log_init();
-	#if TESTCASE_FLAG_ENABLE
-		// need to have a simulate insert
+	// need to have a simulate insert
 	usb_dp_pullup_en (0);  //open USB enum
 	gpio_set_func(GPIO_DP,AS_GPIO);
 	gpio_set_output_en(GPIO_DP,1);
@@ -702,17 +603,8 @@ void user_init()
 	sleep_us(20000);
 	gpio_set_func(GPIO_DP,AS_USB);
 	usb_dp_pullup_en (1);  //open USB enum
-	#endif
-	usb_dp_pullup_en (1);  //open USB enum
-	#if 0
-	// use to create the certify part .
-	static u32 A_debug_simu =0x55;
-	irq_disable();
-	A_debug_simu = mi_mesh_otp_program_simulation();
-	while(1);
-	#else
+#endif
 
-	#endif
 	////////////////// BLE stack initialization ////////////////////////////////////
 #if (DUAL_VENDOR_EN)
 	mesh_common_retrieve(FLASH_ADR_PROVISION_CFG_S);
@@ -728,7 +620,7 @@ void user_init()
 	//	 is about to exceed the sector threshold, this sector must be erased, and all useful information
 	//	 should re_stored) , so it must be done after battery check
 #if (BLE_REMOTE_SECURITY_ENABLE)
-	bls_smp_configParingSecurityInfoStorageAddr(FLASH_ADR_SMP_PARA_START); // must before blc_smp_peripheral_init().
+	bls_smp_configPairingSecurityInfoStorageAddr(FLASH_ADR_SMP_PARA_START); // must before blc_smp_peripheral_init().
 	blc_smp_peripheral_init(); // must before blc_ll_initSlaveRole_module().
 
 	//Hid device on android7.0/7.1 or later version
@@ -737,12 +629,9 @@ void user_init()
 	blc_smp_configSecurityRequestSending(SecReq_IMM_SEND, SecReq_PEND_SEND, 1000); //if not set, default is:  send "security request" immediately after link layer connection established(regardless of new connection or reconnection )
 #endif
 
-#if(MCU_CORE_TYPE == MCU_CORE_8269)
-	blc_ll_initBasicMCU(tbl_mac);   //mandatory
-#elif((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
 	blc_ll_initBasicMCU();                      //mandatory
 	blc_ll_initStandby_module(tbl_mac);				//mandatory
-#endif
+
 #if (EXTENDED_ADV_ENABLE)
     mesh_blc_ll_initExtendedAdv();
 #endif
@@ -757,23 +646,17 @@ void user_init()
 	bls_app_registerEventCallback (BLT_EV_FLAG_PHY_UPDATE, &app_phy_update_complete_event);
 #endif
 
-#if LL_FEATURE_ENABLE_CHANNEL_SELECTION_ALGORITHM2
+#if BLE_GATT_CHANNEL_SELECTION_ALGORITHM2_ENABLE // enable as default, and need 222 byte ramcode.
 	blc_ll_initChannelSelectionAlgorithm_2_feature();
 #endif
 
 #if (BLE_REMOTE_PM_ENABLE)
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
-	#if (MI_SWITCH_LPN_EN||DU_LPN_EN)
-	bls_pm_setSuspendMask (SUSPEND_DISABLE);
-	#else
 	bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
-	#endif
 	blc_pm_setDeepsleepRetentionThreshold(50, 30);
 	blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400);
-	bls_pm_registerFuncBeforeSuspend(app_func_before_suspend);
-
-	#if UI_KEYBOARD_ENABLE
 	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &mesh_set_sleep_wakeup);
+    #if UI_KEYBOARD_ENABLE
 	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &mesh_proc_keyboard);
 	#endif
 #else
@@ -826,22 +709,25 @@ void user_init()
 	//blc_register_hci_handler(rx_from_uart_cb,tx_to_uart_cb);				//customized uart handler
 	#endif
 #endif
-	#if ADC_ENABLE
+
+#if ADC_ENABLE
 	adc_drv_init();	// still init even though BATT_CHECK_ENABLE is enable, because battery check may not be called in user init.
-	#endif
+#endif
+
+#if PA_ENABLE
 	rf_pa_init();
-	#if (LIGHT_TYPE_SEL == LIGHT_TYPE_NLC_SENSOR)
+#endif
+
+#if (LIGHT_TYPE_SEL == LIGHT_TYPE_NLC_SENSOR)
 	nlc_sensor_init();
-	#endif
+#endif
 	
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, (blt_event_callback_t)&mesh_ble_connect_cb);
 	blc_hci_registerControllerEventHandler(app_event_handler);		//register event callback
 	//bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 	bls_set_advertise_prepare (app_advertise_prepare_handler);
 	//bls_set_update_chn_cb(chn_conn_update_dispatch);
-	
-	bls_ota_registerStartCmdCb(entry_ota_mode);
-	bls_ota_registerResultIndicateCb(show_ota_result);
+
 	#if !GATT_LPN_EN
 	app_enable_scan_all_device ();	// enable scan adv packet 
 	#endif
@@ -853,50 +739,24 @@ void user_init()
 	if(DUAL_MODE_NOT_SUPPORT == dual_mode_state)
 	#endif	
 	{
-		#if MI_API_ENABLE
-			//fix the mi ota ,when incomplete ,it need to goon after power on 
-			u32 adr_record;
-			if(!find_record_adr(RECORD_DFU_INFO,&adr_record)){
-				bls_ota_clearNewFwDataArea(0);
-				telink_record_clean_cpy();// trigger clean recycle ,and it will not need to clean in the conn state
-			}
-		#else
-		bls_ota_clearNewFwDataArea(0);	 //must
-		#endif
+        #if (UART_PRINT_DEBUG_ENABLE)
+            blc_debug_addStackLog(STK_LOG_OTA_FLOW);
+        #endif
+        blc_ota_initOtaServer_module(); // call bls_ota_clearNewFwDataArea(0) in it
+
+        blc_ota_setOtaProcessTimeout(600);   //OTA process timeout:  600 seconds
+        //blc_ota_setOtaDataPacketTimeout(5);	//OTA data packet timeout: default 5 seconds
+        bls_ota_registerStartCmdCb(entry_ota_mode);
+        bls_ota_registerResultIndicateCb(show_ota_result);
 	}
+
 	//blc_ll_initScanning_module(tbl_mac);
 	//gatt initialization
-	#if((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
 	blc_gap_peripheral_init();    //gap initialization
-	#endif	
-	
+
 	mesh_scan_rsp_init();
 	my_att_init (provision_mag.gatt_mode);
 	blc_att_setServerDataPendingTime_upon_ClientCmd(10);
-#if MI_API_ENABLE
-	mem_pool_init();
-
-    #if DUAL_VENDOR_EN
-    if(DUAL_VENDOR_ST_ALI != provision_mag.dual_vendor_st) // mac have been set to ali mode before.
-    #endif
-    {
-	//// used for the telink callback part 
-	//extern int mi_mesh_otp_program_simulation();
-	//mi_mesh_otp_program_simulation();
-	blc_att_setServerDataPendingTime_upon_ClientCmd(1);
-	telink_record_part_init();
-	#if (MI_SWITCH_LPN_EN||DU_LPN_EN) // use 16M will save power
-	mi_mesh_switch_sys_mode(16000000);
-	mi_mesh_sleep_init();
-	#endif
-	
-	#if !DU_ENABLE
-	blc_l2cap_register_pre_handler(telink_ble_mi_event_cb_att);// for telink event callback
-	#endif
-	mi_service_init();
-	telink_mi_vendor_init();
-	}
-#endif 
 	system_time_init();
 #if TESTCASE_FLAG_ENABLE
 	memset(&model_sig_cfg_s.hb_sub, 0x00, sizeof(mesh_heartbeat_sub_str)); // init para for test
@@ -926,12 +786,11 @@ void user_init()
 #endif
 
 #if MESH_RX_TEST	
+    mesh_rx_test_rf_power_init();
  	mesh_register_upper_transport_layer_callback(mesh_upper_transport_layer_cb);
 #endif
 
     CB_USER_INIT();
-
-
 }
 
 #if (PM_DEEPSLEEP_RETENTION_ENABLE)
@@ -945,22 +804,7 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 	DBG_CHN0_HIGH;    //debug
     // should enable IRQ here, because it may use irq here, for example BLE connect which need start IRQ quickly.
     irq_enable();
-	#if (MI_SWITCH_LPN_EN||DU_LPN_EN)
-	LOG_MSG_INFO(TL_LOG_NODE_SDK,0,0,"deep init %x",clock_time()/16000);
-		if(bltPm.appWakeup_flg){ // it may have the rate not response by the event tick part ,so we should use the distance
-			if(mi_mesh_sleep_time_exceed_adv_iner()){
-				mi_mesh_sleep_init();
-				bls_pm_setSuspendMask (SUSPEND_DISABLE);
-			}
-		}else{// if it is wakeup by the adv event tick part ,we need to refresh the adv tick part
-			#if DU_LPN_EN //because the mesh disable the random part ,so it should set every time 
-			u32 adv_inter =ADV_INTERVAL_MIN +(rand())%(ADV_INTERVAL_MAX-ADV_INTERVAL_MIN); 	
-			bls_ll_setAdvInterval(adv_inter,adv_inter);
-			#endif
-			mi_mesh_sleep_init();
-			bls_pm_setSuspendMask (SUSPEND_DISABLE);
-		}
-	#endif
+
 	#if DU_ENABLE
 	du_ui_proc_init_deep();
 	#endif

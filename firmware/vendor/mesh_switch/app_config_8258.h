@@ -140,6 +140,18 @@ extern "C" {
 /////////////////// mesh project config /////////////////////////////////
 #define TRANSITION_TIME_DEFAULT_VAL (0x00)  // 0x41: 1 second // 0x00: means no default transition time
 
+#if EXTENDED_ADV_ENABLE
+#define MESH_DLE_MODE               MESH_DLE_MODE_EXTEND_BEAR
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION) // must MAX_OCTETS_DATA_LEN_EXTENSION
+#define DLE_LEN_MAX_TX              (40)
+#else
+#define MESH_DLE_MODE               0 //MESH_DLE_MODE_EXTEND_BEAR // MESH_DLE_MODE_GATT
+    #if MESH_DLE_MODE
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION)
+#define DLE_LEN_MAX_TX              (40)
+    #endif
+#endif
+
 /////////////////// MODULE /////////////////////////////////
 #if (SWITCH_ALWAYS_MODE_GATT_EN)
 #define BLE_REMOTE_PM_ENABLE			0

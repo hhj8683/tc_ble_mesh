@@ -24,22 +24,15 @@
  *******************************************************************************************************/
 #include "tl_common.h"
 #include "proj_lib/ble/blt_config.h"
-#include "app_beacon.h"
+#include "proj_lib/sig_mesh/app_mesh.h"
 
 //FLASH_ADDRESS_EXTERN;
 
 //////////////////Factory Reset///////////////////////////////////////////////////////////////////////
-void show_ota_result(int result);
-void show_factory_reset();
-int factory_reset();
-void set_firmware_type_init();
-int mesh_reset_network(u8 provision_enable);
-
-extern u8 manual_factory_reset;
 
 #define FACTORY_RESET_LOG_EN        0
 
-#if !WIN32
+#ifndef WIN32
 static int adr_reset_cnt_idx = 0;
 
 typedef void (*mesh_start_reboot_t) (void);
@@ -49,7 +42,7 @@ typedef void (*mesh_start_reboot_t) (void);
  * @return      none
  * @note        
  */
-/*_attribute_no_inline_ */void mesh_start_reboot()
+/*_attribute_no_inline_ */void mesh_start_reboot(void)
 {
 #if 1
 	start_reboot();
@@ -83,7 +76,7 @@ const u8 factory_reset_serials[SERIALS_CNT * 2] = { 0, 3,    // [0]:must 0
 #define RESET_CNT_RECOUNT_FLAG          0
 #define RESET_FLAG                      0x80
 
-void	reset_cnt_clean ()
+void	reset_cnt_clean (void)
 {
 	if (adr_reset_cnt_idx < 3840)
 	{
@@ -98,12 +91,12 @@ void write_reset_cnt (u8 cnt)
 	flash_write_page (FLASH_ADR_RESET_CNT + adr_reset_cnt_idx, 1, (u8 *)(&cnt));
 }
 
-void clear_reset_cnt ()
+void clear_reset_cnt (void)
 {
     write_reset_cnt(RESET_CNT_RECOUNT_FLAG);
 }
 
-int reset_cnt_get_idx ()		//return 0 if unconfigured
+int reset_cnt_get_idx (void)		//return 0 if unconfigured
 {
 	u8 *pf = (u8 *)FLASH_ADR_RESET_CNT;
 	for (adr_reset_cnt_idx=0; adr_reset_cnt_idx<4096; adr_reset_cnt_idx++)
@@ -125,7 +118,7 @@ int reset_cnt_get_idx ()		//return 0 if unconfigured
 	return 1;
 }
 
-u8 get_reset_cnt_bit ()
+u8 get_reset_cnt_bit (void)
 {
 	if (adr_reset_cnt_idx < 0)
 	{
@@ -138,7 +131,7 @@ u8 get_reset_cnt_bit ()
 	return reset_cnt;
 }
 
-void increase_reset_cnt ()
+void increase_reset_cnt (void)
 {
 	u8 restcnt_bit = get_reset_cnt_bit();
 	foreach(i,8){
@@ -158,7 +151,7 @@ void increase_reset_cnt ()
 	}
 }
 
-int factory_reset_handle ()
+int factory_reset_handle (void)
 {
     reset_cnt_get_idx();   
     u8 restcnt_bit; 
@@ -174,7 +167,7 @@ int factory_reset_handle ()
 	return 0;
 }
 
-int factory_reset_cnt_check ()
+int factory_reset_cnt_check (void)
 {
 #if PM_DEEPSLEEP_RETENTION_ENABLE
 	return 0; // not support recording factory reset count
@@ -238,14 +231,14 @@ STATIC_ASSERT(sizeof(factory_reset_serials) < 100);
  * @return      none
  * @note        
  */
-void	reset_cnt_clean ()
+void	reset_cnt_clean (void)
 {
 	if (adr_reset_cnt_idx < 3840)
 	{
 		return;
 	}
 #if FACTORY_RESET_LOG_EN
-	LOG_USER_MSG_INFO(0,0,"flash erase\r\n");
+	LOG_MSG_LIB(TL_LOG_NODE_BASIC, 0,0,"flash erase\r\n");
 #endif
 	flash_erase_sector (FLASH_ADR_RESET_CNT);
 	adr_reset_cnt_idx = 0;
@@ -262,7 +255,7 @@ void write_reset_cnt (u8 cnt) // reset cnt value from 1 to 254, 0 is invalid cnt
     reset_cnt_clean ();
 	flash_write_page (FLASH_ADR_RESET_CNT + adr_reset_cnt_idx, 1, (u8 *)(&cnt));
 #if FACTORY_RESET_LOG_EN
-	LOG_USER_MSG_INFO(0,0,"flash write page action\r\n");
+	LOG_MSG_LIB(TL_LOG_NODE_BASIC, 0,0,"flash write page action\r\n");
 #endif
 }
 
@@ -271,14 +264,14 @@ void write_reset_cnt (u8 cnt) // reset cnt value from 1 to 254, 0 is invalid cnt
  * @return      none
  * @note        
  */
-void clear_reset_cnt ()
+void clear_reset_cnt (void)
 {
     write_reset_cnt(RESET_CNT_INVALID);
 }
 
 #if __TLSR_RISCV_EN__
 #define READ_SIZE_RESET_CNT 	(64)
-#define RESET_CNT_SIZE			(8)		// due to max 64 times for writing one page, and each count nead to be set and cleared, so one page can store 64/2 = 32 times, then RESET_CNT_SIZE = 256/32 = 8.
+#define RESET_CNT_SIZE			(8)		// due to max 64 times for writing one page, and each count need to be set and cleared, so one page can store 64/2 = 32 times, then RESET_CNT_SIZE = 256/32 = 8.
 STATIC_ASSERT(BIT_IS_POW2(READ_SIZE_RESET_CNT) && (READ_SIZE_RESET_CNT > RESET_CNT_SIZE));
 STATIC_ASSERT(BIT_IS_POW2(RESET_CNT_SIZE));
 #else
@@ -290,7 +283,7 @@ STATIC_ASSERT(BIT_IS_POW2(RESET_CNT_SIZE));
  * @return      none
  * @note        
  */
-void reset_cnt_get_idx ()		//return 0 if unconfigured
+void reset_cnt_get_idx (void)		//return 0 if unconfigured
 {
 	for (adr_reset_cnt_idx=0; adr_reset_cnt_idx<4096; adr_reset_cnt_idx+=RESET_CNT_SIZE)
 	{
@@ -316,7 +309,7 @@ void reset_cnt_get_idx ()		//return 0 if unconfigured
 		}
 	}
 #if FACTORY_RESET_LOG_EN
-    LOG_USER_MSG_INFO(0,0,"get adr_reset_cnt_idx %d\r\n",adr_reset_cnt_idx);
+    LOG_MSG_LIB(TL_LOG_NODE_BASIC, 0,0,"get adr_reset_cnt_idx %d\r\n",adr_reset_cnt_idx);
 #endif
 }
 
@@ -325,7 +318,7 @@ void reset_cnt_get_idx ()		//return 0 if unconfigured
  * @return      reset_cnt.
  * @note        
  */
-u8 get_reset_cnt () // reset cnt value from 1 to 254, 0 is invalid cnt
+u8 get_reset_cnt (void) // reset cnt value from 1 to 254, 0 is invalid cnt
 {
 	u8 reset_cnt;
 	flash_read_page(FLASH_ADR_RESET_CNT + adr_reset_cnt_idx, 1, &reset_cnt);
@@ -337,7 +330,7 @@ u8 get_reset_cnt () // reset cnt value from 1 to 254, 0 is invalid cnt
  * @return      none
  * @note        
  */
-void increase_reset_cnt ()
+void increase_reset_cnt (void)
 {
 	u8 reset_cnt = get_reset_cnt();
 	if(0xFF == reset_cnt){
@@ -350,7 +343,7 @@ void increase_reset_cnt ()
 	reset_cnt++;
 	write_reset_cnt(reset_cnt);
 	#if FACTORY_RESET_LOG_EN
-    LOG_USER_MSG_INFO(0,0,"cnt %d\r\n",reset_cnt);
+    LOG_MSG_LIB(TL_LOG_NODE_BASIC, 0,0,"cnt %d\r\n",reset_cnt);
     #endif
 }
 
@@ -359,10 +352,14 @@ void increase_reset_cnt ()
  * @return      0
  * @note        
  */
-int factory_reset_handle ()
+int factory_reset_handle (void)
 {
     reset_cnt_get_idx();   
 	if(get_reset_cnt() == RESET_TRIGGER_VAL){
+#if MESH_RESET_NETWORK_CAN_RESTORE_EN
+		clear_reset_cnt();
+		network_revert_handle();
+#else
 		#if MANUAL_FACTORY_RESET_TX_STATUS_EN
 		send_and_wait_completed_reset_node_status();
         #endif
@@ -376,6 +373,7 @@ int factory_reset_handle ()
             #endif
         show_factory_reset();
 	    mesh_start_reboot();
+#endif
 	}else{
         increase_reset_cnt();
 	}
@@ -389,7 +387,7 @@ int factory_reset_handle ()
  * @return      0
  * @note        
  */
-int factory_reset_cnt_check ()
+int factory_reset_cnt_check (void)
 {
 #if PM_DEEPSLEEP_RETENTION_ENABLE
 	return 0; // not support recording factory reset count
@@ -417,7 +415,7 @@ int factory_reset_cnt_check ()
 	    clear_st = 0;
         clear_reset_cnt();
         #if FACTORY_RESET_LOG_EN
-        LOG_USER_MSG_INFO(0,0,"cnt clear\r\n");
+        LOG_MSG_LIB(TL_LOG_NODE_BASIC, 0,0,"cnt clear\r\n");
         #endif
 	}
 	
@@ -435,7 +433,7 @@ int factory_reset_cnt_check ()
  * @return      0
  * @note        
  */
-int factory_reset() // 1M flash for b85m, 2M flash for B91m
+int factory_reset(void) // 1M flash for b85m, 2M flash for B91m
 {
 	u32 r = irq_disable ();
 #if (APP_FLASH_PROTECTION_ENABLE)
@@ -488,6 +486,11 @@ int factory_reset() // 1M flash for b85m, 2M flash for B91m
 	flash_erase_sector(DU_STORE_ADR);
 	flash_erase_sector(DU_OTA_REBOOT_ADR);
 	#endif
+    
+	#if SAVE_SNO_CACHE_EN
+	flash_erase_sector(FLASH_ADR_SNO_CACHE);
+	#endif
+
 	CB_USER_FACTORY_RESET_ADDITIONAL();
     flash_erase_sector(FLASH_ADR_RESET_CNT);    // at last should be better, when power off during factory reset erase.
 
@@ -505,7 +508,7 @@ int factory_reset() // 1M flash for b85m, 2M flash for B91m
  * @return      0
  * @note        
  */
-int factory_reset(){
+int factory_reset(void){
 	u32 r = irq_disable ();
 #if (APP_FLASH_PROTECTION_ENABLE)
 	u32 backup_addr = app_flash_protection_mesh_par_modify_much_sectors_begin(FLASH_ADR_AREA_1_START, FLASH_SIZE_MAX_SW);
@@ -539,19 +542,7 @@ int factory_reset(){
 #endif
 
 	for(int i = 1; i < (FLASH_ADR_PAR_USER_MAX - (CFG_SECTOR_ADR_CALIBRATION_CODE)) / 4096; ++i){
-		#if XIAOMI_MODULE_ENABLE
-		if(i < (((FLASH_ADR_PAR_USER_MAX - (CFG_SECTOR_ADR_CALIBRATION_CODE)) / 4096) - 1)){ // the last sector is FLASH_ADR_MI_AUTH
-            u32 adr = (CFG_SECTOR_ADR_CALIBRATION_CODE + i*0x1000);
-		    #if DUAL_VENDOR_EN
-		    if(adr != FLASH_ADR_THREE_PARA_ADR)
-		    #endif
-		    {
-			    flash_erase_sector(adr);
-			}
-		}
-		#else
 		//flash_erase_sector(CFG_SECTOR_ADR_CALIBRATION_CODE + i*0x1000);
-		#endif
 	}
 
 	#if DU_ENABLE
@@ -565,12 +556,21 @@ int factory_reset(){
 	}
 	#endif
 
+	#if SAVE_SNO_CACHE_EN
+	flash_erase_sector(FLASH_ADR_SNO_CACHE);
+	#endif
+
 	CB_USER_FACTORY_RESET_ADDITIONAL();
     flash_erase_sector(FLASH_ADR_RESET_CNT);    // at last should be better, when power off during factory reset erase.
-
-#if (APP_FLASH_PROTECTION_ENABLE)
-	app_flash_protection_mesh_par_modify_much_sectors_end(backup_addr);
+#ifdef FLASH_ADR_EH_DEVICE_LIST
+#if (ENERGY_HARVEST_RX_EN)
+    flash_erase_sector(FLASH_ADR_EH_DEVICE_LIST);
 #endif
+#endif
+
+    #if (APP_FLASH_PROTECTION_ENABLE)
+	app_flash_protection_mesh_par_modify_much_sectors_end(backup_addr);
+    #endif
 
     irq_restore(r);
 	return 0;
@@ -587,7 +587,7 @@ void kick_out(int led_en){
 #if AUDIO_MESH_EN
 	vd_cmd_mic_tx_req(ele_adr_primary); // just to clear play buffer of itself(no sending RF packet), so that no noise during 6 seconds of led flash.
 #endif
-	#if !WIN32
+	#ifndef WIN32
 	// add terminate cmd 
 	if(bls_ll_isConnectState()){
 		bls_ll_terminateConnection (0x13);
@@ -598,20 +598,13 @@ void kick_out(int led_en){
     #if DUAL_MODE_WITH_TLK_MESH_EN
     UI_restore_TLK_4K_with_check();
     #endif
-#if 0 // not erase network info, user can revert network info by reboot or call mesh_revert_network()
-	mesh_reset_network(1);
-	show_factory_reset();
-#if FAST_PROVISION_ENABLE
-	mesh_fast_prov_val_init();
-#endif
-#else
+
 	factory_reset();
-    #if !WIN32
+    #ifndef WIN32
     if(led_en){
         show_factory_reset();
     }
     mesh_start_reboot();
     #endif
-#endif
 }
 

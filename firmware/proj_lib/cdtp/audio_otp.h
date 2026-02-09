@@ -25,7 +25,7 @@
 #ifndef _AUDIO_OTP_H_
 #define _AUDIO_OTP_H_
 
-#include "proj/common/bit.h"
+#include "bit.h"
 
 #define OTS_FOR_CDTP_EN			1
 

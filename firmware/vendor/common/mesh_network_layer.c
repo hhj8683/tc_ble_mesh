@@ -32,9 +32,22 @@
 
 //--------------------network layer callback------------------------------//
 #if !WIN32
+/**
+ * @brief       This function is called by app_event_handler_adv_()->mesh_rc_data_layer_network_()
+ * @param[in]   p_bear		- rx bearer data
+ * @param[in]   p_nw_retrans- mesh network retransmit parameters
+ * @return      not use now
+ * @note        
+ */
 int mesh_rc_network_layer_cb(mesh_cmd_bear_t *p_bear, mesh_nw_retrans_t *p_nw_retrans)
 {
 	int conn_idx = 0;
+
+#if MESH_GLOBAL_RX_PAR_EN
+    g_mesh_global_rx_par.src_bearer_type = p_nw_retrans->src_bear;
+    g_mesh_global_rx_par.src_addr = p_bear->nw.src;
+    g_mesh_global_rx_par.dst_addr = p_bear->nw.dst;
+#endif
 	
    if((MESH_BEAR_GATT == p_nw_retrans->src_bear) && is_unicast_adr(p_bear->nw.src)){		
 		#if BLE_MULTIPLE_CONNECTION_ENABLE
@@ -243,8 +256,8 @@ u16 mesh_tx_network_layer_cb(mesh_cmd_bear_t *p_bear, mesh_match_type_t *p_match
 	}
 #endif
 
-#if MESH_TX_RX_SELF_EN
-	mesh_set_iv_idx_rx(p_bear->nw.ivi); 
+#if (MESH_TX_RX_SELF_EN || ENERGY_HARVEST_RX_EN)
+	mesh_set_iv_idx_rx((u8)iv_idx_st.iv_tx);    // p_bear->nw.ivi has not been set yet.
 	is_exist_in_cache((u8 *)&p_bear->nw, 0, 1); // update RPL to prevent receiving it again.
 #elif PROXY_TX_OTHER_NODES_EN
     if(!is_own_ele(p_bear->nw.src)){
@@ -252,7 +265,7 @@ u16 mesh_tx_network_layer_cb(mesh_cmd_bear_t *p_bear, mesh_match_type_t *p_match
             p_match_type->local = 0; // receive from relay already, no need to process by local again.
         }
         else{
-            mesh_set_iv_idx_rx(p_bear->nw.ivi); 
+            mesh_set_iv_idx_rx((u8)iv_idx_st.iv_tx);
             is_exist_in_cache((u8 *)&p_bear->nw, 0, 1); // update RPL to prevent receiving it again.
         }
     }
@@ -262,7 +275,6 @@ u16 mesh_tx_network_layer_cb(mesh_cmd_bear_t *p_bear, mesh_match_type_t *p_match
 	#if BLE_MULTIPLE_CONNECTION_ENABLE
 	if(p_bear->nw.ctl){
 		p_match_type->trans.invl_steps = 0; // quick send control message, such as friend poll.
-		LOG_USER_MSG_INFO(0, 0, "lpn_quick", 0);
 	}
 	#endif
 	
@@ -274,6 +286,10 @@ u16 mesh_tx_network_layer_cb(mesh_cmd_bear_t *p_bear, mesh_match_type_t *p_match
 			}
 		}
 		#endif
+
+        if(p_bear->nw.ctl && (FRIENDSHIP == *p_sec_type)){
+            p_match_type->trans.count = TRANSMIT_CNT_LPN_CTL_CMD;
+        }
 	}
 #endif
 
@@ -298,7 +314,7 @@ int mesh_network_df_initial_start(u8 op, u16 netkey_offset, u16 destination, u16
 #endif
 //--------------------network layer callback end------------------------------//
 
-// ---- message relay protect list process
+// ---- message replay protection list process
 cache_buf_t cache_buf[CACHE_BUF_MAX];
 u16 g_cache_buf_max = CACHE_BUF_MAX;
 #ifndef WIN32
@@ -311,9 +327,14 @@ STATIC_ASSERT(CACHE_BUF_MAX > 0);
  * @return      none
  * @note        
  */
-void mesh_network_cache_buf_init()
+void mesh_network_cache_buf_init(void)
 {
     memset(cache_buf, 0, sizeof(cache_buf));
+    #if SAVE_SNO_CACHE_EN
+    if(is_provision_success()){
+	    flash_erase_sector(FLASH_ADR_SNO_CACHE);
+    }
+    #endif
 }
 
 /**
@@ -341,6 +362,30 @@ void cache_init(u16 ele_adr)
 	}
 }
 
+u16 g_cache_idx = 0;
+
+// ---- message cache process
+void mesh_add_rpl(u8 *p)
+{
+	//new device found
+	#if (TESTCASE_FLAG_ENABLE || SAVE_SNO_CACHE_ONLY_WHEN_DST_ADDR_MATCH_EN)
+	// for test case MESH/NODE/TNPT/BV-13-C 4.9.13 [Ignore Replayed Message], (3.9.8 Message replay protection)
+	// "3.4.6.5 Network Message Cache" shows that the oldest should be replaced.
+	// replay protection and Network Message Cache is different. Network Message Cache is to reduce unnecessary security checks and excessive relaying.
+	// but "Figure 3.7: Example of Network PDU processing steps" shows that "Cache checking" should be after "verify MIC" and address check, not sure why.
+	if(g_cache_idx >= g_cache_buf_max){
+		return ;
+	}
+	#endif
+	
+    mesh_update_rpl(p, g_cache_idx);
+	#if (TESTCASE_FLAG_ENABLE || SAVE_SNO_CACHE_ONLY_WHEN_DST_ADDR_MATCH_EN)
+	g_cache_idx++;
+	#else
+	g_cache_idx = (g_cache_idx + 1) % g_cache_buf_max;
+	#endif
+}
+
 
 /**
  * @brief       This function servers to update RPL.
@@ -359,6 +404,48 @@ void mesh_update_rpl(u8 *p, int idx)
     u32 sno = 0;
     memcpy(&sno, p_nw->sno, SIZE_SNO);
     cache_buf[idx].sno = sno;
+	
+#if SAVE_SNO_CACHE_EN
+    int save = 1;
+    #if (SAVE_SNO_CACHE_ONLY_WHEN_DST_ADDR_MATCH_EN)
+    save = 0; // init to 0
+    if(is_unicast_adr(p_nw->dst)){
+        if((ADR_UNASSIGNED == p_nw->dst)){ // set filter message
+            save = 1;
+        }else if(is_own_ele(p_nw->dst)){
+            if(p_nw->ctl){
+                //mesh_cmd_bear_t *p_br = CONTAINER_OF((mesh_cmd_nw_t *)p_nw, mesh_cmd_bear_t, nw);
+                //u8 op = p_br->lt_ctl_unseg.opcode;
+                if(is_use_friend_key_lpn(p_nw, 0)){
+                    // no need to save, such as periodically sent poll messages, because after power off an on, the friend key will be changed.
+                }else{
+                    save = 1; // other control message, include CMD_CTL_HEARTBEAT.
+                }
+            }else{
+                save = 1;
+            }
+        }
+    }else{ // group
+        if(p_nw->ctl){
+            #if 1
+            // no need to save
+            #else
+            mesh_cmd_bear_t *p_br = CONTAINER_OF((mesh_cmd_nw_t *)p_nw, mesh_cmd_bear_t, nw);
+            u8 op = p_br->lt_ctl_unseg.opcode;
+            if(!((CMD_CTL_REQUEST == op) || (CMD_CTL_HEARTBEAT == op))){
+                save = 1; // only fix group for control message.
+            }
+            #endif
+        }else{
+            // check and save in mesh_rc_data_layer_access_cb_()
+        }
+    }
+    #endif
+    
+    if(save){
+	    mesh_sno_cache_store(&cache_buf[idx]);
+	}
+#endif
 }
 
 /**
@@ -501,7 +588,7 @@ int is_exist_in_cache(u8 *p, u8 friend_key_flag, int save)
  * @return      the number of items in RPL.
  * @note        
  */
-u16 get_mesh_current_cache_num() // Note, there may be several elements in a node, but there is often only one element that is in cache.
+u16 get_mesh_current_cache_num(void) // Note, there may be several elements in a node, but there is often only one element that is in cache.
 {
     u16 num = 0;
     foreach(i, g_cache_buf_max){
@@ -511,3 +598,24 @@ u16 get_mesh_current_cache_num() // Note, there may be several elements in a nod
    }
    return num;
 }
+
+/**
+ * @brief       This function set the sequence number of the message to be sent
+ * @param[out]  p_nw- the network buffer to be sent
+ * @return      none
+ * @note        
+ */
+void mesh_copy_tx_sno(mesh_cmd_nw_t *p_nw)
+{
+#if ENERGY_HARVEST_RX_EN
+    extern u32 eh_sno;
+    if(eh_sno){
+        memcpy(p_nw->sno, &eh_sno, sizeof(p_nw->sno)); // use the sequence number of message from energy harvest device
+        eh_sno = 0;
+    }else
+#endif
+    {
+        memcpy(p_nw->sno, &mesh_adv_tx_cmd_sno, sizeof(p_nw->sno));
+    }
+}
+

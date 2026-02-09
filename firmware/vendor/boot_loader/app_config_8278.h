@@ -165,20 +165,17 @@ extern "C" {
 #endif
 #endif
 
-#define XIAOMI_MODULE_ENABLE	MI_API_ENABLE
-#define XIAOMI_TEST_CODE_ENABLE 	0
-
 //---------------  LED / PWM
 #if(PCBA_SEL == PCBA_8278_DONGLE_48PIN)
-#define PWM_R       GPIO_PWM1A3		//red
-#define PWM_G       GPIO_PWM0A2		//green
-#define PWM_B       GPIO_PWM3B0		//blue
-#define PWM_W       GPIO_PWM4B1		//white
+#define PWM_R       GPIO_PA3		//red
+#define PWM_G       GPIO_PA2		//green
+#define PWM_B       GPIO_PB0		//blue
+#define PWM_W       GPIO_PB1		//white
 #elif(PCBA_SEL == PCBA_8278_C1T197A30_V1_0)   // PCBA_8258_DEVELOPMENT_BOARD
-#define PWM_R       GPIO_PWM1ND3	//red
-#define PWM_G       GPIO_PWM2ND4	//green
+#define PWM_R       GPIO_PD3	    //red
+#define PWM_G       GPIO_PD4	    //green
 #define PWM_B       GPIO_PD5		//blue
-#define PWM_W       GPIO_PWM3D2		//white
+#define PWM_W       GPIO_PD2		//white
 #endif
 
 #define PWM_FUNC_R  AS_PWM  // AS_PWM_SECOND

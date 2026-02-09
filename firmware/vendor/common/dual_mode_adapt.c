@@ -30,8 +30,6 @@
 #include "mesh_common.h"
 #include "drivers.h"
 
-void rf_setTxModeNew(void);
-int is_zigbee_found();
 
 #if (DUAL_MODE_ADAPT_EN || DUAL_MODE_WITH_TLK_MESH_EN)
 u8 dual_mode_state = (FW_START_BY_LEGACY_BOOTLOADER_EN) ? DUAL_MODE_SUPPORT_DISABLE : DUAL_MODE_NOT_SUPPORT;
@@ -100,7 +98,7 @@ void dual_mode_backup_TLK_4K()
     }
 }
 
-void dual_mode_restore_TLK_4K()
+void dual_mode_restore_TLK_4K(void)
 {
     // restore 4K, and calibration, if calibrate failed, try again.
     u32 cali_flag = 0;
@@ -136,7 +134,7 @@ void dual_mode_restore_TLK_4K()
     }
 }
 
-int UI_restore_TLK_4K_with_check()
+int UI_restore_TLK_4K_with_check(void)
 {
     if(DUAL_MODE_NOT_SUPPORT != dual_mode_state){
         dual_mode_restore_TLK_4K();
@@ -154,7 +152,7 @@ u8 pair_ltk[17] = MESH_LTK;
 
 #define START_UP_FLAG		(0x544c4e4b)
 
-void dual_mode_en_init()		// call in mesh_init_all();
+void dual_mode_en_init(void)		// call in mesh_init_all();
 {
 #if (0 == FW_START_BY_LEGACY_BOOTLOADER_EN)
 	u8 en = 0;
@@ -237,7 +235,7 @@ void dual_mode_disable()
 #endif
 }
 
-void dual_mode_select()    // 
+void dual_mode_select(void)    // 
 {
 	if(DUAL_MODE_SUPPORT_ENABLE == dual_mode_state){
 		dual_mode_state = DUAL_MODE_SUPPORT_DISABLE;
@@ -262,8 +260,8 @@ void dual_mode_select()    //
 	}
 }
 #else
-void dual_mode_en_init(){}
-void dual_mode_disable(){};
+void dual_mode_en_init(void){}
+void dual_mode_disable(void){};
 #endif
 
 #if DUAL_MESH_ZB_BL_EN
@@ -334,45 +332,45 @@ const TBLCMDSET  setting_rf_250k[] = {
 #define		ZB_RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x10)
 
 const TBLCMDSET setting_rf_250k_init[] = {
-    {{0x12d2}, {0x9b},  {TCMD_UNDER_BOTH | TCMD_WRITE}}, //DCOC_DBG0
-    {{0x12d3}, {0x19},  {TCMD_UNDER_BOTH | TCMD_WRITE}}, //DCOC_DBG1
-    {{0x127b}, {0x0e},  {TCMD_UNDER_BOTH | TCMD_WRITE}}, //BYPASS_FILT_1
-    {{0x1276}, {0x50},  {TCMD_UNDER_BOTH | TCMD_WRITE}}, //FREQ_CORR_CFG2_0
-    {{0x1277}, {0x73},  {TCMD_UNDER_BOTH | TCMD_WRITE}}, //FREQ_CORR_CFG2_1
+    {0x12d2, 0x9b,  TCMD_UNDER_BOTH | TCMD_WRITE}, //DCOC_DBG0
+    {0x12d3, 0x19,  TCMD_UNDER_BOTH | TCMD_WRITE}, //DCOC_DBG1
+    {0x127b, 0x0e,  TCMD_UNDER_BOTH | TCMD_WRITE}, //BYPASS_FILT_1
+    {0x1276, 0x50,  TCMD_UNDER_BOTH | TCMD_WRITE}, //FREQ_CORR_CFG2_0
+    {0x1277, 0x73,  TCMD_UNDER_BOTH | TCMD_WRITE}, //FREQ_CORR_CFG2_1
 };
 
 const TBLCMDSET  setting_rf_250k[] =
 {
-    {{0x1220}, {0x04}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x1221}, {0x2b}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x1222}, {0x43}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x1223}, {0x86}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x122a}, {0x90}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x1254}, {0x0e}, {TCMD_UNDER_BOTH | TCMD_WRITE}}, //AGC_THRSHLD1_2M_0
-    {{0x1255}, {0x09}, {TCMD_UNDER_BOTH | TCMD_WRITE}}, //AGC_THRSHLD1_2M_1
-    {{0x1256}, {0x0c}, {TCMD_UNDER_BOTH | TCMD_WRITE}}, //AGC_THRSHLD2_2M_0
-    {{0x1257}, {0x08}, {TCMD_UNDER_BOTH | TCMD_WRITE}}, //AGC_THRSHLD2_2M_1
-    {{0x1258}, {0x09}, {TCMD_UNDER_BOTH | TCMD_WRITE}}, //AGC_THRSHLD3_2M_0
-    {{0x1259}, {0x0f}, {TCMD_UNDER_BOTH | TCMD_WRITE}}, //AGC_THRSHLD3_2M_1
+    {0x1220, 0x04, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x1221, 0x2b, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x1222, 0x43, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x1223, 0x86, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x122a, 0x90, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x1254, 0x0e, TCMD_UNDER_BOTH | TCMD_WRITE}, //AGC_THRSHLD1_2M_0
+    {0x1255, 0x09, TCMD_UNDER_BOTH | TCMD_WRITE}, //AGC_THRSHLD1_2M_1
+    {0x1256, 0x0c, TCMD_UNDER_BOTH | TCMD_WRITE}, //AGC_THRSHLD2_2M_0
+    {0x1257, 0x08, TCMD_UNDER_BOTH | TCMD_WRITE}, //AGC_THRSHLD2_2M_1
+    {0x1258, 0x09, TCMD_UNDER_BOTH | TCMD_WRITE}, //AGC_THRSHLD3_2M_0
+    {0x1259, 0x0f, TCMD_UNDER_BOTH | TCMD_WRITE}, //AGC_THRSHLD3_2M_1
 
-    {{0x400}, {0x13}, {TCMD_UNDER_BOTH | TCMD_WRITE}},//{{0x400}, {0x0a},	{TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x401}, {0x00}, {TCMD_UNDER_BOTH | TCMD_WRITE}},//zigBee must set
-    {{0x420}, {0x18}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x404}, {0xc0}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x405}, {0x04}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x421}, {0x23}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x422}, {0x04}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x408}, {0xa7}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x409}, {0x00}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x40a}, {0x00}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
-    {{0x40b}, {0x00}, {TCMD_UNDER_BOTH | TCMD_WRITE}},
+    {0x400, 0x13, TCMD_UNDER_BOTH | TCMD_WRITE},//{{0x400}, {0x0a},	{TCMD_UNDER_BOTH | TCMD_WRITE}},
+    {0x401, 0x00, TCMD_UNDER_BOTH | TCMD_WRITE},//zigBee must set
+    {0x420, 0x18, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x404, 0xc0, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x405, 0x04, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x421, 0x23, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x422, 0x04, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x408, 0xa7, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x409, 0x00, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x40a, 0x00, TCMD_UNDER_BOTH | TCMD_WRITE},
+    {0x40b, 0x00, TCMD_UNDER_BOTH | TCMD_WRITE},
     //AGC table 2M
-    {{0x460}, {0x36}, {TCMD_UNDER_BOTH | TCMD_WRITE}},//grx_0
-    {{0x461}, {0x46}, {TCMD_UNDER_BOTH | TCMD_WRITE}},//grx_1
-    {{0x462}, {0x51}, {TCMD_UNDER_BOTH | TCMD_WRITE}},//grx_2
-    {{0x463}, {0x61}, {TCMD_UNDER_BOTH | TCMD_WRITE}},//grx_3
-    {{0x464}, {0x6d}, {TCMD_UNDER_BOTH | TCMD_WRITE}},//grx_4
-    {{0x465}, {0x78}, {TCMD_UNDER_BOTH | TCMD_WRITE}},//grx_5
+    {0x460, 0x36, TCMD_UNDER_BOTH | TCMD_WRITE},//grx_0
+    {0x461, 0x46, TCMD_UNDER_BOTH | TCMD_WRITE},//grx_1
+    {0x462, 0x51, TCMD_UNDER_BOTH | TCMD_WRITE},//grx_2
+    {0x463, 0x61, TCMD_UNDER_BOTH | TCMD_WRITE},//grx_3
+    {0x464, 0x6d, TCMD_UNDER_BOTH | TCMD_WRITE},//grx_4
+    {0x465, 0x78, TCMD_UNDER_BOTH | TCMD_WRITE},//grx_5
 };
 
 /* set Rx mode, maximum receiver buffer size, enable Rx/Tx interrupt */
@@ -442,7 +440,7 @@ static u8 zigbeeNetworkFound = 0;
 
 static u8 _attribute_aligned_(4) rf_tx_buf[64];
 
-typedef struct{
+typedef struct __attribute__((packed)) {
 	u8 protocolId;
 	u16	stackProfile:4;
 	u16	nwkProtocolVer:4;
@@ -452,14 +450,14 @@ typedef struct{
 	u16 edCap:1;
 }zb_beacon_pld_t;
 
-typedef struct{
+typedef struct __attribute__((packed)) {
 	u16 frmCtrl;
 	u8  seqNo;
 	u16 srcPanID;
 	u16 srcAddr;
 }zb_mac_hdr_t;
 
-typedef struct{
+typedef struct __attribute__((packed)) {
 	u16 sfSpecification;
 	u8  gts;
 	u8 pendAddr;
@@ -472,6 +470,9 @@ u8 zbBeaconReq[] = {0x03, 0x08, /* frame control*/
 					0xff, 0xff, /* destination address*/
 					0x07		/* commandId: beacon request */
 					};
+
+#define FRE_OFFSET      0
+#define MAX_RF_CHANNEL  16
 
 static const unsigned char rf_channelNew[MAX_RF_CHANNEL] = {
 	FRE_OFFSET+ 5, FRE_OFFSET+10, FRE_OFFSET+15, FRE_OFFSET+20,
@@ -737,24 +738,24 @@ void dual_mode_zigbee_init(void){
 
 
 // ---------------------dual mode switch check
-int is_ble_found()
+int is_ble_found(void)
 {
 	return ((BLS_LINK_STATE_ADV != blc_ll_getCurrentState()) || (get_provision_state() != STATE_DEV_UNPROV));
 }
 
-int is_zigbee_found()
+int is_zigbee_found(void)
 {
 	return zigbeeNetworkFound;
 }
 
-void zigbee_found_clear()
+void zigbee_found_clear(void)
 {
 	zigbeeNetworkFound = 0;
 }
 
 volatile u8 T_zigbeeSdkRun;
 volatile u8 T_DBG_zigbeeTest[2] = {0};
-u8 dual_mode_proc()
+u8 dual_mode_proc(void)
 {
 	if(DUAL_MODE_SUPPORT_ENABLE != dual_mode_state){
 		return RF_MODE_BLE;
@@ -859,7 +860,7 @@ void phy_set_telink_mesh_scan(int set_chn)
 	rf_set_rxmode ();
 }
 
-u8 dual_mode_proc()
+u8 dual_mode_proc(void)
 {
 	if(DUAL_MODE_SUPPORT_ENABLE != dual_mode_state){
 		return RF_MODE_BLE;

@@ -40,18 +40,19 @@ static inline void ota_reboot(void){
 	while (1);
 }
 
+u8 ota_pingpong_disable_copy_fw_flag = 0;
+
 _attribute_ram_code_ void ota_fw_check_over_write (void)    //must run in ramcode
 {
 	#if SWITCH_FW_ENABLE
-	u8 flash_boot_flag ;
-	flash_read_page(FLASH_ADR_BOOT_FLAG,1,&flash_boot_flag);
+	// u8 flash_boot_flag ;
+	// flash_read_page(FLASH_ADR_BOOT_FLAG,1,&flash_boot_flag); // can not use flash read page due to sleep_us() called inside, and clock is not start now.
 	u32 flash_adr_new_fw = (*(u8 *)FLASH_ADR_BOOT_FLAG == 0xa5)?FLASH_ADR_LIGHT_TELINK_MESH:FLASH_ADR_UPDATE_NEW_FW;
 	#else
 	u32 flash_adr_new_fw = FLASH_ADR_UPDATE_NEW_FW;
 	#endif
     u32 adr_flag = flash_adr_new_fw + BOOT_MARK_ADDR;
-	u32 adr_flag_data;
-	flash_read_page(adr_flag,sizeof(adr_flag_data),(u8*)&adr_flag_data);
+	u32 adr_flag_data = *(u32 *)adr_flag; // can not use flash read page due to sleep_us() called inside, and clock is not start now.
     if(0x544c4e4b != adr_flag_data){
         return ;
     }
@@ -72,7 +73,8 @@ _attribute_ram_code_ void ota_fw_check_over_write (void)    //must run in ramcod
     REG_ADDR8(0x74f) = 0x01;        //enable system tick for flash API;
 
 	//irq_disable ();
-	
+	ota_pingpong_disable_copy_fw_flag = 1;
+
 #if 1
     u8 buff[256];// = {0};
     int n;

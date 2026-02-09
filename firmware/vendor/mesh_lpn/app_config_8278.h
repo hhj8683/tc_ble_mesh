@@ -62,8 +62,8 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_NONE
 
 #if (HCI_ACCESS==HCI_USE_UART)
-#define UART_TX_PIN		UART_TX_PB1
-#define UART_RX_PIN		UART_RX_PB0
+#define UART_TX_PIN		UART_TX_PD7
+#define UART_RX_PIN		UART_RX_PA0
 #endif
 
 #ifndef HCI_LOG_FW_EN
@@ -95,6 +95,22 @@ extern "C" {
 #endif
 /////////////////// mesh project config /////////////////////////////////
 #define TRANSITION_TIME_DEFAULT_VAL (0x00)  // 0x41: 1 second // 0x00: means no default transition time
+
+#if EXTENDED_ADV_ENABLE
+#define MESH_DLE_MODE               MESH_DLE_MODE_EXTEND_BEAR
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION) // must MAX_OCTETS_DATA_LEN_EXTENSION
+#define DLE_LEN_MAX_TX              (40)
+#elif GATT_LPN_EN
+#define MESH_DLE_MODE               MESH_DLE_MODE_GATT
+#define DLE_LEN_MAX_RX              (56)
+#define DLE_LEN_MAX_TX              (40)
+#else
+#define MESH_DLE_MODE               0 //MESH_DLE_MODE_EXTEND_BEAR // MESH_DLE_MODE_GATT
+    #if MESH_DLE_MODE
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION)
+#define DLE_LEN_MAX_TX              (40)
+    #endif
+#endif
 
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			1
@@ -212,15 +228,15 @@ extern "C" {
 
 //---------------  LED / PWM
 #if(PCBA_SEL == PCBA_8278_DONGLE_48PIN)
-#define PWM_R       GPIO_PWM1A3		//red
-#define PWM_G       GPIO_PWM0A2		//green
-#define PWM_B       GPIO_PWM3B0		//blue
-#define PWM_W       GPIO_PWM4B1		//white
+#define PWM_R       GPIO_PA3		//red
+#define PWM_G       GPIO_PA2		//green
+#define PWM_B       GPIO_PB0		//blue
+#define PWM_W       GPIO_PB1		//white
 #elif(PCBA_SEL == PCBA_8278_C1T197A30_V1_0)   // PCBA_8258_DEVELOPMENT_BOARD
-#define PWM_R       GPIO_PWM1ND3	//red
-#define PWM_G       GPIO_PWM2ND4	//green
+#define PWM_R       GPIO_PD3	//red
+#define PWM_G       GPIO_PD4	//green
 #define PWM_B       GPIO_PD5		//blue
-#define PWM_W       GPIO_PWM3D2		//white
+#define PWM_W       GPIO_PD2		//white
 #endif
 
 #define PWM_FUNC_R  AS_PWM  // AS_PWM_SECOND

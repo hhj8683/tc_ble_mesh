@@ -23,16 +23,12 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#if __TLSR_RISCV_EN__
 #include "stack/ble/ble.h"
-#else
-#include "proj_lib/ble/ll/ll.h"
-#endif
 
 #if(BEACON_ENABLE)
 #if 0
 //apple ibeacon
-typedef struct{
+typedef struct __attribute__((packed)) {
     u8 flag_len; //constant, 0x02
     u8 flag_type;//constant, 0x01, flags type
     u8 flag; //constant, 0x06, flags indicating LE General discoverable and not supporting BR/EDR
@@ -131,8 +127,8 @@ int pre_set_beacon_to_adv(rf_packet_adv_t *p){
 		p->dma_len = beacon_len + 8;
 		p->header.type = LL_TYPE_ADV_NONCONN_IND;//Set ADV type to non-connectable
 		p->rf_len = beacon_len + 6;
-		memcpy(p->advA, tbl_mac, 6);
-		
+		set_adv_addr(GATT_ADV_HANDLE, tbl_mac, BLE_ADDR_PUBLIC);
+
 		return 1;
  	}
  	

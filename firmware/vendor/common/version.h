@@ -42,7 +42,7 @@
 #define SW_VERSION_SPEC			(4)		// "3" means SIG MESH 1.0.x, "4" means SIG MESH 1.1.x; 0 mean beta version.
 #define SW_VERSION_MAJOR		(2)		// "2" means multi connection, "1" means single connection.
 #define SW_VERSION_MINOR		(0)		// 
-#define SW_VERSION_2ND_MINOR	(0)		// second minor or fix version
+#define SW_VERSION_2ND_MINOR	(3)		// second minor or fix version
 	#else
 #define SW_VERSION_SPEC			(4)		// "3" means SIG MESH 1.0.x, "4" means SIG MESH 1.1.x; 0 mean beta version.
 #define SW_VERSION_MAJOR		(1)		// "1" means single connection"2", means multi connection.
@@ -52,8 +52,8 @@
 #else // for B85m chips
 #define SW_VERSION_SPEC			(4)		// "3" means SIG MESH 1.0.x, "4" means SIG MESH 1.1.x; 0 mean beta version.
 #define SW_VERSION_MAJOR		(1)		// "1" means single connection"2", means multi connection. 
-#define SW_VERSION_MINOR		(0)		// 
-#define SW_VERSION_2ND_MINOR	(1)		// second minor or fix version
+#define SW_VERSION_MINOR		(1)		// 
+#define SW_VERSION_2ND_MINOR	(0)		// second minor or fix version
 #endif
 
 // big endian
@@ -74,6 +74,12 @@
 #define PID_CHIP_TYPE			2
 #elif(CHIP_TYPE == CHIP_TYPE_9518)
 #define PID_CHIP_TYPE			3
+#elif(CHIP_TYPE == CHIP_TYPE_TL321X)
+#define PID_CHIP_TYPE			4
+#elif(CHIP_TYPE == CHIP_TYPE_TC321X)
+#define PID_CHIP_TYPE			5
+#elif(CHIP_TYPE == CHIP_TYPE_B92)
+#define PID_CHIP_TYPE			6
 #else
 #error error mcu core type
 #endif
@@ -114,7 +120,7 @@ format: please refer to spec "4.2.1.1 Composition Data Page 0"
 user can be allowed to redefined PID and VID if needed.
 */
 
-#if (WIN32)
+#ifdef WIN32
 #define MESH_PID_SEL		(PID_LIGHT)
 #define MESH_VID		    FW_VERSION_TELINK_RELEASE       // user can redefine
 #elif (__PROJECT_MESH_PRO__ || __PROJECT_MESH_GW_NODE__)  // must define in TC32_CC_Assembler ->General , too. because cstartup.s can't read predefine value in TC32_compiler-->symbols
@@ -142,7 +148,7 @@ user can be allowed to redefined PID and VID if needed.
 #elif (__PROJECT_MESH_GW_NODE_HK__)   // light
 #define MESH_PID_SEL		(PID_GW_NODE_HK)
 #define MESH_VID		    FW_VERSION_TELINK_RELEASE       // user can redefine
-#elif (__PROJECT_BOOTLOADER__ || __PROJECT_ACL_PER_DEMO__)   // light
+#elif (__PROJECT_BOOTLOADER__ || __PROJECT_ACL_PER_DEMO__ || __PROJECT_BLE_SAMPLE__  || __PROJECT_MASTER_KMA_DONGLE__)   // just for compiler
 #define MESH_PID_SEL		(PID_LIGHT)						// 
 #define MESH_VID		    FW_VERSION_TELINK_RELEASE       // user can redefine
 #else

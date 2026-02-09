@@ -23,21 +23,8 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#include "proj_lib/rf_drv.h"
-#include "proj_lib/pm.h"
-#include "proj_lib/ble/ll/ll.h"
-#include "proj_lib/ble/blt_config.h"
-#include "proj_lib/ble/ll/ll_whitelist.h"
-#include "proj_lib/ble/trace.h"
-#include "proj/mcu/pwm.h"
-#include "proj/mcu/watchdog_i.h"
-#include "proj_lib/ble/service/ble_ll_ota.h"
-#include "proj/drivers/adc.h"
-#if(MCU_CORE_TYPE == MCU_CORE_8258)
 #include "stack/ble/ble.h"
-#elif(MCU_CORE_TYPE == MCU_CORE_8278)
-#include "stack/ble_8278/ble.h"
-#endif
+#include "drivers.h"
 #include "proj_lib/mesh_crypto/mesh_crypto.h"
 #include "proj_lib/mesh_crypto/mesh_md5.h"
 
@@ -47,14 +34,8 @@
 #include "../common/app_proxy.h"
 #include "../common/app_health.h"
 #include "../common/subnet_bridge.h"
-#include "proj/drivers/keyboard.h"
 #include "app.h"
 #include "vendor/common/blt_soft_timer.h"
-#include "proj/drivers/rf_pa.h"
-
-#if (HCI_ACCESS==HCI_USE_UART)
-#include "proj/drivers/uart.h"
-#endif
 
 #if MESH_DLE_MODE
 MYFIFO_INIT_NO_RET(blt_rxfifo, DLE_RX_FIFO_SIZE, 8);
@@ -169,9 +150,7 @@ int app_event_handler (u32 h, u8 *p, int n)
 		else if(pd->reason == HCI_ERR_REMOTE_USER_TERM_CONN){  //0x13
 
 		}
-		else if(pd->reason == SLAVE_TERMINATE_CONN_ACKED || pd->reason == SLAVE_TERMINATE_CONN_TIMEOUT){
 
-		}
 		#if DEBUG_BLE_EVENT_ENABLE
 		rf_link_light_event_callback(LGT_CMD_BLE_ADV);
 		#endif 
@@ -191,9 +170,11 @@ int app_event_handler (u32 h, u8 *p, int n)
 	return 0;
 }
 
-void proc_ui()
+void proc_ui(void)
 {
+#if UI_KEYBOARD_ENABLE
 	lpn_proc_keyboard(0, 0, 0);
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -219,12 +200,12 @@ void main_loop ()
 	
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_sdk_main_loop ();
-
-
 	////////////////////////////////////// UI entry /////////////////////////////////
 	//  add spp UI task:
 #if (BATT_CHECK_ENABLE)
-    app_battery_power_check_and_sleep_handle(1);
+	if(!is_lpn_poll_ready()){ // not check low power in send friend poll loop to save run time. 
+    	app_battery_power_check_and_sleep_handle(1);
+	}
 #endif
 	proc_ui();
 	proc_led();
@@ -298,7 +279,7 @@ void user_init()
 	//	 is about to exceed the sector threshold, this sector must be erased, and all useful information
 	//	 should re_stored) , so it must be done after battery check
 #if (BLE_REMOTE_SECURITY_ENABLE)
-	bls_smp_configParingSecurityInfoStorageAddr(FLASH_ADR_SMP_PARA_START); // must before blc_smp_peripheral_init().
+	bls_smp_configPairingSecurityInfoStorageAddr(FLASH_ADR_SMP_PARA_START); // must before blc_smp_peripheral_init().
 	blc_smp_peripheral_init();
 
 	//Hid device on android7.0/7.1 or later version
@@ -307,25 +288,28 @@ void user_init()
 	blc_smp_configSecurityRequestSending(SecReq_IMM_SEND, SecReq_PEND_SEND, 1000); //if not set, default is:  send "security request" immediately after link layer connection established(regardless of new connection or reconnection )
 #endif
 
-#if(MCU_CORE_TYPE == MCU_CORE_8269)
-	blc_ll_initBasicMCU(tbl_mac);   //mandatory
-#elif((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
 	blc_ll_initBasicMCU();                      //mandatory
 	blc_ll_initStandby_module(tbl_mac);				//mandatory
-#endif
+
 #if (EXTENDED_ADV_ENABLE)
     mesh_blc_ll_initExtendedAdv();
 #endif
 	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+
+#if BLE_GATT_CHANNEL_SELECTION_ALGORITHM2_ENABLE // enable as default, and need 222 byte ramcode.
+	blc_ll_initChannelSelectionAlgorithm_2_feature();
+#endif
+
 #if BLE_REMOTE_PM_ENABLE
 	blc_ll_initPowerManagement_module();		//pm module:		 optional
 	ENABLE_SUSPEND_MASK;
 	blc_pm_setDeepsleepRetentionThreshold(50, 30); // threshold to enter retention
 	blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400); // retention early wakeup time
-	bls_pm_registerFuncBeforeSuspend(app_func_before_suspend);
-	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &lpn_set_sleep_wakeup);	
+	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &mesh_set_sleep_wakeup);
+#if UI_KEYBOARD_ENABLE
 	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &lpn_proc_keyboard);
+#endif
 #endif
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 
@@ -369,14 +353,16 @@ void user_init()
 #if ADC_ENABLE
 	adc_drv_init();	// still init even though BATT_CHECK_ENABLE is enable, because battery check may not be called in user init.
 #endif
+
+#if PA_ENABLE
 	rf_pa_init();
+#endif
+
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, (blt_event_callback_t)&mesh_ble_connect_cb);
 	blc_hci_registerControllerEventHandler(app_event_handler);		//register event callback
 	//bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 	bls_set_advertise_prepare (app_advertise_prepare_handler);
 	//bls_set_update_chn_cb(chn_conn_update_dispatch);
-	bls_ota_registerStartCmdCb(entry_ota_mode);
-	bls_ota_registerResultIndicateCb(show_ota_result);
 
 	if(!lpn_provision_ok){
 		app_enable_scan_all_device ();
@@ -389,14 +375,21 @@ void user_init()
 	#if (DUAL_MODE_ADAPT_EN && (0 == FW_START_BY_LEGACY_BOOTLOADER_EN) || DUAL_MODE_WITH_TLK_MESH_EN)
 	if(DUAL_MODE_NOT_SUPPORT == dual_mode_state)
 	#endif
-	{bls_ota_clearNewFwDataArea(0);	 //must
+	{
+        #if (UART_PRINT_DEBUG_ENABLE)
+            blc_debug_addStackLog(STK_LOG_OTA_FLOW);
+        #endif
+        blc_ota_initOtaServer_module(); // call bls_ota_clearNewFwDataArea(0) in it
+
+        blc_ota_setOtaProcessTimeout(600);   //OTA process timeout:  600 seconds
+        //blc_ota_setOtaDataPacketTimeout(5);	//OTA data packet timeout: default 5 seconds
+        bls_ota_registerStartCmdCb(entry_ota_mode);
+        bls_ota_registerResultIndicateCb(show_ota_result);
 	}
 
 	//blc_ll_initScanning_module(tbl_mac);
-	#if((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
 	blc_gap_peripheral_init();    //gap initialization
-	#endif
-	
+
 	mesh_scan_rsp_init();
 	my_att_init (provision_mag.gatt_mode);
 	blc_att_setServerDataPendingTime_upon_ClientCmd(10);
@@ -430,9 +423,12 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 	irq_enable();
 	user_init_peripheral(1); 
 
-	if(get_blt_busy() && clock_time_exceed(fri_ship_proc_lpn.poll_tick, get_lpn_poll_interval_ms()*1000/2)){ // blt_busy true means not early wakeup
-		lpn_set_poll_ready(); // will call mesh_friend_ship_start_poll() in mesh_friend_ship_proc_LPN().
-	}	
+    // If a poll retry or poll more data exceed in last advertising event, check to send friend poll in this advertising event, otherwise it may delay to next advertising event.
+    // don't use clock_time_exceed_ms() here, because system_time_ms had not been refreshed by system_time_run()    
+    if(get_blt_busy() && !(mesh_lpn_par.long_sleep_flag) && clock_time_exceed(fri_ship_proc_lpn.poll_time_ms * SYSTEM_TIMER_TICK_1MS, get_lpn_poll_interval_ms() * 1000 / 2)){ // get_blt_busy() true means not early wakeup
+        lpn_set_poll_ready(); // will call mesh_friend_ship_start_poll() in mesh_friend_ship_proc_LPN().
+    }
+
 //  if(!is_led_busy()){
 //	    light_pwm_init();   // cost about 1.5ms
 //	}

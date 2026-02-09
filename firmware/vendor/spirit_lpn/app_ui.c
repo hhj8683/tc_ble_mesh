@@ -23,22 +23,11 @@
  *******************************************************************************************************/
 #include "tl_common.h"
 #include "drivers.h"
-#if(MCU_CORE_TYPE == MCU_CORE_8278)
-#include "stack/ble_8278/ble.h"
-#else
 #include "stack/ble/ble.h"
-#endif
-#include "app.h"
 #include "app_ui.h"
 #include "proj_lib/sig_mesh/app_mesh.h"
 #include "vendor/common/subnet_bridge.h"
 #include "vendor/common/blt_soft_timer.h"
-#if (UI_KEYBOARD_ENABLE)
-static int	long_pressed;
-u8   key_released =1;
-
-#define	KEY_SCAN_WAKEUP_INTERVAL		(40 * 1000)	// unit:us. wakeup interval to scan key.
-#define GPIO_WAKEUP_KEYPROC_CNT			3
 
 void spirit_lpn_wakeup_init(u8 e, u8 *p, int n)
 {
@@ -46,11 +35,11 @@ void spirit_lpn_wakeup_init(u8 e, u8 *p, int n)
 		mesh_sleep_time.appWakeup_flg = 0;
 		mesh_sleep_time.last_tick = clock_time()|1;
 		bls_pm_setSuspendMask (SUSPEND_DISABLE);
-		app_enable_scan_all_device();
+		mesh_set_scan_enable(1, 1);
 	}
 	else{ // early wakeup, not need scan.
 		mesh_sleep_time.appWakeup_flg = 1;
-		blc_ll_setScanEnable (0, 0); 
+		mesh_set_scan_enable(0, 0); 
 	}
 }
 
@@ -61,12 +50,19 @@ void spirit_lpn_ui_init()
 #endif
 }
 
+#if (UI_KEYBOARD_ENABLE)
+static int	long_pressed;
+u8   key_released =1;
+
+#define	KEY_SCAN_WAKEUP_INTERVAL		(40 * 1000)	// unit:us. wakeup interval to scan key.
+#define GPIO_WAKEUP_KEYPROC_CNT			3
+
 /**
  * @brief       This function server to wakeup to scan key when key press.
  * @return      0: keep same soft timer. -1: delete soft timer.
  * @note        
  */
-int soft_timer_key_scan()
+int soft_timer_key_scan(void)
 {
 	return key_released ? -1 : 0;
 }
@@ -201,7 +197,7 @@ void mesh_proc_keyboard(u8 e, u8 *p, int n)
 }
 #endif
 
-void proc_ui()
+void proc_ui(void)
 {
 #if (UI_KEYBOARD_ENABLE)
 	mesh_proc_keyboard(0, 0, 0);

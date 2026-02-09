@@ -31,7 +31,7 @@
  * @param[in]	none
  * @return      none
  */
-void user_init_deepRetn();
+void user_init_deepRetn(void);
 extern void deep_wakeup_proc(void);
 
 void mesh_proc_keyboard(u8 e, u8 *p, int n);

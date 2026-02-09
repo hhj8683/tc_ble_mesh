@@ -35,6 +35,10 @@ extern "C" {
 #define PCBA_8278_C1T197A30_V1_0        2
 #define PCBA_SEL			    PCBA_8278_DONGLE_48PIN
 
+#define ENERGY_HARVEST_RX_EN	        0
+#if ENERGY_HARVEST_RX_EN
+#define ENERGY_HARVEST_DEBUG_LOG_EN     0
+#endif
 
 #define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
 #define	__LOG_RT_ENABLE__		0
@@ -43,11 +47,7 @@ extern "C" {
 #if DUAL_VENDOR_EN
 #define FLASH_1M_ENABLE         0
 #else
-	#if MI_API_ENABLE
-#define FLASH_1M_ENABLE        	1
-	#else
 #define FLASH_1M_ENABLE        	0	
-	#endif
 #endif
 
 #if FLASH_1M_ENABLE
@@ -58,6 +58,12 @@ extern "C" {
 #endif
 
 #define APP_FLASH_PROTECTION_ENABLE     1
+
+#define SAVE_SNO_CACHE_EN				0
+#if SAVE_SNO_CACHE_EN
+// if save cache once receive a new message, it will need to do many flash save action when such as get all lightness, all publish to all.
+#define SAVE_SNO_CACHE_ONLY_WHEN_DST_ADDR_MATCH_EN      1 // 0 means save cache once receiving a new message. 1 means save only when need to handle this message.
+#endif
 
 //////////// product  Information  //////////////////////////////
 #define ID_VENDOR				0x248a			// for report
@@ -77,15 +83,23 @@ extern "C" {
 #define HCI_USE_UART	1
 #define HCI_USE_USB		2
 
-#if WIN32
+#ifndef HCI_ACCESS
+#if (WIN32 || PTS_TEST_EN || TESTCASE_FLAG_ENABLE)
 #define HCI_ACCESS		HCI_USE_USB
+#elif MESH_MONITOR_EN
+#define HCI_ACCESS		HCI_USE_UART
 #else
+	#if GATT_RP_EN
+#define HCI_ACCESS		HCI_USE_UART
+	#else
 #define HCI_ACCESS		HCI_USE_NONE
+	#endif
 #endif 
 
 #if (HCI_ACCESS==HCI_USE_UART)
-#define UART_TX_PIN		UART_TX_PB1
-#define UART_RX_PIN		UART_RX_PB0
+#define UART_TX_PIN		UART_TX_PD7
+#define UART_RX_PIN		UART_RX_PA0
+#endif
 #endif
 
 #ifndef HCI_LOG_FW_EN
@@ -127,15 +141,35 @@ extern "C" {
 #if (MESH_RX_TEST || (!MD_DEF_TRANSIT_TIME_EN))
 #define TRANSITION_TIME_DEFAULT_VAL (0)
 #else
-	#if MI_API_ENABLE
-#define TRANSITION_TIME_DEFAULT_VAL	0
-	#else
 #define TRANSITION_TIME_DEFAULT_VAL (GET_TRANSITION_TIME_WITH_STEP(1, TRANSITION_STEP_RES_1S)) // (0x41)  // 0x41: 1 second // 0x00: means no default transition time
-	#endif
+#endif
+
+#if GATT_LPN_EN
+#define MESH_DLE_MODE               MESH_DLE_MODE_EXTEND_BEAR
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION)
+#define DLE_LEN_MAX_TX              (80)
+#elif DEBUG_CFG_CMD_GROUP_AK_EN
+#define MESH_DLE_MODE               0   // because not enough RAM
+#elif EXTENDED_ADV_ENABLE
+#define MESH_DLE_MODE               MESH_DLE_MODE_EXTEND_BEAR
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION) // must MAX_OCTETS_DATA_LEN_EXTENSION
+#define DLE_LEN_MAX_TX              (40)
+#elif NMW_ENABLE
+#define MESH_DLE_MODE               MESH_DLE_MODE_GATT
+#define DLE_LEN_MAX_RX              (88)
+#define DLE_LEN_MAX_TX              (40)
+#else
+#define MESH_DLE_MODE               MESH_DLE_MODE_GATT
+#define DLE_LEN_MAX_RX              (56)
+#define DLE_LEN_MAX_TX              (40)
 #endif
 
 /////////////////// MODULE /////////////////////////////////
+#if (GATT_LPN_EN)
+#define BLE_REMOTE_PM_ENABLE			1
+#else
 #define BLE_REMOTE_PM_ENABLE			0
+#endif
 #if BLE_REMOTE_PM_ENABLE
 #define PM_DEEPSLEEP_RETENTION_ENABLE   1   // must
 #else
@@ -145,12 +179,20 @@ extern "C" {
 #define BLE_IR_ENABLE					0
 #define BLE_GATT_2M_PHY_ENABLE			0 // only GATT, not for ADV
 
+#if GATT_LPN_EN
+#define BLT_SOFTWARE_TIMER_ENABLE		1
+#endif
+
 #ifndef BLT_SOFTWARE_TIMER_ENABLE
 #define BLT_SOFTWARE_TIMER_ENABLE		0
 #endif
 
+#if ((0 == PM_DEEPSLEEP_RETENTION_ENABLE) && DUAL_VENDOR_EN)
+#define SLEEP_FUNCTION_DISABLE          1
+#endif
+
 //----------------------- GPIO for UI --------------------------------
-#if (GATT_LPN_EN || DF_TEST_MODE_EN || IV_UPDATE_TEST_EN)
+#if (GATT_LPN_EN || DF_TEST_MODE_EN || IV_UPDATE_TEST_EN || DU_ENABLE || MESH_RX_TEST)
 #define	UI_KEYBOARD_ENABLE 				1
 #endif
 
@@ -240,20 +282,17 @@ extern "C" {
 #endif
 #endif
 
-#define XIAOMI_MODULE_ENABLE	MI_API_ENABLE
-#define XIAOMI_TEST_CODE_ENABLE 	0
-
 //---------------  LED / PWM
 #if(PCBA_SEL == PCBA_8278_DONGLE_48PIN)
-#define PWM_R       GPIO_PWM1A3		//red
-#define PWM_G       GPIO_PWM0A2		//green
-#define PWM_B       GPIO_PWM3B0		//blue
-#define PWM_W       GPIO_PWM4B1		//white
+#define PWM_R       GPIO_PA3		//red
+#define PWM_G       GPIO_PA2		//green
+#define PWM_B       GPIO_PB0		//blue
+#define PWM_W       GPIO_PB1		//white
 #elif(PCBA_SEL == PCBA_8278_C1T197A30_V1_0)   // PCBA_8258_DEVELOPMENT_BOARD
-#define PWM_R       GPIO_PWM1ND3	//red
-#define PWM_G       GPIO_PWM2ND4	//green
+#define PWM_R       GPIO_PD3	    //red
+#define PWM_G       GPIO_PD4	    //green
 #define PWM_B       GPIO_PD5		//blue
-#define PWM_W       GPIO_PWM3D2		//white
+#define PWM_W       GPIO_PD2		//white
 #endif
 
 #define PWM_FUNC_R  AS_PWM  // AS_PWM_SECOND
@@ -285,9 +324,7 @@ extern "C" {
 #define	USE_SYS_TICK_PER_US
 #define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC
 
-#if (MI_API_ENABLE)
-#define CLOCK_SYS_CLOCK_HZ  	48000000
-#elif EXTENDED_ADV_ENABLE
+#if EXTENDED_ADV_ENABLE
 #define CLOCK_SYS_CLOCK_HZ  	48000000		// need to process rx buffer quickly
 #else
 #define CLOCK_SYS_CLOCK_HZ  	32000000
@@ -297,13 +334,7 @@ extern "C" {
 
 /////////////////// watchdog  //////////////////////////////
 #define MODULE_WATCHDOG_ENABLE		1
-#if (MI_API_ENABLE)
-#define WATCHDOG_INIT_TIMEOUT		20000  //in mi mode the watchdog timeout is 20s
-#else
 #define WATCHDOG_INIT_TIMEOUT		2000  //in mi mode the watchdog timeout is 20s
-#endif
-
-
 
 /////////////////// set default   ////////////////
 

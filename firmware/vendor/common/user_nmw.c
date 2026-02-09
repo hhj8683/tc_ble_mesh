@@ -24,9 +24,7 @@
  *******************************************************************************************************/
 #include "tl_common.h"
 #include "proj_lib/sig_mesh/app_mesh.h"
-#if (!__TLSR_RISCV_EN__)
-#include "proj_lib/ble/service/ble_ll_ota.h"
-#endif
+#include "stack/ble/ble.h"
 #include "mesh_ota.h"
 #include "user_ali.h"
 #include "user_nmw.h"
@@ -72,7 +70,7 @@ int nmw_ota_st_report(u16 op, u8 errno)
 	return ret;
 }
 
-int nmw_ota_seg_report()
+int nmw_ota_seg_report(void)
 {
 	rec_seg_map_t seg_map;	
 	nmw_ota_state.seg_timeout_tick = clock_time()|1;
@@ -213,16 +211,16 @@ u8 nmw_ota_data_save(u16 seg_index, u8 *p_data, int len)
 	int err = NMW_OTA_SUCCESS;
 	if((nmw_ota_state.ota_index + 1) == seg_index){		
 		if((nmw_ota_state.file_type == MODULE_FILE) || (nmw_ota_state.file_type == MCU_FILE)){
-			blt_ota_start_tick = clock_time()|1;
+			blc_ota_refresh_packet_tick();
 			if((seg_index == 0) && (nmw_ota_state.file_type == MODULE_FILE)){
 	            if(!is_valid_tlk_fw_buf(p_data+8)){ // telink bin file check
 	                err = OTA_OTA_SIGNATURE_ERR;
 	            }
 			}		
 		
-			if(nmw_ota_state.image_offset <= (ota_firmware_size_k<<10)){
-			
-				ota_save_data (nmw_ota_state.image_offset, p_data, len);
+			if(nmw_ota_state.image_offset <= ota_firmware_max_size){
+
+				ota_save_data (nmw_ota_state.image_offset, len, p_data);
 
 				u8 flash_check[256];
 				flash_read_page(ota_program_offset + nmw_ota_state.image_offset, len, flash_check);
@@ -259,8 +257,8 @@ int	nmw_ota_write(void *p)
 	if(0 == seg_index){
 		endianness_swap_u16((u8 *)&p_ota_write->tlv_size);
 		endianness_swap_u32((u8 *)&p_ota_write->file_size);
-		blcOta.ota_start_flag = 1; // ota start flag
-		blt_ota_start_tick = clock_time()|1;  //mark time
+		blc_ota_set_busy(); // ota start flag
+		blc_ota_set_start_tick();  //mark time
 		
 		memset(&nmw_ota_state, 0x00, sizeof(nmw_ota_state));
 		nmw_ota_state.ota_index = -1;
@@ -292,7 +290,7 @@ int	nmw_ota_write(void *p)
 
 			nmw_ota_state.seg_timeout_tick = 0;
 			nmw_ota_st_report(NMW_OTA_RESULT_REPORT, err_flg);
-			blt_ota_finished_flag_set(err_flg); // will process in bls_ota_procTimeout
+            blt_ota_setResult(OTA_STEP_FEEDBACK, err_flg);
 		}
 	}
 	else if(0==(p_ota_write->seg_index+1)%MAX_DEVICE_CACHE_NUM){

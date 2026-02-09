@@ -56,8 +56,8 @@
 #define		TIME_COMPARE_BIG(t1,t2)   ( (u32)((t1) - (t2)) < BIT(30)  )
 
 
-#define		BLT_TIMER_SAFE_MARGIN_PRE	  (CLOCK_16M_SYS_TIMER_CLK_1US<<7)  //128 us
-#define		BLT_TIMER_SAFE_MARGIN_POST	  (CLOCK_16M_SYS_TIMER_CLK_1S<<3)   // 8S
+#define		BLT_TIMER_SAFE_MARGIN_PRE	  (CLOCK_SYS_TIMER_CLK_1US<<7)  //128 us
+#define		BLT_TIMER_SAFE_MARGIN_POST	  (CLOCK_SYS_TIMER_CLK_1S<<6)   // 64S
 /**
  * @brief		This function is used to check the current time is what the timer expects or not
  * @param[in]	t - the time is expired for setting
@@ -65,7 +65,7 @@
  * @return		0 - The current time isn't what the timer expects
  * 				1 - The current time is what the timer expects
  */
-static int inline blt_is_timer_expired(u32 t, u32 now) {
+static inline int blt_is_timer_expired(u32 t, u32 now) {
 	return ((u32)(now + BLT_TIMER_SAFE_MARGIN_PRE - t) < BLT_TIMER_SAFE_MARGIN_POST);
 }
 
@@ -155,7 +155,7 @@ int 	blt_soft_timer_delete_by_index(u8 index);
  */
 int is_timer_expired(blt_timer_callback_t *e);
 int is_soft_timer_exist(blt_timer_callback_t func);
-u8 blt_soft_timer_cur_num();
+u8 blt_soft_timer_cur_num(void);
 
 #endif
 #endif /* BLT_SOFT_TIMER_H_ */

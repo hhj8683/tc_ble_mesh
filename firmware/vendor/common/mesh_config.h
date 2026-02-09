@@ -37,7 +37,11 @@ extern "C" {
 #define PROXY_HCI_USB					2
 #define PROXY_HCI_SEL					PROXY_HCI_GATT
 
-#define GATEWAY_MODEL_PLUS_EN   ((!WIN32) && __PROJECT_MESH_PRO__ && (CHIP_TYPE != CHIP_TYPE_8269))
+#ifdef WIN32
+#define GATEWAY_MODEL_PLUS_EN           0
+#else
+#define GATEWAY_MODEL_PLUS_EN           (__PROJECT_MESH_PRO__ && (CHIP_TYPE != CHIP_TYPE_8269))
+#endif
 
 #if (__TLSR_RISCV_EN__)
 #define MESH_IRONMAN_AP2T31F80_EN		0
@@ -47,7 +51,7 @@ extern "C" {
     #if (__DEBUG_MESH_DONGLE_IN_VC__)
 #define DEBUG_MESH_DONGLE_IN_VC_EN		1		// must 1
     #else
-        #if WIN32
+        #ifdef WIN32
 #define DEBUG_MESH_DONGLE_IN_VC_EN		0
         #else
 #define DEBUG_MESH_DONGLE_IN_VC_EN		0
@@ -66,14 +70,14 @@ extern "C" {
 #define DEBUG_CFG_CMD_USE_AK_WHEN_GROUP_EN2		(0 || DEBUG_PUBLISH_REDUCE_COLLISION_TEST_EN || MESH_RX_TEST) // used only by telink internal
 #define DEBUG_CFG_CMD_GROUP_AK_EN				(0) // not for user
 #define DEBUG_CFG_CMD_GROUP_USE_AK(addr)    	((DEBUG_CFG_CMD_GROUP_AK_EN || DEBUG_CFG_CMD_USE_AK_WHEN_GROUP_EN2) && (addr & 0x8000))
-#if (!WIN32)
+#ifndef WIN32
 #define DEBUG_LOG_SETTING_DEVELOP_MODE_EN		0 //
 #endif
 
 #define SHOW_VC_SELF_NO_NW_ENC			1
 #define SHOW_VC_SELF_NW_ENC				2	// can not send reliable cmd with segment, such as netkey add,...
 
-#if (WIN32 && (0 == DEBUG_MESH_DONGLE_IN_VC_EN))
+#if (defined(WIN32) && (0 == DEBUG_MESH_DONGLE_IN_VC_EN))
 #define NODE_CAN_SEND_ADV_FLAG			0
 #define DEBUG_SHOW_VC_SELF_EN			0 // SHOW_VC_SELF_NO_NW_ENC // SHOW_VC_SELF_NW_ENC
 #define VC_CHECK_NEXT_SEGMENT_EN		1		// must 1
@@ -92,7 +96,7 @@ extern "C" {
 #define PROJECT_VC_MAX 		10	// VC project max
 #define PROJECT_FW_MESH		11	//FW start from 11
 
-#if WIN32
+#ifdef WIN32
 #define PROJECT_SEL			PROJECT_VC_DONGLE // PROJECT_VC_MESH // 
 #else
 #define PROJECT_SEL			PROJECT_FW_MESH
@@ -102,7 +106,7 @@ extern "C" {
 #define IS_VC_PROJECT_MASTER	(IS_VC_PROJECT && (!DEBUG_MESH_DONGLE_IN_VC_EN))
 
 #define PROXY_GATT_WITH_HEAD ((DEBUG_MESH_DONGLE_IN_VC_EN)||(PROXY_HCI_SEL == PROXY_HCI_USB))
-#if WIN32
+#ifdef WIN32
 #define 	__PROJECT_MESH_PRO__	 	1 // "PRO" means provisioner, will be set as 1 for 8258_mesh_gw (gateway) and sig_mesh_tool.exe.
 #define FAST_PROVISION_ENABLE		 	1
 #else
@@ -133,7 +137,7 @@ extern "C" {
 #define ATT_REPLACE_PROXY_SERVICE_EN	0 // 1:0x7fdd will not existed in att
 #endif
 
-#if WIN32
+#ifdef WIN32
 #define TESTCASE_FLAG_ENABLE 		0	// must 0
 #define PTS_TEST_EN                 0   // must 0
 #else
@@ -161,6 +165,8 @@ extern "C" {
 #define GATT_LPN_EN					0   // only mesh and lpn project can enable
 #elif(__PROJECT_MESH_LPN__)
 #define GATT_LPN_EN					0   // only mesh and lpn project can enable
+#else
+#define GATT_LPN_EN                 0   // must 0
 #endif
 
 #if (__PROJECT_MESH_SWITCH__)
@@ -172,11 +178,12 @@ extern "C" {
 	#if __PROJECT_MESH__ || __PROJECT_MESH_PRO__ 	// only for B91 mesh and gateway project
 #define AUDIO_MESH_EN					0
 		#if AUDIO_MESH_EN
-#define CODEC_ALGORITHM_SBC             0
-#define CODEC_ALGORITHM_LC3	            1
+#define CODEC_ALGORITHM_SBC             0   // CODEC_ALGORITHM enumeration
+#define CODEC_ALGORITHM_LC3	            1   // CODEC_ALGORITHM enumeration
 
-#define AUDIO_MESH_MULTY_NODES_TX_EN	0	// only support audio LC3 + 8k sample rate now for multy nodes mode.
-		#if AUDIO_MESH_MULTY_NODES_TX_EN
+#define TEST_DEBUG_LEVEL                0
+#define AUDIO_MESH_MULTI_NODES_TX_EN	0	// only support audio LC3 + 8k sample rate now for multiple nodes mode.
+		#if AUDIO_MESH_MULTI_NODES_TX_EN
 #define AUDIO_DATA_NO_TX_WHEN_SILENCE_EN		1
 			#if AUDIO_DATA_NO_TX_WHEN_SILENCE_EN
 #define AUDIO_RX_NODES_MAX				5	// define a node that can receive audio from how many nodes.
@@ -223,8 +230,28 @@ extern "C" {
 		#endif
 	#endif
 #endif
+
+#ifndef AUDIO_MESH_EN
+#define AUDIO_MESH_EN               0 // must 0
+#endif
 //------------ mesh audio config end -------------
 
+//------------ mesh audio config -------------
+#if __TLSR_RISCV_EN__
+	#if __PROJECT_MESH__ || __PROJECT_MESH_PRO__ 	// only for B91 mesh and gateway project
+#define ASR_EN                      0
+#define AUDIO_SAMPLE_RATE           AUDIO_8K // refer to APP_ASR_SAMPLE_RATE in APP.h
+    #endif
+#endif
+
+#ifndef ASR_EN
+#define ASR_EN                      0 // must 0
+#endif
+//------------ mesh audio config end-------------
+
+#ifndef PAIR_PROVISION_ENABLE
+#define PAIR_PROVISION_ENABLE       0
+#endif
 
 //------------ mesh config-------------
 #define MD_CFG_CLIENT_EN            (__PROJECT_MESH_PRO__ || __PROJECT_MESH_GW_NODE__ || TESTCASE_FLAG_ENABLE)   // don't modify
@@ -237,8 +264,8 @@ extern "C" {
 #define MESH_SPIRIT_ENABLE			2	// use this mode should burn in the para in 0x78000,or use init para should enable the  con_sec_data
 #define MESH_AES_ENABLE 			3
 #define MESH_GN_ENABLE 		    	4
-#define MESH_MI_ENABLE          	5
-#define MESH_MI_SPIRIT_ENABLE   	6   // dual vendor
+#define MESH_MI_ENABLE          	5   // OBSOLETE: Had been removed
+#define MESH_MI_SPIRIT_ENABLE   	6   // OBSOLETE: Had been removed
 #define MESH_IRONMAN_MENLO_ENABLE   7   // include boot_loader.bin and light.bin
 #define MESH_ZB_BL_DUAL_ENABLE      8   // mesh && zigbee normal dual mode with bootloader
 #define MESH_PIPA_ENABLE        	9   // 
@@ -308,52 +335,9 @@ extern "C" {
 #elif(MESH_USER_DEFINE_MODE == MESH_GN_ENABLE)
 #define PROVISION_FLOW_SIMPLE_EN    1
 #elif(MESH_USER_DEFINE_MODE == MESH_MI_ENABLE)
-#define AIS_ENABLE					0
-#define PROVISION_FLOW_SIMPLE_EN    0
-#define MI_API_ENABLE               1
-#define MI_SWITCH_LPN_EN			0   // only support 825x serials 
-
-//#define MI_MESH_TEMPLATE_LIGHTNESS		0
-#define MI_MESH_TEMPLATE_LIGHTCTL			1
-//#define MI_MESH_TEMPLATE_ONE_KEY_SWITCH	2
-//#define MI_MESH_TEMPLATE_TWO_KEY_SWITCH	3
-//#define MI_MESH_TEMPLATE_THREE_KEY_SWITCH	4
-//#define MI_MESH_TEMPLATE_FAN				5
-
-#if  defined(MI_MESH_TEMPLATE_LIGHTNESS)
-#define MI_PRODUCT_TYPE				MI_PRODUCT_TYPE_LAMP
-#elif defined(MI_MESH_TEMPLATE_LIGHTCTL)
-#define MI_PRODUCT_TYPE				MI_PRODUCT_TYPE_CT_LIGHT
-#elif defined(MI_MESH_TEMPLATE_ONE_KEY_SWITCH)
-#define MI_PRODUCT_TYPE				MI_PRODUCT_TYPE_ONE_ONOFF
-#elif defined(MI_MESH_TEMPLATE_TWO_KEY_SWITCH)
-#define MI_PRODUCT_TYPE				MI_PRODUCT_TYPE_TWO_ONOFF
-#elif defined(MI_MESH_TEMPLATE_THREE_KEY_SWITCH)
-#define MI_PRODUCT_TYPE				MI_PRODUCT_TYPE_THREE_ONOFF
-#elif defined(MI_MESH_TEMPLATE_FAN)
-#define MI_PRODUCT_TYPE				MI_PRODUCT_TYPE_FANS
-#endif
-/*
-	#if MI_SWITCH_LPN_EN
-#define BLT_SOFTWARE_TIMER_ENABLE	1
-#define MI_PRODUCT_TYPE				LIGHT_TYPE_PANEL
-	#else
-#define MI_PRODUCT_TYPE				LIGHT_TYPE_CT	
-	#endif
-*/
+#error "not support mode!!!"
 #elif(MESH_USER_DEFINE_MODE == MESH_MI_SPIRIT_ENABLE)
-#define VENDOR_ID                   VENDOR_ID_MI // use mi vendor_id and mi mac by default
-#define AIS_ENABLE					1
-#define PROVISION_FLOW_SIMPLE_EN    1	
-#define ALI_MD_TIME_EN				0
-#define MI_API_ENABLE               1
-#define MI_SWITCH_LPN_EN			0   // only support 825x serials 
-	#if MI_SWITCH_LPN_EN
-#define BLT_SOFTWARE_TIMER_ENABLE	1
-#define MI_PRODUCT_TYPE				MI_PRODUCT_TYPE_ONE_ONOFF
-	#else
-#define MI_PRODUCT_TYPE				MI_PRODUCT_TYPE_CT_LIGHT	
-	#endif
+#error "not support mode!!!"
 #elif((MESH_USER_DEFINE_MODE == MESH_IRONMAN_MENLO_ENABLE)||(MESH_USER_DEFINE_MODE == MESH_ZB_BL_DUAL_ENABLE))
     #if __PROJECT_BOOTLOADER__
 #define FW_START_BY_LEGACY_BOOTLOADER_EN   0
@@ -409,7 +393,7 @@ extern "C" {
 										
 #if (MESH_USER_DEFINE_MODE == MESH_TAIBAI_ENABLE)
 #define DU_ENABLE 			1
-#define DU_LPN_EN			0
+#define DU_LPN_EN			0 // use spirit_lpn build config
 #define DU_ULTRA_PROV_EN	0	
 
 	#if DU_LPN_EN
@@ -443,9 +427,6 @@ extern "C" {
 #define DU_ENABLE 						0
 #endif
 
-#ifndef MI_API_ENABLE
-#define MI_API_ENABLE 					0
-#endif
 #ifndef NL_API_ENABLE
 #define NL_API_ENABLE 					0
 #endif
@@ -470,16 +451,6 @@ extern "C" {
 #ifndef PROVISION_FLOW_SIMPLE_EN
 #define PROVISION_FLOW_SIMPLE_EN		0
 #endif
-
-#if MI_API_ENABLE
-	#if MCU_CORE_TYPE == MCU_CORE_8269
-	#define BLT_SOFTWARE_TIMER_ENABLE	0
-	#endif
-	#ifndef BLT_SOFTWARE_TIMER_ENABLE
-	#define BLT_SOFTWARE_TIMER_ENABLE 	1
-	#endif
-#endif
-
 
 #if __PROJECT_SPIRIT_LPN__
 #define SPIRIT_PRIVATE_LPN_EN			1 // must
@@ -508,8 +479,8 @@ extern "C" {
 #define MI_SWITCH_LPN_EN 				0
 #endif
 
-#define VENDOR_MD_MI_EN             	(MI_API_ENABLE)
-#define VENDOR_MD_NORMAL_EN         	((!MI_API_ENABLE) || AIS_ENABLE)    // include ali
+#define VENDOR_MD_MI_EN             	0 // must 0
+#define VENDOR_MD_NORMAL_EN         	1
 #define VENDOR_SUB_OP_USER_DEMO_EN      (0) // add user demo subcommand for "VD_GROUP_G_GET, VD_GROUP_G_SET, VD_GROUP_G_SET_NOACK, VD_GROUP_G_STATUS"
 #define VENDOR_OP_USER_DEMO_EN          (0) // add user demo vendor command
 
@@ -519,7 +490,7 @@ extern "C" {
 #define DRAFT_FEATURE_VENDOR_TYPE_ONE_OP        1   // only use "C0"
 #define DRAFT_FEATURE_VENDOR_TYPE_MULTI_OP      2
 
-#if (WIN32)
+#ifdef WIN32
 #define DEBUG_VENDOR_CMD_EN 		    0		// must 0, if 1, debug vendor id as server node.
 #define DRAFT_FEATURE_VENDOR_TYPE_SEL   DRAFT_FEATURE_VENDOR_TYPE_NONE
 #define VC_SUPPORT_ANY_VENDOR_CMD_EN	(!DEBUG_VENDOR_CMD_EN && (DRAFT_FEATURE_VENDOR_TYPE_SEL == DRAFT_FEATURE_VENDOR_TYPE_NONE))
@@ -537,7 +508,7 @@ extern "C" {
 #define VC_SUPPORT_ANY_VENDOR_CMD_EN	__PROJECT_MESH_PRO__		
 #endif
 
-#if WIN32
+#ifdef WIN32
 #define TLV_ENABLE					0
 #elif __PROJECT_MESH_PRO__
 #define TLV_ENABLE					0
@@ -568,7 +539,7 @@ extern "C" {
 
 /*LIGHT_TYPE_SEL   means instance type select*/
 #ifndef LIGHT_TYPE_SEL  // user can define in user_app_config.h
-#if (WIN32 || GATEWAY_MODEL_PLUS_EN) // __PROJECT_MESH_PRO__
+#if (defined(WIN32) || GATEWAY_MODEL_PLUS_EN) // __PROJECT_MESH_PRO__
 #define LIGHT_TYPE_SEL				LIGHT_TYPE_CT_HSL  	// for APP and gateway
 #elif __PROJECT_MESH_LPN__
 #define LIGHT_TYPE_SEL				LIGHT_TYPE_LPN_ONOFF_LEVEL // LIGHT_TYPE_CT
@@ -581,23 +552,7 @@ extern "C" {
 #elif AUDIO_MESH_EN
 #define LIGHT_TYPE_SEL 				LIGHT_TYPE_DIM
 #else
-	#if MI_API_ENABLE
-		#if MI_PRODUCT_TYPE == MI_PRODUCT_TYPE_CT_LIGHT
-#define LIGHT_TYPE_SEL				LIGHT_TYPE_CT
-		#elif MI_PRODUCT_TYPE == MI_PRODUCT_TYPE_LAMP
-#define LIGHT_TYPE_SEL				LIGHT_TYPE_CT		
-		#elif (	MI_PRODUCT_TYPE == MI_PRODUCT_TYPE_ONE_ONOFF ||\
-				MI_PRODUCT_TYPE == MI_PRODUCT_TYPE_TWO_ONOFF ||\
-				MI_PRODUCT_TYPE == MI_PRODUCT_TYPE_THREE_ONOFF)
-#define LIGHT_TYPE_SEL				LIGHT_TYPE_PANEL
-		#elif (MI_PRODUCT_TYPE == MI_PRODUCT_TYPE_PLUG)
-#define LIGHT_TYPE_SEL				LIGHT_TYPE_PANEL
-		#elif (MI_PRODUCT_TYPE == MI_PRODUCT_TYPE_FANS)
-#define LIGHT_TYPE_SEL				LIGHT_TYPE_PANEL
-		#endif
-	#else
 #define LIGHT_TYPE_SEL				LIGHT_TYPE_CT	// 
-	#endif
 #endif
 #endif
 
@@ -617,9 +572,12 @@ extern "C" {
 */
 #if ((LIGHT_TYPE_SEL == LIGHT_TYPE_CT) || (LIGHT_TYPE_SEL == LIGHT_TYPE_HSL) || \
 	 (LIGHT_TYPE_SEL == LIGHT_TYPE_XYL) || (LIGHT_TYPE_SEL == LIGHT_TYPE_DIM))
-#define NLCP_BLC_EN					0	// BLCNLCP: Basic Lightness Controller Network Lighting Profile
+#define NLCP_BLC_EN					    0	// BLCNLCP: Basic Lightness Controller Network Lighting Profile
+    #if NLCP_BLC_EN
+#define SCENE_NOT_STORE_LC_PROPERTY_EN  0   // customized setting to not store light control property for scene to decrease parameter size.
+    #endif
 #else
-#define NLCP_BLC_EN					0	// must 0
+#define NLCP_BLC_EN					    0	// must 0
 #endif
 
 // other NLC profiles please refer to NLCP_DIC_EN, NLCP_BSS_EN, NLCP_TYPE_ALS, NLCP_TYPE_OCS, NLCP_TYPE_ENM in other files.
@@ -645,7 +603,7 @@ extern "C" {
 #endif
 
 #if ((LIGHT_TYPE_CT_EN) || (LIGHT_TYPE_HSL_EN) || (LIGHT_TYPE_SEL == LIGHT_TYPE_DIM) || (LIGHT_TYPE_SEL == LIGHT_TYPE_XYL))
-    #if(WIN32)
+    #ifdef WIN32
 #define MD_LIGHT_CONTROL_EN			1	// must 1
     #else
 #define MD_LIGHT_CONTROL_EN			(0 || NLCP_BLC_EN)
@@ -662,7 +620,6 @@ extern "C" {
 #define MD_LIGHTNESS_EN             1
 #define MD_LEVEL_EN                 0
 #elif ((LIGHT_TYPE_SEL == LIGHT_TYPE_NONE) || (LIGHT_TYPE_SEL == LIGHT_TYPE_PANEL) || (LIGHT_TYPE_SEL == TYPE_TOOTH_BRUSH))
-#define MD_LIGHTNESS_EN             0
 #define MD_LIGHTNESS_EN             0
 #define MD_LEVEL_EN                 0
 #elif (LIGHT_TYPE_SEL == LIGHT_TYPE_LPN_ONOFF_LEVEL)
@@ -685,7 +642,7 @@ extern "C" {
  * PROV_EPA_EN: provision EPA(Enhanced Provisioning Authentication) enable.
  * add new Algorithms "BTM_ECDH_P256_HMAC_SHA256_AES_CCM" in "5.4.1.2 Provisioning Capabilities" of spec "MshPRT_v1.1.pdf".
  */
-#if WIN32
+#ifdef WIN32
 #define PROV_EPA_EN					1
 #elif __PROJECT_MESH_PRO__
 #define PROV_EPA_EN					1	// enhance provision auth: support two Algorithms in capability.
@@ -701,14 +658,10 @@ extern "C" {
  * CERTIFY_BASE_ENABLE: Certificate-based provisioning.
  * refer to "5.5 Certificate-based provisioning" of spec "MshPRT_v1.1.pdf".
  */
-#if WIN32
+#ifdef WIN32
 #define CERTIFY_BASE_ENABLE 	1
 #else
-	#if MI_API_ENABLE
-#define CERTIFY_BASE_ENABLE 	0		// must 0
-	#else
 #define CERTIFY_BASE_ENABLE		0
-	#endif
 #endif
 
 /**
@@ -716,12 +669,10 @@ extern "C" {
  * refer to "4.4.5 Remote Provisioning Server model" and "4.4.6 Remote Provisioning Client model" of spec "MshPRT_v1.1.pdf".
  */
 #ifndef MD_REMOTE_PROV
-#if (WIN32)
+#ifdef WIN32
 #define MD_REMOTE_PROV              1
 #elif (MESH_USER_DEFINE_MODE == MESH_IRONMAN_MENLO_ENABLE)
 #define MD_REMOTE_PROV              0   // default disable
-#elif (MI_API_ENABLE)
-#define MD_REMOTE_PROV              0   // must 0
 #elif (__PROJECT_MESH__)
 #define MD_REMOTE_PROV              0   // dufault disable
 #elif (__PROJECT_MESH_PRO__)
@@ -740,7 +691,7 @@ extern "C" {
 #define DEVICE_KEY_REFRESH_ENABLE	1 	// must 1
 	#else
 #define REMOTE_SET_RETRY_EN			1
-		#if WIN32
+		#ifdef WIN32
 #define DEVICE_KEY_REFRESH_ENABLE	1	
 		#else
 #define DEVICE_KEY_REFRESH_ENABLE	0	// default 0 to compatible with previous version's VC_node_info[]
@@ -760,7 +711,7 @@ extern "C" {
 #if (DEBUG_CFG_CMD_GROUP_AK_EN || DEBUG_PUBLISH_REDUCE_COLLISION_TEST_EN)
 #define MD_MESH_OTA_EN				1	// just for internal test.
 #elif (__PROJECT_MESH_PRO__)   // app & gateway
-    #if WIN32
+    #ifdef WIN32
 #define MD_MESH_OTA_EN				1
     #else // gateway
 #define MD_MESH_OTA_EN				0   // dufault disable
@@ -784,7 +735,7 @@ extern "C" {
 	#if(__PROJECT_MESH_PRO__ || __PROJECT_MESH_GW_NODE__)
 #define DISTRIBUTOR_UPDATE_CLIENT_EN    1
 #define DISTRIBUTOR_UPDATE_SERVER_EN    DISTRIBUTOR_UPDATE_CLIENT_EN
-		#if (WIN32 && DISTRIBUTOR_UPDATE_CLIENT_EN)
+		#if (defined(WIN32) && DISTRIBUTOR_UPDATE_CLIENT_EN)
 #define INITIATOR_CLIENT_EN             1   // only app or VC enable
 		#endif
 	#else
@@ -793,19 +744,25 @@ extern "C" {
 #define DISTRIBUTOR_UPDATE_SERVER_EN    0   // include distribute server, update client and blob transfer client model
 		#endif
 	#endif
+
+    #if (DISTRIBUTOR_UPDATE_SERVER_EN && (DISTRIBUTOR_UPDATE_CLIENT_EN || PTS_TEST_OTA_EN)) // because PTS testing OTA update server will enable PTS_TEST_BLOB_TRANSFER_FLOW_EN. 
+#define DISTRIBUTOR_START_TLK_EN        1   // only used in internal to be compatible with old version INI. 
+    #endif    
 #endif
 
-#if (WIN32 || DU_ENABLE)
+#if (defined(WIN32) || DU_ENABLE)
 #define OTA_ADOPT_RULE_CHECK_PID_EN		0	// in the du mode ,it will not allow to check the pid.because it will change format
 #else
 #ifndef OTA_ADOPT_RULE_CHECK_PID_EN			// for both GATT and ADV
 #define OTA_ADOPT_RULE_CHECK_PID_EN		1
+    #if OTA_ADOPT_RULE_CHECK_PID_EN
+#define OTA_ADOPT_RULE_ALLOW_DIFFERENT_PID_EN       0
+        #if OTA_ADOPT_RULE_ALLOW_DIFFERENT_PID_EN
+#define OTA_KEEP_PROVISIONED_WHEN_DIFFER_PID_EN     0
+        #endif
+    #endif
 #define OTA_ADOPT_RULE_CHECK_VID_EN		0
 #endif
-#endif
-
-#if (DISTRIBUTOR_UPDATE_SERVER_EN && (DISTRIBUTOR_UPDATE_CLIENT_EN || PTS_TEST_OTA_EN)) // because PTS testing OTA update server will enable PTS_TEST_BLOB_TRANSFER_FLOW_EN. 
-#define DISTRIBUTOR_START_TLK_EN        1   // only used in internal to be compatible with old version INI. 
 #endif
 
 /**
@@ -814,7 +771,7 @@ extern "C" {
  * PRIVATE_PROXY_FUN_EN: the full name is private proxy function enable. for private .
  *                 refer to "3.4.6.6 Private Proxy functionality" and "3.4.6.8 Private Node Identity functionality" of spec "MshPRT_v1.1.pdf".
  */
-#if WIN32
+#ifdef WIN32
 #define MD_PRIVACY_BEA				1
 #define PRIVATE_PROXY_FUN_EN		1
 #else
@@ -882,7 +839,7 @@ extern "C" {
 
 #define MD_ONOFF_EN                 1
 
-#if WIN32
+#ifdef WIN32
 #define MD_DEF_TRANSIT_TIME_EN      1   // must 1
 #define MD_POWER_ONOFF_EN           1   // must 1
 #define MD_TIME_EN                  1   // must 1
@@ -909,7 +866,7 @@ extern "C" {
 #endif
 #define MD_CLIENT_EN                1   // just SIG models, and exclude sensor model.
 #define MD_CLIENT_VENDOR_EN         1
-#define MD_VENDOR_2ND_EN            (DEBUG_VENDOR_CMD_EN && MI_API_ENABLE)
+#define MD_VENDOR_2ND_EN            (DEBUG_VENDOR_CMD_EN && 0)
 #define MD_SENSOR_SERVER_EN			MD_SERVER_EN	
 #define MD_SENSOR_CLIENT_EN		    MD_CLIENT_EN	
 #elif(1 == TESTCASE_FLAG_ENABLE)
@@ -957,7 +914,7 @@ extern "C" {
 #define MD_CLIENT_EN                (!MD_SERVER_EN) // just SIG models
 		#endif
 #define MD_CLIENT_VENDOR_EN         0
-#define MD_VENDOR_2ND_EN            (DEBUG_VENDOR_CMD_EN && MI_API_ENABLE)
+#define MD_VENDOR_2ND_EN            (DEBUG_VENDOR_CMD_EN && 0)
 #define MD_SENSOR_SERVER_EN			0	
 #define MD_SENSOR_CLIENT_EN		    0	
 	#else // core type is 825x serial ,and the ram is enough .
@@ -988,7 +945,7 @@ extern "C" {
 #define MD_CLIENT_EN                (!MD_SERVER_EN) // just SIG models, and exclude sensor model.
 		#endif
 #define MD_CLIENT_VENDOR_EN         1
-#define MD_VENDOR_2ND_EN            (DEBUG_VENDOR_CMD_EN && MI_API_ENABLE)
+#define MD_VENDOR_2ND_EN            (DEBUG_VENDOR_CMD_EN && 0)
 #define MD_SENSOR_SERVER_EN			MD_SERVER_EN	// 0
 #define MD_SENSOR_CLIENT_EN		    MD_CLIENT_EN	// 0
 	#endif
@@ -1039,7 +996,7 @@ extern "C" {
     #else
 #define MD_CLIENT_VENDOR_EN         (0 || MD_CLIENT_EN)
     #endif
-#define MD_VENDOR_2ND_EN            (DEBUG_VENDOR_CMD_EN && MI_API_ENABLE)
+#define MD_VENDOR_2ND_EN            (DEBUG_VENDOR_CMD_EN && 0)
 #define MD_SENSOR_SERVER_EN			0	// MD_SERVER_EN
 #define MD_SENSOR_CLIENT_EN		    0	// MD_CLIENT_EN
 #endif
@@ -1054,14 +1011,18 @@ extern "C" {
 
 #define FACTORY_TEST_MODE_ENABLE    		1
 #define MANUAL_FACTORY_RESET_TX_STATUS_EN   1
-#if (!WIN32)
+#ifndef WIN32
 #define KEEP_ONOFF_STATE_AFTER_OTA			1
 #endif
-#define DF_TEST_MODE_EN  					(0 && MD_DF_CFG_SERVER_EN) // Path lifetime is 12 minute in test mode.
-#if DF_TEST_MODE_EN
-#define DF_TEST_EXHIBITION_EN	0	// It's for the trade show test, all led of the node participating in forwarding blinks
-#endif
 
+#if MD_DF_CFG_SERVER_EN
+#define CONFIG_ALWAYS_GET_ROUTE_FROM_FLASH         1  // store non-fixed forwarding table entry in flash to save ram, read fixed/non-fixed entry from flash every time.
+
+#define DF_TEST_MODE_EN  					(0 && MD_DF_CFG_SERVER_EN) // Path lifetime is 2 minute in test mode.
+    #if DF_TEST_MODE_EN
+#define DF_TEST_EXHIBITION_EN	            0	// It's for the trade show test, all led of the node participating in forwarding blinks
+    #endif
+#endif
 
 //----------------------------------------------------------------------------------
 
@@ -1094,7 +1055,7 @@ extern "C" {
     #endif
 #endif
 
-#if LIGHT_CONTROL_SERVER_LOCATE_EXCLUSIVE_ELEMENT_EN
+#if (defined(LIGHT_CONTROL_SERVER_LOCATE_EXCLUSIVE_ELEMENT_EN) && LIGHT_CONTROL_SERVER_LOCATE_EXCLUSIVE_ELEMENT_EN)
 #define ELE_CNT_EVERY_LIGHT         (LEVEL_STATE_CNT_EVERY_LIGHT + 1) // light control model locate at a exclusive element.
 #else
 #define ELE_CNT_EVERY_LIGHT         LEVEL_STATE_CNT_EVERY_LIGHT
@@ -1110,13 +1071,13 @@ extern "C" {
 #define MESH_MONITOR_EN 			0
 #endif
 
-#if VC_APP_ENABLE ||__PROJECT_MESH_PRO__   
+#if (defined(VC_APP_ENABLE) ||__PROJECT_MESH_PRO__)
 #define MD_BIND_WHITE_LIST_EN 		0
 #else
 #define MD_BIND_WHITE_LIST_EN 		0
 #endif
 
-#if WIN32
+#ifdef WIN32
 // log enable
 #define LOG_VC_RX_TEST_EN			0
 #define LOG_WRITE_CMD_FIFO_EN		1
@@ -1124,25 +1085,25 @@ extern "C" {
 #endif
 
 // feature part ,enable or disable to cut down the ram cost 
-#if (__PROJECT_MESH_LPN__ && (!WIN32))
+#if (__PROJECT_MESH_LPN__ && (!defined(WIN32)))
 #define FEATURE_FRIEND_EN 		0
 #define FEATURE_LOWPOWER_EN		1
 #define FEATURE_PROV_EN 		1
 #define FEATURE_RELAY_EN		0
 #define FEATURE_PROXY_EN 		1
-#elif (__PROJECT_SPIRIT_LPN__ && (!WIN32))
+#elif (__PROJECT_SPIRIT_LPN__ && (!defined(WIN32)))
 #define FEATURE_FRIEND_EN 		0
 #define FEATURE_LOWPOWER_EN		0
 #define FEATURE_PROV_EN 		1
 #define FEATURE_RELAY_EN		0
 #define FEATURE_PROXY_EN 		1
-#elif (MI_SWITCH_LPN_EN &&(!WIN32))
+#elif (MI_SWITCH_LPN_EN &&(!defined(WIN32)))
 #define FEATURE_FRIEND_EN 		0
 #define FEATURE_LOWPOWER_EN		0
 #define FEATURE_PROV_EN 		1
 #define FEATURE_RELAY_EN		0
 #define FEATURE_PROXY_EN 		0
-#elif ((GATT_LPN_EN || __PROJECT_MESH_SWITCH__)&&(!WIN32))
+#elif ((GATT_LPN_EN || __PROJECT_MESH_SWITCH__)&&(!defined(WIN32)))
 #define FEATURE_FRIEND_EN 		0
 #define FEATURE_LOWPOWER_EN		0
 #define FEATURE_PROV_EN 		1
@@ -1188,7 +1149,7 @@ extern "C" {
 #define PROXY_PDU_TIMEOUT_TICK 		20*1000*1000
 
 #ifndef SEND_STATUS_WHEN_POWER_ON
-#if (WIN32 || __PROJECT_MESH_SWITCH__)
+#if (defined(WIN32) || __PROJECT_MESH_SWITCH__)
 #define SEND_STATUS_WHEN_POWER_ON			0
 #elif (DEBUG_MESH_DONGLE_IN_VC_EN && (!IS_VC_PROJECT))
 #define SEND_STATUS_WHEN_POWER_ON			0
@@ -1249,7 +1210,7 @@ extern "C" {
 #define			IRQ_TIME1_INTERVAL			    (1000) // unit: us
 #define			IRQ_GPIO_ENABLE  			    0
 
-#if (WIN32)
+#ifdef WIN32
 // support extend adv, but disable as default. to change by selecting "Extend Adv" item list.
 #else
 // extend adv should be running on the chip with 64k or more RAM.
@@ -1257,6 +1218,9 @@ extern "C" {
 // if needed, user can change the rule defined in is_not_use_extend_adv.
 #define EXTENDED_ADV_ENABLE				(0 || AUDIO_MESH_EN)   // BLE mesh extend ADV
 	#if EXTENDED_ADV_ENABLE
+        #if BLE_MULTIPLE_CONNECTION_ENABLE
+            #define BLE_PHY_MODE        BLE_PHY_1M // set phy coded in extend adv mode.
+        #endif
 #define EXTENDED_ADV_PROV_ENABLE		0
 	#else
 #define EXTENDED_ADV_PROV_ENABLE		0	// must 0
@@ -1291,6 +1255,25 @@ extern "C" {
  */
 #if (FEATURE_RELAY_EN && MD_SERVER_EN)
 #define PUBLISH_REDUCE_COLLISION_EN		1 // 
+#endif
+
+#if __PROJECT_MESH__
+#define GATT_CONNECTED_DEV_PROCESS_MSG_DELAY_EN     0
+#if GATT_CONNECTED_DEV_PROCESS_MSG_DELAY_EN
+#define GATT_CONNECTED_DEV_PROCESS_MSG_DELAY_MS     (60) // max value is 1275
+#endif
+#endif
+
+#define MESH_GLOBAL_RX_PAR_EN                       (1 || GATT_CONNECTED_DEV_PROCESS_MSG_DELAY_EN)
+
+#if (__PROJECT_MESH_SWITCH__)
+#define MESH_TIMER_MS_100MS_EN          0 // no ms/100ms, because do not set value in system_time_run_() for them.
+#define MESH_HEARTBEAT_EN               0
+#endif
+
+#define MESH_RESET_NETWORK_CAN_RESTORE_EN   		0
+#if MESH_RESET_NETWORK_CAN_RESTORE_EN
+#define MESH_RESET_NETWORK_CAN_RESTORE_TIMEOUT   	(30 * 1000 * 1000) // unit:us
 #endif
 
 /* Disable C linkage for C++ Compilers: */

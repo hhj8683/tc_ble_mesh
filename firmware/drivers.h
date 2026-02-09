@@ -1,13 +1,12 @@
 /********************************************************************************************************
- * @file	drivers.h
+ * @file    drivers.h
  *
- * @brief	This is the header file for TLSR8258
+ * @brief   This is the header file for BLE SDK
  *
- * @author	author@telink-semi.com;
- * @date	May 8, 2018
+ * @author  BLE GROUP
+ * @date    06,2022
  *
- * @par     Copyright (c) 2018, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
- *          All rights reserved.
+ * @par     Copyright (c) 2022, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *
  *          Licensed under the Apache License, Version 2.0 (the "License");
  *          you may not use this file except in compliance with the License.
@@ -24,30 +23,8 @@
  *******************************************************************************************************/
 #pragma once
 
-#include "proj/mcu/config.h"
+#include "config.h"
 
-#if(__TL_LIB_8255__ || (MCU_CORE_TYPE == MCU_CORE_8255))
-#include "drivers/8255/driver_8255.h"
-#elif(__TL_LIB_8258__ || (MCU_CORE_TYPE == MCU_CORE_8258))
-#include "drivers/8258/driver_8258.h"
-#include "drivers/8258/driver_ext/driver_ext.h"
-#elif(MCU_CORE_TYPE == MCU_CORE_8278)
-#include "drivers/8278/driver_8278.h"
-#include "drivers/8278/driver_ext/driver_ext.h"
-#else
-#include "proj/common/compatibility.h"
-#include "proj/mcu/analog.h"
-#include "proj/mcu/compiler.h"
-#include "proj/mcu/register.h"
-#include "proj/mcu/gpio.h"
-#include "proj/mcu/pwm.h"
-#include "proj/mcu/cpu.h"
-#include "proj/mcu/dma.h"
-#include "proj/mcu/clock.h"
-#include "proj/mcu/clock_i.h"
-#include "proj/mcu/random.h"
-#include "proj_lib/rf_drv.h"
-#endif
+#include "driver.h"
+#include "driver_ext/driver_ext.h"
 
-#include "proj/drivers/uart.h"
-#include "drivers/8258/flash.h"
