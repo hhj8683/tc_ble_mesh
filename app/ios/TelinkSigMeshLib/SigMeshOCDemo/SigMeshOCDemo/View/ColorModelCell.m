@@ -85,9 +85,7 @@
 }
 
 - (IBAction)changedValueOfH:(UISlider *)sender {
-    //self.hslModel.hue为0~1，需装换为(0~359)/360，即hue不为360。
-    CGFloat hue = (sender.value * 359.999999)/360.0;
-    self.hslModel.hue = hue;
+    self.hslModel.hue = sender.value;
     [self setHslModel:self.hslModel];
     [self callbackCurrentColor];
 }

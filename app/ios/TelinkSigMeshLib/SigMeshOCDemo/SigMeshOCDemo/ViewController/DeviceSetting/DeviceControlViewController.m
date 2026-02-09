@@ -199,14 +199,11 @@ typedef enum : NSUInteger {
 }
 
 - (UIColor *)getColorWithHue:(UInt8)hue saturation:(UInt8)saturation ligntness:(UInt8)ligntness {
-    //注意：hsl四舍五入取两位小数，理论上hsl中h为[0~100)
-    if (hue == 100) {
-        hue = 99;
-    }
     HSLModel *hsl = [[HSLModel alloc] init];
     hsl.hue = [NSString stringWithFormat:@"%d",hue].div(@"100").floatValue;
     hsl.saturation = [NSString stringWithFormat:@"%d",saturation].div(@"100").floatValue;
     hsl.lightness = [NSString stringWithFormat:@"%d",ligntness].div(@"100").floatValue;
+    self.hslModel = hsl;
     return [ColorManager getRGBWithHSLColor:hsl];
 }
 
@@ -228,7 +225,7 @@ typedef enum : NSUInteger {
         case ModelUITypeHSL:
             cell = (ColorModelCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifiers_ColorModelCellID forIndexPath:indexPath];
             ((ColorModelCell *)cell).delegate = self;
-            [((ColorModelCell *)cell) setColorModel:self.colorModel];
+            [((ColorModelCell *)cell) setHslModel:self.hslModel];
             self.colorModelCell = (ColorModelCell *)cell;
             break;
         case ModelUITypeOnOff:

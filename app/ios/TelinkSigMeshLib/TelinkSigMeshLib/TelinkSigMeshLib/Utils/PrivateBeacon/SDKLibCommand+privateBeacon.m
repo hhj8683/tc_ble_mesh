@@ -29,7 +29,7 @@
 #pragma mark - 4.3.12 Mesh Private Beacon messages
 
 
-#pragma mark 4.3.12.1 PRIVATE_BEACON_GET, opcode:0xB711
+#pragma mark 4.3.12.1 PRIVATE_BEACON_GET, opcode:0x8060
 
 
 /**
@@ -51,7 +51,7 @@
 }
 
 
-#pragma mark 4.3.12.2 PRIVATE_BEACON_SET, opcode:0xB712
+#pragma mark 4.3.12.2 PRIVATE_BEACON_SET, opcode:0x8061
 
 
 /**
@@ -102,7 +102,7 @@
 }
 
 
-#pragma mark 4.3.12.4 PRIVATE_GATT_PROXY_GET, opcode:0xB714
+#pragma mark 4.3.12.4 PRIVATE_GATT_PROXY_GET, opcode:0x8063
 
 
 /**
@@ -124,7 +124,7 @@
 }
 
 
-#pragma mark 4.3.12.5 PRIVATE_GATT_PROXY_SET, opcode:0xB715
+#pragma mark 4.3.12.5 PRIVATE_GATT_PROXY_SET, opcode:0x8064
 
 
 /**
@@ -150,7 +150,7 @@
 }
 
 
-#pragma mark 4.3.12.7 PRIVATE_NODE_IDENTITY_GET, opcode:0xB718
+#pragma mark 4.3.12.7 PRIVATE_NODE_IDENTITY_GET, opcode:0x8066
 
 
 /**
@@ -172,7 +172,7 @@
 }
 
 
-#pragma mark 4.3.12.8 PRIVATE_NODE_IDENTITY_SET, opcode:0xB719
+#pragma mark 4.3.12.8 PRIVATE_NODE_IDENTITY_SET, opcode:0x8067
 
 
 /**

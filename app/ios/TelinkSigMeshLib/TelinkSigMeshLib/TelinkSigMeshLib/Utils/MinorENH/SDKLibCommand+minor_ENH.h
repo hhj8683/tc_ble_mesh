@@ -157,7 +157,7 @@ NS_ASSUME_NONNULL_BEGIN
  GATT Proxy state (see Section 4.2.47).
  */
 
-#pragma mark 4.3.6.1 ON_DEMAND_PRIVATE_PROXY_GET, opcode:0xB800
+#pragma mark 4.3.6.1 ON_DEMAND_PRIVATE_PROXY_GET, opcode:0x8069
 
 
 /// An ON_DEMAND_PRIVATE_PROXY_GET message is an acknowledged message
@@ -170,7 +170,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.6.2 ON_DEMAND_PRIVATE_PROXY_SET, opcode:0xB801
+#pragma mark 4.3.6.2 ON_DEMAND_PRIVATE_PROXY_SET, opcode:0x806A
 
 
 /// An ON_DEMAND_PRIVATE_PROXY_SET message is an acknowledged message
@@ -196,7 +196,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.6.3 ON_DEMAND_PRIVATE_PROXY_STATUS, opcode:0xB802
+#pragma mark 4.3.6.3 ON_DEMAND_PRIVATE_PROXY_STATUS, opcode:0x806B
 
 
 /// An ON_DEMAND_PRIVATE_PROXY_STATUS message is an unacknowledged message
@@ -223,7 +223,7 @@ NS_ASSUME_NONNULL_BEGIN
  replay protection list of a node (see Section 6.9.2.1).
  */
 
-#pragma mark 4.3.7.1 SOLICITATION_PDU_RPL_ITEMS_CLEAR, opcode:0xB815
+#pragma mark 4.3.7.1 SOLICITATION_PDU_RPL_ITEMS_CLEAR, opcode:0x8078
 
 
 /// A SOLICITATION_PDU_RPL_ITEMS_CLEAR message is an acknowledged message
@@ -251,7 +251,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.7.2 SOLICITATION_PDU_RPL_ITEMS_CLEAR_UNACKNOWLEDGED, opcode:0xB816
+#pragma mark 4.3.7.2 SOLICITATION_PDU_RPL_ITEMS_CLEAR_UNACKNOWLEDGED, opcode:0x8079
 
 
 /// A SOLICITATION_PDU_RPL_ITEMS_CLEAR_UNACKNOWLEDGED message is an
@@ -280,7 +280,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.7.3 SOLICITATION_PDU_RPL_ITEMS_STATUS, opcode:0xB817
+#pragma mark 4.3.7.3 SOLICITATION_PDU_RPL_ITEMS_STATUS, opcode:0x807A
 
 
 /// A SOLICITATION_PDU_RPL_ITEMS_STATUS message is an unacknowledged message
@@ -406,7 +406,7 @@ struct SARTransmitterStructure {
 #pragma mark 4.3.8 SAR Configuration messages
 
 
-#pragma mark 4.3.8.1 SAR_TRANSMITTER_GET, opcode:0xB803
+#pragma mark 4.3.8.1 SAR_TRANSMITTER_GET, opcode:0x806C
 
 
 /// A SAR_TRANSMITTER_GET message is an acknowledged message used to
@@ -420,7 +420,7 @@ struct SARTransmitterStructure {
 @end
 
 
-#pragma mark 4.3.8.2 SAR_TRANSMITTER_SET, opcode:0xB804
+#pragma mark 4.3.8.2 SAR_TRANSMITTER_SET, opcode:0x806D
 
 
 /// A SAR_TRANSMITTER_SET message is an acknowledged message used to
@@ -444,7 +444,7 @@ struct SARTransmitterStructure {
 @end
 
 
-#pragma mark 4.3.8.3 SAR_TRANSMITTER_STATUS, opcode:0xB805
+#pragma mark 4.3.8.3 SAR_TRANSMITTER_STATUS, opcode:0x806E
 
 
 /// A SAR_TRANSMITTER_STATUS message is an unacknowledged message used
@@ -524,7 +524,7 @@ struct SARReceiverStructure {
 };
 
 
-#pragma mark 4.3.8.4 SAR_RECEIVER_GET, opcode:0xB806
+#pragma mark 4.3.8.4 SAR_RECEIVER_GET, opcode:0x806F
 
 
 /// A SAR_RECEIVER_GET message is an acknowledged message used to get
@@ -538,7 +538,7 @@ struct SARReceiverStructure {
 @end
 
 
-#pragma mark 4.3.8.5 SAR_RECEIVER_SET, opcode:0xB807
+#pragma mark 4.3.8.5 SAR_RECEIVER_SET, opcode:0x8070
 
 
 /// A SAR_RECEIVER_SET message is an acknowledged message used to set
@@ -562,7 +562,7 @@ struct SARReceiverStructure {
 @end
 
 
-#pragma mark 4.3.8.6 SAR_RECEIVER_STATUS, opcode:0xB808
+#pragma mark 4.3.8.6 SAR_RECEIVER_STATUS, opcode:0x8071
 
 
 /// A SAR_RECEIVER_STATUS message is an unacknowledged message used to report
@@ -586,7 +586,7 @@ struct SARReceiverStructure {
 #pragma mark - 4.3.10 Large Composition Data messages
 
 
-#pragma mark 4.3.10.1 LARGE_COMPOSITION_DATA_GET, opcode:0xB811
+#pragma mark 4.3.10.1 LARGE_COMPOSITION_DATA_GET, opcode:0x8074
 
 
 /// A LARGE_COMPOSITION_DATA_GET message is an acknowledged message
@@ -616,7 +616,7 @@ struct SARReceiverStructure {
 @end
 
 
-#pragma mark 4.3.10.2 LARGE_COMPOSITION_DATA_STATUS, opcode:0xB812
+#pragma mark 4.3.10.2 LARGE_COMPOSITION_DATA_STATUS, opcode:0x8075
 
 
 /// A LARGE_COMPOSITION_DATA_STATUS message is an unacknowledged message
@@ -647,7 +647,7 @@ struct SARReceiverStructure {
 @end
 
 
-#pragma mark 4.3.10.3 MODELS_METADATA_GET, opcode:0xB813
+#pragma mark 4.3.10.3 MODELS_METADATA_GET, opcode:0x8076
 
 
 /// A MODELS_METADATA_GET message is an acknowledged message used to
@@ -677,7 +677,7 @@ struct SARReceiverStructure {
 @end
 
 
-#pragma mark 4.3.10.4 MODELS_METADATA_STATUS, opcode:0xB814
+#pragma mark 4.3.10.4 MODELS_METADATA_STATUS, opcode:0x8077
 
 
 /// A MODELS_METADATA_STATUS message is an unacknowledged message used
@@ -841,7 +841,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
  GATT Proxy state (see Section 4.2.47).
  */
 
-#pragma mark 4.3.6.1 ON_DEMAND_PRIVATE_PROXY_GET, opcode:0xB800
+#pragma mark 4.3.6.1 ON_DEMAND_PRIVATE_PROXY_GET, opcode:0x8069
 
 
 /**
@@ -858,7 +858,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
 + (SigMessageHandle *)onDemandPrivateProxyGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseOnDemandPrivateProxyStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.6.2 ON_DEMAND_PRIVATE_PROXY_SET, opcode:0xB801
+#pragma mark 4.3.6.2 ON_DEMAND_PRIVATE_PROXY_SET, opcode:0x806A
 
 
 /**
@@ -883,7 +883,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
  replay protection list of a node (see Section 6.9.2.1).
  */
 
-#pragma mark 4.3.7.1 SOLICITATION_PDU_RPL_ITEMS_CLEAR, opcode:0xB815
+#pragma mark 4.3.7.1 SOLICITATION_PDU_RPL_ITEMS_CLEAR, opcode:0x8078
 
 
 /**
@@ -903,7 +903,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
 + (SigMessageHandle *)solicitationPduRplItemsClearWithAddressRange:(SigUnicastAddressRangeFormatModel *)addressRange destination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseSolicitationPduRplItemsStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.7.2 SOLICITATION_PDU_RPL_ITEMS_CLEAR_UNACKNOWLEDGED, opcode:0xB816
+#pragma mark 4.3.7.2 SOLICITATION_PDU_RPL_ITEMS_CLEAR_UNACKNOWLEDGED, opcode:0x8079
 
 
 /**
@@ -925,7 +925,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
 #pragma mark 4.3.8 SAR Configuration messages
 
 
-#pragma mark 4.3.8.1 SAR_TRANSMITTER_GET, opcode:0xB803
+#pragma mark 4.3.8.1 SAR_TRANSMITTER_GET, opcode:0x806C
 
 
 /**
@@ -942,7 +942,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
 + (SigMessageHandle *)SARTransmitterGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseSARTransmitterStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.8.2 SAR_TRANSMITTER_SET, opcode:0xB804
+#pragma mark 4.3.8.2 SAR_TRANSMITTER_SET, opcode:0x806D
 
 
 /**
@@ -960,7 +960,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
 + (SigMessageHandle *)SARTransmitterSetWithSARTransmitter:(struct SARTransmitterStructure)SARTransmitter destination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseSARTransmitterStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.8.4 SAR_RECEIVER_GET, opcode:0xB806
+#pragma mark 4.3.8.4 SAR_RECEIVER_GET, opcode:0x806F
 
 /**
  * @brief   SAR_RECEIVER_GET.
@@ -976,7 +976,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
 + (SigMessageHandle *)SARReceiverGetWithDestination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseSARReceiverStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.8.4 SAR_RECEIVER_SET, opcode:0xB807
+#pragma mark 4.3.8.5 SAR_RECEIVER_SET, opcode:0x8070
 
 
 /**
@@ -997,7 +997,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
 #pragma mark - 4.3.10 Large Composition Data messages
 
 
-#pragma mark 4.3.10.1 LARGE_COMPOSITION_DATA_GET, opcode:0xB811
+#pragma mark 4.3.10.1 LARGE_COMPOSITION_DATA_GET, opcode:0x8074
 
 
 /**
@@ -1018,7 +1018,7 @@ typedef void(^responseDirectedProxyCapabilitiesStatusMessageBlock)(UInt16 source
 + (SigMessageHandle *)largeCompositionDataGetWithPage:(UInt8)page offset:(UInt16)offset destination:(UInt16)destination retryCount:(NSInteger)retryCount responseMaxCount:(NSInteger)responseMaxCount successCallback:(responseLargeCompositionDataStatusMessageBlock)successCallback resultCallback:(resultBlock)resultCallback;
 
 
-#pragma mark 4.3.10.3 MODELS_METADATA_GET, opcode:0xB813
+#pragma mark 4.3.10.3 MODELS_METADATA_GET, opcode:0x8076
 
 /**
  * @brief   MODELS_METADATA_GET.

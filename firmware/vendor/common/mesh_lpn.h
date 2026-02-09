@@ -33,6 +33,8 @@
 
 #define LPN_GATT_OTA_ADV_STATE_MAX_TIME_MS      (60*1000)
 
+#define LPN_PREPARE_NEXT_POLL_EN        0 // Prepare the next Friend Poll during the receive window, send friend poll in mesh_friend_poll_cache to save sending time.
+
 #if LPN_DEBUG_PIN_EN
 void lpn_debug_set_current_pin(u8 level);
 void lpn_debug_set_debug_pin(u8 level);
@@ -46,42 +48,34 @@ void lpn_debug_alter_debug_pin(int reset);
 #define lpn_debug_set_event_handle_pin(level)   
 #endif
 
-void lpn_set_poll_ready();
-void friend_cmd_send_poll();
-void mesh_friend_ship_start_poll();
-void mesh_feature_set_lpn();
+void lpn_set_poll_ready(void);
+int is_lpn_poll_ready(void);
+void friend_cmd_send_poll(void);
+void mesh_friend_ship_start_poll(void);
+void mesh_feature_set_lpn(void);
 int lpn_quick_tx(u8 is_quick_tx);
 int lpn_rx_offer_handle(u8 *bear);
-void lpn_no_offer_handle();
+void lpn_no_offer_handle(void);
 void subsc_add_rmv_test(int add);
-void pts_test_case_lpn();
+void pts_test_case_lpn(void);
 void lpn_subsc_list_update_by_sub_set_cmd(u16 op, u16 sub_adr);
-void mesh_main_loop_LPN();
-void friend_send_current_subsc_list();
+void mesh_main_loop_LPN(void);
+void friend_send_current_subsc_list(void);
 void suspend_handle_next_poll_interval(int handle_type);
 void suspend_handle_wakeup_rx(int handle_type);
-void mesh_friend_ship_retry();
-void send_gatt_adv_right_now();
-u8 lpn_get_poll_retry_max();
+void mesh_friend_ship_retry(void);
+u8 lpn_get_poll_retry_max(void);
 void lpn_mode_set(int mode);
-void mesh_lpn_gatt_adv_refresh();
-int mesh_lpn_send_gatt_adv();
+void mesh_lpn_gatt_adv_refresh(void);
+int mesh_lpn_send_gatt_adv(void);
 int mesh_lpn_rcv_delay_wakeup(void);
 int mesh_lpn_poll_md_wakeup(void);
 int mesh_lpn_adv_interval_update(u8 adv_tick_refresh);
-void soft_timer_mesh_adv_proc();
-void  lpn_set_sleep_wakeup (u8 e, u8 *p, int n);
-/************************** access_set_lum **************************
-function : cache the sublist address for lpn  
-para:
-	op: opcode
-	addr: sublist address 
-	ready: 0:send sublist control message after receive pre sublist confirm message.  1:ready to send sublist control message.
-ret: 0  means OK 
-	-1 or other value means err 
-****************************************************************************/
-int mesh_lpn_subsc_pending_add(u16 op, u16 *p_sublist, int sub_cnt, int overwrite_flag);
-u32 get_lpn_poll_interval_ms();
+void soft_timer_mesh_adv_proc(void);
+int mesh_tx_cmd_add_packet_fn_poll_cache(u8 *p_bear);
+int friend_subsc_list_retry_update(u8 type, u16 *p_sublist, int sub_cnt, int overwrite_flag);
+u32 get_lpn_poll_interval_ms(void);
+int set_lpn_poll_interval(int poll_ms);
 
 enum{
     HANDLE_NONE                     = 0,
@@ -121,9 +115,7 @@ typedef struct{
 	u32  cnt;
 }lpn_sub_list_event_t;
 
-extern _align_4_ lpn_sub_list_event_t mesh_lpn_subsc_pending;
 extern mesh_subsc_list_retry_t subsc_list_retry;
 
-#define LPN_SUBSC_LIST_ADD_CNT_MAX		(SUB_LIST_MAX_IN_ONE_MSG + ARRAY_SIZE(mesh_lpn_subsc_pending.sub_list))	// default is 10.
 
 

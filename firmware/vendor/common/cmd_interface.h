@@ -24,13 +24,13 @@
  *******************************************************************************************************/
 #pragma once
 
-#if WIN32
+#ifdef WIN32
 #include "proj_lib/sig_mesh/app_mesh.h"
 #endif
 
 
 //---------------
-typedef struct{
+typedef struct __attribute__((packed)) {
 	int op;
 	u16 ele_adr;
 }mesh_cfg_cmd_sub_set_par_t;
@@ -833,7 +833,7 @@ int mesh_proxy_set_filter_cmd(u8 opcode,u8 filter_type, u8 * dat,u8 len );
 int mesh_proxy_set_filter_init(u16 self_adr);
 
 /**
- * @brief       This function server to set wether the Directed Proxy Server uses directed forwarding for Directed Proxy Client messages for a specified
+ * @brief       This function server to set whether the Directed Proxy Server uses directed forwarding for Directed Proxy Client messages for a specified
 			range of unicast addresses or not. 
  * @param[io]   conn_handle	- connection handle.
  * @param[io]   use_directed- 1: use directed. 0: not use directed.
@@ -863,7 +863,7 @@ ret: 0  means OK
 ****************************************************************************/
 int cfg_cmd_send_path_solicitation(u16 netkey_offset, u16 *addr_list, int num);
 
-#if WIN32
+#ifdef WIN32
 /*******************json_get_net_info****************************
 use to get the provision information form the stack ,it can call in the provision end callback fun
 p_netkey_val:network key 16 bytes 

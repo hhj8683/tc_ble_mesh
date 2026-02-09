@@ -23,11 +23,7 @@
  *
  *******************************************************************************************************/
 #include "gateway_common.h"
-#if __TLSR_RISCV_EN__
 #include "stack/ble/ble.h"
-#else
-#include "proj_lib/ble/service/ble_ll_ota.h"
-#endif
 #include "proj_lib/sig_mesh/app_mesh.h"
 #include "remote_prov.h"
 #include "mesh_ota.h"
@@ -56,7 +52,7 @@ u32 gateway_iv_updata_s = 0;
  * @return      none
  * @note        
  */
-void gateway_iv_update_time_refresh()
+void gateway_iv_update_time_refresh(void)
 {
 	gateway_iv_updata_s = clock_time_s();
 }
@@ -71,7 +67,7 @@ void gateway_trigger_iv_search_mode(int force)
 {	
 	if(force || clock_time_exceed_s(gateway_iv_updata_s, GATEWAY_IV_SEARCHING_INVL_S)){
 		gateway_iv_update_time_refresh();		
-		app_enable_scan_all_device (); 	// enable scan
+		mesh_set_scan_enable(1, 1); 	// enable scan
 		bls_pm_setSuspendMask (SUSPEND_DISABLE);
 		mesh_beacon_poll_1s();
 		#if GW_SMART_PROVISION_REMOTE_CONTROL_PM_EN
@@ -92,20 +88,20 @@ void set_gateway_provision_sts(unsigned char en)
 	gateway_provision_para_enable =en;
 	return ;
 }
-unsigned char get_gateway_provisison_sts()
+unsigned char get_gateway_provisison_sts(void)
 {
 	unsigned char ret;
 	ret = gateway_provision_para_enable;
 	return ret;
 }
-void set_gateway_provision_para_init()
+void set_gateway_provision_para_init(void)
 {
 	gateway_adv_filter_init();
 	set_provision_stop_flag_act(1);
 	set_gateway_provision_sts(0);//disable the provision sts part 
 
 }
-u8 mesh_get_hci_tx_fifo_cnt()
+u8 mesh_get_hci_tx_fifo_cnt(void)
 {
 #if (HCI_ACCESS == HCI_USE_USB)
 	return hci_tx_fifo.size;
@@ -240,7 +236,7 @@ u8 gateway_upload_provision_self_sts(u8 sts)
 	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_PRO_STS_RSP,buf,sizeof(buf));
 }
 
-int gateway_upload_primary_info_get()
+int gateway_upload_primary_info_get(void)
 {
 	provision_primary_mesh_info_t mesh_info;
 	memset(&mesh_info, 0x00, sizeof(mesh_info));
@@ -273,7 +269,7 @@ u8 gateway_upload_mesh_ota_sts(u8 *p_dat,int len)
 	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_SEND_MESH_OTA_STS,p_dat,len);
 }
 
-u8 gateway_upload_mesh_sno_val()
+u8 gateway_upload_mesh_sno_val(void)
 {
     return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_SEND_SNO_RSP,
                         (u8 *)&mesh_adv_tx_cmd_sno,sizeof(mesh_adv_tx_cmd_sno));
@@ -417,7 +413,7 @@ int mesh_tx_comm_cmd(u16 adr)
 	return mesh_bulk_cmd((mesh_bulk_cmd_par_t*)p_bulk_vd_cmd, par_len);
 }
 
-void mesh_ota_comm_test()
+void mesh_ota_comm_test(void)
 {
 	int err =-1;
 	if(comm_send_flag && comm_send_cnt>0){
@@ -653,29 +649,20 @@ u8 gateway_cmd_from_host_ota(u8 *p, u16 len )
 	rf_packet_att_data_t local_ota;
 	u8 dat_len ;
 	dat_len = p[0];
-#if (0 == __TLSR_RISCV_EN__)
-	local_ota.dma_len = dat_len+9;
-#endif
 	local_ota.type = 0;
 	local_ota.rf_len = dat_len+7;
 	local_ota.l2cap = dat_len+3;
 	local_ota.chanid = 4;
 	local_ota.att = 0;
-#if (__TLSR_RISCV_EN__)
 	local_ota.handle = 0;
-#else
-	local_ota.hl = 0;
-	local_ota.hh = 0;
-#endif
+
 	memcpy(local_ota.dat,p+1,dat_len);
 	// enable ota flag 
 	pair_login_ok = 1;
 	u16 ota_adr =  local_ota.dat[0] | (local_ota.dat[1]<<8);
 	if(ota_adr == CMD_OTA_START){
 //		u32 irq_en = irq_disable();
-		#if __TLSR_RISCV_EN__
 		blt_ota_reset();
-		#endif
 		bls_ota_clearNewFwDataArea(0);
 //		irq_restore(irq_en);
 	}

@@ -1,13 +1,12 @@
 /********************************************************************************************************
- * @file	ble_common.h
+ * @file    ble_common.h
  *
- * @brief	for TLSR chips
+ * @brief   This is the header file for BLE SDK
  *
- * @author	BLE Group
- * @date	Sep. 18, 2015
+ * @author  BLE GROUP
+ * @date    06,2020
  *
- * @par     Copyright (c) 2017, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
- *          All rights reserved.
+ * @par     Copyright (c) 2020, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *
  *          Licensed under the Apache License, Version 2.0 (the "License");
  *          you may not use this file except in compliance with the License.
@@ -25,336 +24,14 @@
 #ifndef BLE_COMMON_H
 #define BLE_COMMON_H
 
-#include "proj/mcu/config.h"
 #include "tl_common.h"
-/*********************************************************************
- * CONSTANTS
- */
 
 
-/**
- *  @brief  Definition for Link Layer Feature Support
- */
-#define LL_FEATURE_SIZE                                      8
-#define LL_FEATURE_MASK_LL_ENCRYPTION                        (0x00000001)   //core_4.0
-#define LL_FEATURE_MASK_CONNECTION_PARA_REQUEST_PROCEDURE  	 (0x00000002)	//core_4.1
-#define LL_FEATURE_MASK_EXTENDED_REJECT_INDICATION           (0x00000004)	//core_4.1
-#define LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE    (0x00000008)	//core_4.1
-#define LL_FEATURE_MASK_LE_PING                              (0x00000010)   //core_4.1
-#define LL_FEATURE_MASK_LE_DATA_LENGTH_EXTENSION             (0x00000020)	//core_4.2
-#define LL_FEATURE_MASK_LL_PRIVACY                           (0x00000040)	//core_4.2
-#define LL_FEATURE_MASK_EXTENDED_SCANNER_FILTER_POLICIES     (0x00000080)   //core_4.2
-#define LL_FEATURE_MASK_LE_2M_PHY         					 (0x00000100)	//core_5.0
-#define LL_FEATURE_MASK_STABLE_MODULATION_INDEX_TX 			 (0x00000200)	//core_5.0
-#define LL_FEATURE_MASK_STABLE_MODULATION_INDEX_RX 			 (0x00000400)	//core_5.0
-#define LL_FEATURE_MASK_LE_CODED_PHY     					 (0x00000800)	//core_5.0
-#define LL_FEATURE_MASK_LE_EXTENDED_ADVERTISING          	 (0x00001000)	//core_5.0
-#define LL_FEATURE_MASK_LE_PERIODIC_ADVERTISING     		 (0x00002000)	//core_5.0
-#define LL_FEATURE_MASK_CHANNEL_SELECTION_ALGORITHM2         (0x00004000)	//core_5.0
-#define LL_FEATURE_MASK_LE_POWER_CLASS_1 					 (0x00008000)	//core_5.0
-#define LL_FEATURE_MASK_MIN_USED_OF_USED_CHANNELS   	     (0x00010000)	//core_5.0
 
-/////////////////////////////////////////////////////////////////////////////
-
-//#define         VENDOR_ID                       0x0211
-#define         VENDOR_ID_HI_B                  U16_HI(VENDOR_ID)
-#define         VENDOR_ID_LO_B                  U16_LO(VENDOR_ID)
-
-#define			BLUETOOTH_VER_4_0				6
-#define			BLUETOOTH_VER_4_1				7
-#define			BLUETOOTH_VER_4_2				8
-#define			BLUETOOTH_VER_5_0				9
-
-#if WIN32
-#define			BLUETOOTH_VER					BLUETOOTH_VER_4_2	// keep the same as the one of "proj_lib\ble\ll\ll.h".
-#endif
-
-#ifndef 		BLUETOOTH_VER
-#define			BLUETOOTH_VER					BLUETOOTH_VER_5_0	// modify by weixiong
-#endif
-
-
-#if (BLUETOOTH_VER == BLUETOOTH_VER_4_2)
-	#define			BLUETOOTH_VER_SUBVER			0x22BB
-#elif (BLUETOOTH_VER == BLUETOOTH_VER_5_0)
-	#define			BLUETOOTH_VER_SUBVER			0x1C1C
-#else
-	#define			BLUETOOTH_VER_SUBVER			0x4103
-#endif
-
-
-
-
-#if (BLUETOOTH_VER == BLUETOOTH_VER_4_0)
-	#define LL_FEATURE_ENABLE_LE_ENCRYPTION								1
-	#define LL_CMD_MAX						   							LL_REJECT_IND
-
-#elif (BLUETOOTH_VER == BLUETOOTH_VER_4_1)
-	#define LL_FEATURE_ENABLE_LE_ENCRYPTION								1
-	#define	LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION				1
-	#define	LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE			1
-	#define	LL_FEATURE_ENABLE_LE_PING									1
-
-	#define LL_CMD_MAX						   							LL_PING_RSP
-
-#elif (BLUETOOTH_VER == BLUETOOTH_VER_4_2)
-
-	#define LL_FEATURE_ENABLE_LE_ENCRYPTION								0	// modify by weixiong
-	#define	LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION				0	// modify by weixiong
-	#define	LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE			0	// modify by weixiong
-	#define	LL_FEATURE_ENABLE_LE_PING									0	// modify by weixiong
-	#define	LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION					BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE
-	#define	LL_FEATURE_ENABLE_LL_PRIVACY								0
-
-	#define LL_CMD_MAX						  							LL_LENGTH_RSP
-
-#elif (BLUETOOTH_VER == BLUETOOTH_VER_5_0)
-
-	#define LL_FEATURE_ENABLE_LE_ENCRYPTION								0
-	#define	LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION				0
-	#define	LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE			0
-	#define	LL_FEATURE_ENABLE_LE_PING									0
-	#define	LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION					BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE
-	#define	LL_FEATURE_ENABLE_LL_PRIVACY								0
-
-	#define	LL_FEATURE_ENABLE_LE_2M_PHY									LL_FEATURE_SUPPORT_LE_2M_PHY
-	#define	LL_FEATURE_ENABLE_LE_CODED_PHY								LL_FEATURE_SUPPORT_LE_CODED_PHY
-	#define	LL_FEATURE_ENABLE_LE_EXTENDED_ADVERTISING					LL_FEATURE_SUPPORT_LE_EXTENDED_ADVERTISING
-	#define	LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING					LL_FEATURE_SUPPORT_LE_PERIODIC_ADVERTISING
-	#define	LL_FEATURE_ENABLE_CHANNEL_SELECTION_ALGORITHM2				LL_FEATURE_SUPPORT_CHANNEL_SELECTION_ALGORITHM2
-
-	#define LL_CMD_MAX						   							LL_MIN_USED_CHN_IND
-#else
-
-
-#endif
-
-
-#ifndef		 LL_FEATURE_ENABLE_LE_ENCRYPTION
-#define		 LL_FEATURE_ENABLE_LE_ENCRYPTION							0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_CONNECTION_PARA_REQUEST_PROCEDURE
-#define		 LL_FEATURE_ENABLE_CONNECTION_PARA_REQUEST_PROCEDURE		0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION
-#define		 LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION				0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE
-#define		 LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE		0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_LE_PING
-#define		 LL_FEATURE_ENABLE_LE_PING									0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION
-#define		 LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION					0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_LL_PRIVACY
-#define		 LL_FEATURE_ENABLE_LL_PRIVACY								0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_EXTENDED_SCANNER_FILTER_POLICIES
-#define		 LL_FEATURE_ENABLE_EXTENDED_SCANNER_FILTER_POLICIES			0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_LE_2M_PHY
-#define		 LL_FEATURE_ENABLE_LE_2M_PHY								0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_TX
-#define		 LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_TX				0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_RX
-#define		 LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_RX				0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_LE_CODED_PHY
-#define		 LL_FEATURE_ENABLE_LE_CODED_PHY								0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_LE_EXTENDED_ADVERTISING
-#define		 LL_FEATURE_ENABLE_LE_EXTENDED_ADVERTISING					0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING
-#define		 LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING					0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_CHANNEL_SELECTION_ALGORITHM2
-#define		 LL_FEATURE_ENABLE_CHANNEL_SELECTION_ALGORITHM2				0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_LE_POWER_CLASS_1
-#define		 LL_FEATURE_ENABLE_LE_POWER_CLASS_1							0
-#endif
-
-#ifndef		 LL_FEATURE_ENABLE_MIN_USED_OF_USED_CHANNELS
-#define		 LL_FEATURE_ENABLE_MIN_USED_OF_USED_CHANNELS				0
-#endif
-
-
-
-
-//BIT<0:31>
-#if 1
-
-// feature below is conFiged by application layer
-// LL_FEATURE_ENABLE_LE_2M_PHY
-// LL_FEATURE_ENABLE_LE_CODED_PHY
-// LL_FEATURE_ENABLE_LE_EXTENDED_ADVERTISING
-// LL_FEATURE_ENABLE_CHANNEL_SELECTION_ALGORITHM2
-
-#define LL_FEATURE_MASK_BASE0											(	LL_FEATURE_ENABLE_LE_ENCRYPTION 					<<0		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_CONNECTION_PARA_REQUEST_PROCEDURE <<1		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION 	   	<<2		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE <<3		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_PING 						   	<<4		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION 		   	<<5		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LL_PRIVACY 					   	<<6		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_EXTENDED_SCANNER_FILTER_POLICIES  <<7		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_TX 	   	<<9		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_RX  	   	<<10	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING 		   	<<13	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_POWER_CLASS_1 				   	<<15	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_MIN_USED_OF_USED_CHANNELS 		<<16 	)
-#else
-#define LL_FEATURE_MASK_0												(	LL_FEATURE_ENABLE_LE_ENCRYPTION 					<<0		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_CONNECTION_PARA_REQUEST_PROCEDURE <<1		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION 	   	<<2		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE <<3		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_PING 						   	<<4		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION 		   	<<5		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LL_PRIVACY 					   	<<6		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_EXTENDED_SCANNER_FILTER_POLICIES  <<7		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_2M_PHY 						<<8		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_TX 	   	<<9		|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_RX  	   	<<10	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_CODED_PHY 					   	<<11	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_EXTENDED_ADVERTISING  		   	<<12	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING 		   	<<13	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_CHANNEL_SELECTION_ALGORITHM2 	   	<<14	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_POWER_CLASS_1 				   	<<15	|  \
-		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_MIN_USED_OF_USED_CHANNELS 		<<16 	)
-
-#endif
-
-
-extern u32 LL_FEATURE_MASK_0;
-
-//BIT<32:63>
-#define LL_FEATURE_MASK_1												0
-
-
-#define LL_FEATURE_BYTE_0												U32_BYTE0(LL_FEATURE_MASK_0)
-#define LL_FEATURE_BYTE_1												U32_BYTE1(LL_FEATURE_MASK_0)
-#define LL_FEATURE_BYTE_2												U32_BYTE2(LL_FEATURE_MASK_0)
-#define LL_FEATURE_BYTE_3												U32_BYTE3(LL_FEATURE_MASK_0)
-#define LL_FEATURE_BYTE_4												U32_BYTE0(LL_FEATURE_MASK_1)
-#define LL_FEATURE_BYTE_5												U32_BYTE1(LL_FEATURE_MASK_1)
-#define LL_FEATURE_BYTE_6												U32_BYTE2(LL_FEATURE_MASK_1)
-#define LL_FEATURE_BYTE_7												U32_BYTE3(LL_FEATURE_MASK_1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#define 		ADV_INTERVAL_3_125MS                        5
-#define 		ADV_INTERVAL_3_75MS                         6
-#define 		ADV_INTERVAL_10MS                           16
-#define 		ADV_INTERVAL_15MS                           24
-#define 		ADV_INTERVAL_20MS                           32
-#define 		ADV_INTERVAL_25MS                           40
-#define 		ADV_INTERVAL_30MS                           48
-#define 		ADV_INTERVAL_35MS                           56
-#define 		ADV_INTERVAL_40MS                           64
-#define 		ADV_INTERVAL_45MS                           72
-#define 		ADV_INTERVAL_50MS                           80
-#define 		ADV_INTERVAL_55MS                           88
-#define 		ADV_INTERVAL_60MS                           96
-#define 		ADV_INTERVAL_70MS                           112
-#define 		ADV_INTERVAL_80MS                           128
-#define 		ADV_INTERVAL_90MS							144
-#define 		ADV_INTERVAL_100MS                          160
-#define 		ADV_INTERVAL_105MS                          168
-#define 		ADV_INTERVAL_160MS                          256
-#define 		ADV_INTERVAL_200MS                          320
-#define 		ADV_INTERVAL_205MS                          328
-#define 		ADV_INTERVAL_300MS                          480
-#define 		ADV_INTERVAL_305MS                          488
-#define 		ADV_INTERVAL_360MS                          576
-#define 		ADV_INTERVAL_400MS                          640
-#define 		ADV_INTERVAL_405MS                          648
-#define 		ADV_INTERVAL_500MS                          800
-#define 		ADV_INTERVAL_505MS                          808
-
-#define 		ADV_INTERVAL_1S                          	1600
-#define 		ADV_INTERVAL_1S5                          	2400
-#define 		ADV_INTERVAL_2S                          	3200
-#define 		ADV_INTERVAL_1_28_S                         0x0800
-#define			ADV_INTERVAL_2_56_S							0x1000
-#define 		ADV_INTERVAL_10_24S                         16384
-
-
-
-#define 		SCAN_INTERVAL_10MS                           16
-#define 		SCAN_INTERVAL_30MS                           48
-#define 		SCAN_INTERVAL_50MS                           80
-#define 		SCAN_INTERVAL_60MS                           96
-#define 		SCAN_INTERVAL_90MS                           144
-#define 		SCAN_INTERVAL_100MS                          160
-#define 		SCAN_INTERVAL_200MS                          320
-#define 		SCAN_INTERVAL_300MS                          480
-
-
-#define 		CONN_INTERVAL_7P5MS                          6
-#define 		CONN_INTERVAL_10MS                           8
-#define 		CONN_INTERVAL_15MS                           12
-#define 		CONN_INTERVAL_18P75MS                        15
-#define 		CONN_INTERVAL_20MS                           16
-#define 		CONN_INTERVAL_30MS                           24
-#define 		CONN_INTERVAL_38P75MS                        31
-#define 		CONN_INTERVAL_40MS                           32
-#define 		CONN_INTERVAL_48P75MS                        39
-#define 		CONN_INTERVAL_50MS                           40
-#define 		CONN_INTERVAL_100MS                          80
-
-
-#define 		CONN_TIMEOUT_500MS							 50
-#define 		CONN_TIMEOUT_1S							 	 100
-#define 		CONN_TIMEOUT_4S							 	 400
-#define 		CONN_TIMEOUT_10S							 1000
-#define 		CONN_TIMEOUT_20S							 2000
-
-
-/*********************************************************************
- * ENUMS
- */
 typedef enum {
     BLE_SUCCESS = 0,
 
-//// HCI Status, See the Core_v5.0(Vol 2/Part D/1.3 "list of Error Codes") for more information)
+//// HCI Status, refer to BLE Core Specification: Vol 1, Part F, "1.3 LIST OF ERROR CODES" for more information.
     HCI_ERR_UNKNOWN_HCI_CMD                                        = 0x01,
     HCI_ERR_UNKNOWN_CONN_ID                                        = 0x02,
     HCI_ERR_HW_FAILURE                                             = 0x03,
@@ -420,9 +97,10 @@ typedef enum {
     HCI_ERR_MAC_CONN_FAILED                                        = 0x3F,
     HCI_ERR_COARSE_CLOCK_ADJUSTMENT_REJECT						   = 0x40,
     HCI_ERR_TYPE0_SUBMAP_NOT_DEFINED							   = 0x41,
-    HCI_ERR_UNKNOWN_ADV_IDENTIFIER								   = 0x42,
+	HCI_ERR_UNKNOWN_ADV_IDENTIFIER								   = 0x42,
     HCI_ERR_LIMIT_REACHED										   = 0x43,
     HCI_ERR_OP_CANCELLED_BY_HOST								   = 0x44,
+    HCI_ERR_PACKET_TOO_LONG										   = 0x45,
     
 
 
@@ -435,11 +113,15 @@ typedef enum {
 	LL_ERR_TX_FIFO_NOT_ENOUGH,
 	LL_ERR_ENCRYPTION_BUSY,
 	LL_ERR_CURRENT_STATE_NOT_SUPPORTED_THIS_CMD,
+	LL_ERR_INVALID_PARAMETER,
+	LL_ERR_UNKNOWN_OPCODE,
+
+	LL_ERR_CIS_SYNC_FAIL,
+	LL_ERR_CIS_DISCONNECT,
+
 
 	//L2CAP status
     L2CAP_ERR_INVALID_PARAMETER 								   = 0x90,
-    L2CAP_ERR_INVALID_HANDLE,
-    L2CAP_ERR_INSUFFICIENT_RESOURCES,
     L2CAP_ERR_PSM_NOT_REGISTER,
     L2CAP_ERR_CONTROL_NOT_READY,
     L2CAP_ERR_COC_CREATING,
@@ -452,108 +134,97 @@ typedef enum {
 	SMP_ERR_INVALID_PARAMETER 									   = 0xA0,
 	SMP_ERR_PAIRING_BUSY,
 
+
+	//ATT status
+	ATT_ERR_INVALID_PARAMETER 									   = 0xB0,
+
+
+
 	//GATT status
-	GATT_ERR_INVALID_PARAMETER 									   = 0xB0,
+	GATT_ERR_INVALID_PARAMETER 									   = 0xC0,
 	GATT_ERR_PREVIOUS_INDICATE_DATA_HAS_NOT_CONFIRMED,
 	GATT_ERR_SERVICE_DISCOVERY_TIMEOUT,
 	GATT_ERR_NOTIFY_INDICATION_NOT_PERMITTED,
 	GATT_ERR_DATA_PENDING_DUE_TO_SERVICE_DISCOVERY_BUSY,
 	GATT_ERR_DATA_LENGTH_EXCEED_MTU_SIZE,
 
+
+
+
 	//GAP status
 	GAP_ERR_INVALID_PARAMETER 								   	   = 0xC0,
 
-	SLAVE_TERMINATE_CONN_ACKED = 0xF0,
-	SLAVE_TERMINATE_CONN_TIMEOUT    = 0xF1,
+	//Service status
+	SERVICE_ERR_INVALID_PARAMETER 								   = 0xD0,
+
 } ble_sts_t;
 
 
 
 
 
-
-// l2cap pb flag type
-#define L2CAP_FIRST_PKT_H2C              0x00
-#define L2CAP_CONTINUING_PKT             0x01
-#define L2CAP_FIRST_PKT_C2H              0x02
-
-#if 1 // L2CAP_CREDIT_BASED_FLOW_CONTROL_MODE_EN
 /**
- *  @brief  Definition for Error Response of signal packet
- *  See the Core_v5.0(Vol 3/Part A/4.1) for more information.
+ *  @brief  error code for user initialization error
  */
-typedef enum{
-	SIG_CMD_NOT_UNDERSTAND	= 0,
-	SIG_MTU_EXCEEDED		= 1,
-	SIG_INVALID_CID_REQUEST	= 2,
-}l2cap_sig_cmd_reject_reason;
+typedef enum {
+    INIT_SUCCESS = 0,
 
-//Result values for the L2CAP_CREDIT_BASED_CONNECTION_RSP packet
-typedef enum{
-	L2CAP_ALL_CONN_SUCCESSFUL=0,
-	L2CAP_ALL_CONN_REFUSED_SPSM_NOT_SUPPORT=2,
-	L2CAP_SOME_CONN_REFUSED_INSUFFICIENT_RESOURCES_AVAILABLE=4,
-	L2CAP_ALL_CONN_REFUSED_INSUFFICIENT_AUTHENTICATION=5,
-	L2CAP_ALL_CONN_REFUSED_INSUFFICIENT_AUTHORIZATION=6,
-	L2CAP_ALL_CONN_REFUSED_INSUFFICIENT_ENCRYPTION_KEY_SIZE=7,
-	L2CAP_ALL_CONN_REFUSED_INSUFFICIENT_ENCRYPTION=8,
-	L2CAP_SOME_CONN_REFUSED_INVALID_SOURCE_CID=9,
-	L2CAP_SOME_CONN_REFUSED_SOURCE_CID_ALREADY_ALLOCATED=0x0a,
-	L2CAP_ALL_CONN_REFUSED_UNACCEPTABLE_PARAMETERS=0x0b,
-	L2CAP_ALL_CONN_REFUSED_INVALID_PARAMETERS=0x0c,
-}l2cap_credit_based_conn_rsp_result;
-typedef enum{
-	L2CAP_RECONFIG_SUCCESSFUL = 0,
-	L2CAP_RECONFIG_FAIL_REDUCTION_MTU = 1,
-	L2CAP_RECONFIG_FAIL_REDUCTION_MPS = 2,
-	L2CAP_RECONFIG_FAIL_ONE_MORE_DCID_INVALID = 3,
-	L2CAP_RECONFIG_FAIL_OTHER_UNACCEPTABLE_PARAMETERS = 4,
-}l2cap_credit_based_reconfigure_rsp_result;
+	////////////////////////// Controller //////////////////////////////
 
-//Result values for the L2CAP_LE_CREDIT_BASED_CONNECTION_RSP packet.
-enum{
-	CONN_SUCCESSFUL								= 0x0000,
-	CONN_REFUSED_SPSM_NOT_SUPPORT				= 0x0002,
-	CONN_REFUSED_NO_RESOURCES_AVAILABLE			= 0x0004,
-	CONN_REFUSED_INSUFFICIENT_AUTHENTICATION	= 0x0005,	//not used
-	CONN_REFUSED_INSUFFICIENT_AUTHORIZATION		= 0x0006,	//not used
-	CONN_REFUSED_ENCRYPTION_KEY_SIZE_TOO_SHORT	= 0x0007,	//not used
-	CONN_REFUSED_INSUFFICIENT_ENCRYPTION		= 0x0008,	//not used
-	CONN_REFUSED_INVALID_SOURCE_CID				= 0x0009,
-	CONN_REFUSED_SOURCE_CID_ALREADY_ALLOCATED	= 0x000A,
-	CONN_REFUSED_UNACCEPTABLE_PARAMETERS		= 0x000B,
-};
-
-//Result values for the L2CAP_CREDIT_BASED_CONNECTION_RSP packet.
-enum{
-	ALL_CONN_SUCCESSFUL								= 0x0000,
-	ALL_CONN_REFUSED_SPSM_NOT_SUPPORTED				= 0x0002,
-	SOME_CONN_REFUSED_INSUFFICIENT_RESOURCES_AVA	= 0x0004,
-	ALL_CONN_REFUSED_INSUFFICIENT_AUTHENTICATION	= 0x0005,
-	ALL_CONN_REFUSED_INSUFFICIENT_AUTHORIZATION		= 0x0006,
-	ALL_CONN_REFUSED_ENCRYPTION_KEY_SIZE_TOO_SHORT	= 0x0007,
-	ALL_CONN_REFUSED_INSUFFICIENT_ENCRYPTION		= 0x0008,
-	SOME_CONN_REFUSED_INVALID_SOURCE_CID			= 0x0009,
-	SOME_CONN_REFUSED_SOURCE_CID_ALREADY_ALLOCATED	= 0x000A,
-	ALL_CONN_REFUSED_UNACCEPTABLE_PARAMETERS		= 0x000B,
-	ALL_CONN_REFUSED_INVALID_PARAMETERS				= 0x000C,
-	ALL_CONN_REFUSED_NO_FURTHER_INFO_AVA			= 0x000D,
-	ALL_CONN_REFUSED_AUTHENTICATION_PENDING			= 0x000E,
-	ALL_CONN_REFUSED_AUTHORIZATION_PENDING			= 0x000F,
-};
-
-//Result values for the L2CAP_CREDIT_BASED_RECONFIGURE_RSP packet.
-enum{
-	RECONFIGURATION_SUCCESSFUL						= 0x0000,
-	RECONFIGURATION_FAILED_MTU_NOT_ALLOWED			= 0x0001,
-	RECONFIGURATION_FAILED_MPS_NOT_ALLOWED			= 0x0002,
-	RECONFIGURATION_FAILED_DST_CIDS_INVALID			= 0x0003,
-	RECONFIGURATION_FAILED_OTHER_UNACCEPTABLE_PARAMS= 0x0004,
-};
-#endif
+    INIT_ERR_LL_ACL_RX_BUF_NO_INIT 						 = 0x1000,
+    INIT_ERR_LL_ACL_RX_BUF_PARAM_INVALID,
+    INIT_ERR_LL_ACL_RX_BUF_SIZE_NOT_MEET_MAX_RX_OCT,
+    INIT_ERR_LL_ACL_TX_BUF_NO_INIT,
+    INIT_ERR_LL_ACL_TX_BUF_PARAM_INVALID,
+    INIT_ERR_LL_ACL_TX_BUF_SIZE_NOT_MEET_MAX_TX_OCT,
 
 
 
+
+	///////////////////////////// Host ///////////////////////////////
+
+	////////////// GAP /////////////
+    INIT_ERR_GAP_PARAM_INVALID				= 0x2000,
+
+	//
+	////////////// L2CAP /////////////
+    INIT_ERR_L2CAP_PARAM_INVALID			= 0x2100,
+
+
+	////////////// ATT /////////////
+    INIT_ERR_ATT_PARAM_INVALID				= 0x2200,
+	INIT_ERR_ATT_MTU_SIZE_INVALID,
+	/* MTU buffer is not enough for MTU size, user need register new buffer with API "blc l2cap_initMtuBuffer" */
+	INIT_ERR_ATT_MTU_BUFF_NOT_MATCH_MTU_SIZE,
+
+
+
+
+
+
+	////////////// GATT /////////////
+    INIT_ERR_GATT_PARAM_INVALID				 = 0x2300,
+
+
+
+	////////////// SMP /////////////
+    INIT_ERR_SMP_PARAM_INVALID				 = 0x2400,
+	/* user set bonding maximum number exceed stack design limitation. If default maximum number can not meet user's requirement,
+	 * they should contact Telink for support */
+	INIT_ERR_SMP_BONDING_MAX_NUMBER_EXCEED,
+	INIT_ERR_SMP_MTU_SIZE_NOT_MATCH_SC,						 //MTU should equal to or greater than 65 for secure connection
+
+
+	////////////////// Service/Profile /////////////////////
+
+
+} init_err_t;
+
+
+
+
+
+/////////////////////////////// BLE  MAC ADDRESS //////////////////////////////////////////////
 #define BLE_ADDR_PUBLIC                  0
 #define BLE_ADDR_RANDOM                  1
 #define BLE_ADDR_INVALID                 0xff
@@ -587,862 +258,201 @@ enum{
 #define IS_RESOLVABLE_PRIVATE_ADDR(Type, Addr)  		( (Type)==BLE_ADDR_RANDOM && (Addr[5] & 0xC0) == 0x40 )
 
 
+#define		MAC_MATCH8(md,ms)	(md[0]==ms[0] && md[1]==ms[1] && md[2]==ms[2] && md[3]==ms[3] && md[4]==ms[4] && md[5]==ms[5])
+#define		MAC_MATCH16(md,ms)	(md[0]==ms[0] && md[1]==ms[1] && md[2]==ms[2])
+#define		MAC_MATCH32(md,ms)	(md[0]==ms[0] && md[1]==ms[1])
+/////////////////////////////////////////////////////////////////////////////
 
+/******************************************** ATT ***************************************************************/
 
+/**
+ *  @brief  Definition for Attribute protocol PDUs
+ */
 typedef enum{
-	OWN_ADDRESS_PUBLIC = 0,
-	OWN_ADDRESS_RANDOM = 1,
-	OWN_ADDRESS_RESOLVE_PRIVATE_PUBLIC = 2,
-	OWN_ADDRESS_RESOLVE_PRIVATE_RANDOM = 3,
-}own_addr_type_t;
-
-
-
-
-
-
-
-
-typedef struct {
-	u8 type   :4;
-	u8 rfu1   :1;
-	u8 chan_sel:1;
-	u8 txAddr :1;
-	u8 rxAddr :1;
-}rf_adv_head_t;
-
-
-
-typedef struct {
-    u8 llid   :2;
-    u8 nesn   :1;
-    u8 sn     :1;
-    u8 md     :1;
-    u8 rfu1   :3;
-}rf_data_head_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-}rf_packet_head_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-}rf_packet_auto_reply_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-
-	rf_adv_head_t  header;
-	u8  rf_len;				//LEN(6)_RFU(2)
-
-	u8	advA[6];			//address
-	#if (MESH_DLE_MODE == MESH_DLE_MODE_EXTEND_BEAR || EXTENDED_ADV_ENABLE)
-	u8  data[249];          // 255 -6(mac)
-	#else
-	u8	data[31];			//0-31 byte
-	#endif
-}rf_packet_adv_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	rf_adv_head_t  header;	//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-
-	u8	scanA[6];			//
-	u8	advA[6];			//
-}rf_packet_scan_req_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	rf_adv_head_t  header;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-
-	u8	advA[6];			//address
-	u8	data[31];			//0-31 byte
-}rf_packet_scan_rsp_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-
-	u8 type   :4;
-	u8 rfu1   :1;
-	u8 chan_sel:1;
-	u8 txAddr :1;
-	u8 rxAddr :1;
-
-	u8  rf_len;				//LEN(6)_RFU(2)
-	u8	initA[6];			//scanA
-	u8	advA[6];			//
-	u8	accessCode[4];		// access code
-	u8	crcinit[3];
-	u8	winSize;
-	u16	winOffset;
-	u16 interval;
-	u16 latency;
-	u16 timeout;
-	u8	chm[5];
-	u8	hop;				//sca(3)_hop(5)
-}rf_packet_connect_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	rf_adv_head_t  header;				//RA(1)_TA(1)_RFU(2)_TYPE(4): connect request PDU
-	u8  rf_len;				//LEN(6)_RFU(2)
-	u8	scanA[6];			//
-	u8	advA[6];			//
-	u8	aa[4];				// access code
-	u8	crcinit[3];
-	u8	wsize;
-	u16	woffset;
-	u16 interval;
-	u16 latency;
-	u16 timeout;
-	u8	chm[5];
-	u8	hop;				//sca(3)_hop(5)
-}rf_packet_ll_init_t;
-
-typedef struct {
-	u8	type;
-	u8  rf_len;
-	u8 	opcode;
-	u8 	winSize;
-	u16 winOffset;
-	u16 interval;
-	u16 latency;
-	u16 timeout;
-	u16 instant;
-} rf_packet_ll_updateConnPara_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4): connect request PDU
-	u8  rf_len;				//LEN(6)_RFU(2)
-
-	u8	scanA[6];			//
-	u8	advA[6];			//
-	u8	aa[4];				// access code
-	u8	crcinit[3];
-	u8	wsize;
-	u16	woffset;
-	u16 interval;
-	u16 latency;
-	u16 timeout;
-	u8	chm[5];
-	u8	hop;				//sca(3)_hop(5)
-}rf_packet_relay_t;
-
-
-typedef struct {
-	u16 intervalMin;      // Minimum advertising interval for non-directed advertising, time = N * 0.625ms
-	u16 intervalMax;      // Maximum advertising interval for non-directed advertising, time = N * 0.625ms
-	u8  advType;          // Advertising
-	u8  ownAddrType;
-	u8  peerAddrType;
-	u8  peerAddr[BLE_ADDR_LEN];
-	u8  advChannelMap;
-	u8  advFilterPolicy;
-} adv_para_t;
-
-typedef struct {
-	u16 connHandle;
-	u16 connIntervalMin;
-	u16 connIntervalMax;
-	u16 connLatency;
-	u16 supervisionTimeout;
-	u16 minCELen;
-	u16 maxCELen;
-} conn_para_t;
-
-
-
-/*
-LLID(2) - NESN(1) - SN(1) - MD(1) - RFU(3) - Length(5) - RFU(3)
-*/
-
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-	u16	l2capLen;
-	u16	chanId;
-}rf_packet_l2cap_head_t;
-
-
-typedef struct{
-	rf_data_head_t	header;
-	u8  rf_len;
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 data[1];
-}rf_packet_l2cap_t;
-
-
-typedef struct{
-	rf_data_head_t	header;
-	u8  rf_len;
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8  handle0;
-	u8  handle1;
-	u8	dat[20];
-}rf_packet_att_t;
-
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 data[1];
-}rf_packet_l2cap_req_t;
-
-
-typedef struct{
-	u32 dma_len;
-	u8	type;
-	u8  rf_len;
-	u16	l2capLen;
-	u16	chanId;
-	u8  code;
-	u8  id;
-	u16 dataLen;
-	u16  result;
-}rf_pkt_l2cap_sig_connParaUpRsp_t;
-
-
-typedef struct{
-	u8	type;
-	u8  rf_len;
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 data[1];
-}rf_pkt_l2cap_req_t;
-
-
-typedef struct{
-	u8	llid;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8	id;
-	u16 data_len;
-	u16 min_interval;
-	u16 max_interval;
-	u16 latency;
-	u16 timeout;
-}rf_packet_l2cap_connParaUpReq_t;
-
-
-typedef struct{
-	u8	llid;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8	id;
-	u16 data_len;
-	u16 result;
-}rf_packet_l2cap_connParaUpRsp_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u8	data;
-}rf_packet_l2cap_cust_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 	errOpcode;
-	u16 errHandle;
-	u8  errReason;
-}rf_packet_att_errRsp_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8	startingHandle;
-	u8	startingHandle1;
-	u8	endingHandle;
-	u8	endingHandle1;
-	u8	attType[2];				//
-}rf_packet_att_readByType_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8	startingHandle;
-	u8	startingHandle1;
-	u8	endingHandle;
-	u8	endingHandle1;
-	u8	attType[2];
-	u8  attValue[2];
-}rf_packet_att_findByTypeReq_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u16 	data[1];
-}rf_packet_att_findByTypeRsp_t;
-
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 handle;
-	u8 handle1;
-}rf_packet_att_read_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 handle;
-	u8 handle1;
-	u8 offset0;
-	u8 offset1;
-}rf_packet_att_readBlob_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 	value[22];
-}rf_packet_att_readRsp_t;
-
-
-typedef struct{
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8  datalen;
-	u8  data[1];			// character_handle / property / value_handle / value
-}rf_pkt_att_readByTypeRsp_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8  datalen;
-	u8  data[1];			// character_handle / property / value_handle / value
-}rf_packet_att_readByTypeRsp_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8  datalen;
-	u8  data[3];
-}rf_packet_att_readByGroupTypeRsp_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8  format;
-	u8  data[1];			// character_handle / property / value_handle / value
-}rf_packet_att_findInfoReq_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 flags;
-}rf_packet_att_executeWriteReq_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 handle;
-	u8 handle1;
-	u8 value;
-}rf_packet_att_write_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 handle[2];
-	u8 data;
-}rf_packet_att_notification_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-
-	u16	l2cap;				//0x17
-	u16	chanid;				//0x04,
-
-	u8	att;				//0x12 for master; 0x1b for slave
-	u8	hl;					// assigned by master
-	u8	hh;					//
-	u8	sno;
-
-	u8	ctype;
-	u8	cmd[18];				//byte
-}rf_packet_ll_write_data_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 mtu[2];
-}rf_packet_att_mtu_t;
-
-typedef struct{
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 mtu[2];
-}rf_packet_att_mtu_exchange_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-}rf_packet_att_writeRsp_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-	u8 	opcode;
-	u8	data[8];
-}rf_packet_feature_rsp_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-	u8 	opcode;
-	u8  mainVer;
-	u16 vendor;
-	u16 subVer;
-}rf_packet_version_ind_t;
-
-typedef struct {
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8 	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-	u8 	opcode;
-	u8 	winSize;
-	u16 winOffset;
-	u16 interval;
-	u16 latency;
-	u16 timeout;
-	u16 instant;
-}rf_packet_connect_upd_req_t;
-
-typedef struct {
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8 	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-	u8 	opcode;
-	u8 	chm[5];
-	u16 instant;
-} rf_packet_chm_upd_req_t;
-
-
-typedef struct {
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
-	u8  rf_len;				//LEN(6)_RFU(2)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8  id;
-	u16 siglen;
-    u16 min_interval;
-    u16 max_interval;
-    u16 latency;
-    u16 timeout;
-}rf_packet_connParUpReq_t;
-
-typedef struct {
-	u8  valid;
-	u8 	winSize;
-	u16 winOffset;
-	u16 interval;
-	u16 latency;
-	u16 timeout;
-	u16 instant;
-}connect_upd_data_t;
-
-typedef struct {
-	u8  valid;
-	u8 	chm[5];
-	u16 instant;
-}connect_chm_upd_data_t;
-
-
-typedef struct{
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-
-	u8	opcode;				//
-	u8	reason;				//
-}rf_packet_ll_terminate_t;
-
-
-typedef struct{
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-
-	u8	opcode;				//
-	u8	dat[1];				//
-}rf_packet_ll_control_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2cap;
-	u16	chanid;
-
-	u8	att;
-	u8	hl;					// assigned by master
-	u8	hh;					//
-
-	u8	dat[20];
-
-}rf_packet_att_data_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	flag;
-
-	u32	src_id;
-
-	u8	att;				//0x12 for master; 0x1b for slave
-	u8	hl;					// assigned by master
-	u8	hh;					//
-	u8	sno;
-
-	u16	nid;				// network ID
-	u16	group;
-
-	u32	dst_id;
-
-	u8	cmd[11];			//byte
-							// 10 xx xx xx xx xx xx		=> light on
-							// 11 xx xx xx xx xx xx		=> light off
-							// 12 rr gg bb ww uu vv		=> set
-
-	//u32	mic[4];			//optional
-}rf_packet_ll_rc_data_t;
-
-typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-
-	u16	l2capLen;			// can be src_id
-	u16	chanId;
-
-	u8	att;				//0x12 for master; 0x1b for slave
-	u8	hl;					// assigned by master
-	u8	hh;					//
-	u8	sno;
-
-	u16	mic;				// network ID
-	u16	group;
-
-	u8	dst_id[4];
-
-	u8	cmd[11];			//byte
-							// 10 xx xx xx xx xx xx		=> light on
-							// 11 xx xx xx xx xx xx		=> light off
-							// 12 rr gg bb ww uu vv		=> set
-
-	//u32	mic[4];			//optional
-}rf_packet_mesh_data_phone_t;
-
-typedef struct{
-    u8 sno[3];
-    u8 src[2];
-    u8 dst[2];
-    u8 op_para[13];
- //   u8 ttl;
- //   u8 hop;
-}rf_packet_mesh_nwk_t;
-
-
-typedef struct{
-	u32 dma_len;            //29
-
-	u8	rf_len;				//28
-	u8  type;				//LEN(5)_RFU(3)
-
-	u8	src_id[4];			// src_id
-
-	u8	ttl;				// time to live
-	u8	hl;					// assigned by master
-	u8	hh;					//
-	u8	sno;
-
-	u16	mic;				// network ID
-	u16	group;
-
-	u8	dst_id[4];
-
-	u8	cmd[11];			//byte
-							// 10 xx xx xx xx xx xx		=> light on
-							// 11 xx xx xx xx xx xx		=> light off
-							// 12 rr gg bb ww uu vv		=> set
-
-	//u32	mic[4];			//optional
-}rf_packet_mesh_data_t1;
-
-typedef struct{
-	u32 dma_len;            //29
-
-	u8	rf_len;				//28
-	u8  type;				//LEN(5)_RFU(3)
-
-	u16	l2cap;				// l2cap length
-	u16	chan;				// channel ID
-
-	u8	ttl;				// time to live
-	u8	hl;					// assigned by master
-	u8	hh;					//
-	rf_packet_mesh_nwk_t	c;
-
-}rf_packet_mesh_phone_t;
-
-typedef struct{
-	u32 dma_len;            //29
-
-	u8	rf_len;				//28
-	u8  type;				//LEN(5)_RFU(3)
-
-	u16	l2cap;				// l2cap length
-	u16	chan;				// channel ID
-
-	u8	ttl;				// time to live
-	u8	hl;					// assigned by master
-	u8	hh;					//
-	rf_packet_mesh_nwk_t	c;
-	u8 rsv[6];
-
-}rf_packet_mesh_data_t;
-
-typedef struct{
-	u32 dma_len;            //39
-
-	u8	rf_len;				//38
-	u8  type;				//LEN(5)_RFU(3)
-
-	u16	l2cap;				// l2cap length
-	u16	chan;				// channel ID
-
-	u8	ttl;				// time to live
-	u8	hl;					// assigned by master
-	u8	hh;					//
-	u8	dat[30];
-
-}rf_packet_mesh_status_t;
-
-typedef struct{
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8  datalen;
-	u8  data[1];			// character_handle / property / value_handle / value
-}att_readByTypeRsp_t;
-
-typedef struct{
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8  format;
-	u8  data[1];			// character_handle / property / value_handle / value
-}att_findInfoRsp_t;
-
-typedef struct{
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8 	value[22];
-}att_readRsp_t;
-
-typedef struct{
-	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
-	u8  rf_len;				//LEN(5)_RFU(3)
-	u16	l2capLen;
-	u16	chanId;
-	u8  opcode;
-	u8	handle;
-	u8	hh;
-	u8 	value[1];
-}att_notify_t;
-
-typedef struct {
-	u8 type;
-	u8 address[BLE_ADDR_LEN];
-} addr_t;
-
-typedef struct {
-	u8 address[BLE_ADDR_LEN];
-} public_addr_t;
-
-
-////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-typedef struct {
-	u8	num;
-	u8	property;
-	u16	handle;
-	u16	uuid;
-	u16 ref;
-} att_db_uuid16_t;			//8-byte
-
-
-typedef struct {
-	u8	num;
-	u8	property;
-	u16	handle;
-	u8	uuid[16];
-} att_db_uuid128_t;			//20-byte
-
-//-------------   event --------------------------------
-typedef struct {
-	u8	status;
-	u8	connHandle;
-	u8	hh;
-	u8	reason;
-} event_disconnection_t;			//20-byte
-
-typedef struct {
-	u8	subcode;
-	u8	nreport;
-	u8	event_type;
-	u8	adr_type;
-	u8	mac[6];
-	u8	len;
-	u8	data[1];
-} event_adv_report_t;			//20-byte
-
-typedef struct {
-	u8	subcode;
-	u8	status;
-	u16	handle;
-	u8	role;
-	u8	peer_adr_type;
-	u8	mac[6];
-	u16	interval;
-	u16	latency;
-	u16	timeout;
-	u8	accuracy;
-} event_connection_complete_t;			//20-byte
-
-typedef struct {
-	u8	subcode;
-	u8	status;
-	u16	handle;
-	u16	interval;
-	u16	latency;
-	u16	timeout;
-} event_connection_update_t;			//20-byte
-
-typedef struct {
-	u8	status;
-	u16	handle;
-	u8  enc_enable;
-} event_enc_change_t;
-
-typedef struct {
-	u8	status;
-	u16	handle;
-} event_enc_refresh_t;
+	ATT_OP_ERROR_RSP					= 0x01,
+	ATT_OP_EXCHANGE_MTU_REQ				= 0x02,
+	ATT_OP_EXCHANGE_MTU_RSP				= 0x03,
+	ATT_OP_FIND_INFORMATION_REQ			= 0x04,		ATT_OP_FIND_INFO_REQ = 0x04,
+	ATT_OP_FIND_INFORMATION_RSP			= 0x05,		ATT_OP_FIND_INFO_RSP = 0x05,
+	ATT_OP_FIND_BY_TYPE_VALUE_REQ		= 0x06,
+	ATT_OP_FIND_BY_TYPE_VALUE_RSP		= 0x07,
+	ATT_OP_READ_BY_TYPE_REQ				= 0x08,
+	ATT_OP_READ_BY_TYPE_RSP				= 0x09,
+	ATT_OP_READ_REQ						= 0x0A,
+	ATT_OP_READ_RSP						= 0x0B,
+	ATT_OP_READ_BLOB_REQ				= 0x0C,
+	ATT_OP_READ_BLOB_RSP				= 0x0D,
+	ATT_OP_READ_MULTIPLE_REQ			= 0x0E,		ATT_OP_READ_MULTI_REQ = 0x0E,
+	ATT_OP_READ_MULTIPLE_RSP			= 0x0F,
+	ATT_OP_READ_BY_GROUP_TYPE_REQ		= 0x10,
+	ATT_OP_READ_BY_GROUP_TYPE_RSP		= 0x11,
+	ATT_OP_WRITE_REQ					= 0x12,
+	ATT_OP_WRITE_RSP					= 0x13,
+	ATT_OP_PREPARE_WRITE_REQ			= 0x16,
+	ATT_OP_PREPARE_WRITE_RSP			= 0x17,
+	ATT_OP_EXECUTE_WRITE_REQ			= 0x18,
+	ATT_OP_EXECUTE_WRITE_RSP			= 0x19,
+
+	ATT_OP_HANDLE_VALUE_NTF				= 0x1B,		ATT_OP_HANDLE_VALUE_NOTI = 0x1B,
+	ATT_OP_HANDLE_VALUE_IND				= 0x1D,
+	ATT_OP_HANDLE_VALUE_CFM				= 0x1E,
+
+	ATT_OP_READ_MULTIPLE_VARIABLE_REQ	= 0x20,	//core_5.2
+	ATT_OP_READ_MULTIPLE_VARIABLE_RSP	= 0x21, //core_5.2
+	ATT_OP_MULTIPLE_HANDLE_VALUE_NTF	= 0x23, //core_5.2
+
+	ATT_OP_WRITE_CMD					= 0x52,
+	ATT_OP_SIGNED_WRITE_CMD				= 0xD2,
+}att_pdu_type;
+
+
+
+
+/******************************************** L2CAP ***************************************************************/
+
+/**
+ *  @brief  Definition for L2CAP CID name space for the LE-U
+ */
+typedef enum{
+	L2CAP_CID_NULL				= 0x0000,
+	L2CAP_CID_ATTR_PROTOCOL		= 0x0004,
+	L2CAP_CID_SIG_CHANNEL		= 0x0005,
+	L2CAP_CID_SMP				= 0x0006,
+}l2cap_cid_type;
+
+
+
+/**
+ * @brief	6 = header(2)+l2cap_len(2)+CID(2)
+ */
+#define		CAL_L2CAP_BUFF_SIZE(n)				(((n + 6) + 3)/4 * 4)
+
+
+/**
+ *  @brief  Definition for L2CAP signal packet formats
+ */
+typedef enum{
+	L2CAP_COMMAND_REJECT_RSP           		= 0x01,
+	L2CAP_CONNECTION_REQ                 	= 0x02,
+	L2CAP_CONNECTION_RSP                 	= 0x03,
+	L2CAP_CONFIGURATION_REQ                	= 0x04,
+	L2CAP_CONFIGURATION_RSP           		= 0x05,
+	L2CAP_DISCONNECTION_REQ           		= 0x06,
+	L2CAP_DISCONNECTION_RSP           		= 0x07,
+	L2CAP_ECHO_REQ          		 		= 0x08,
+	L2CAP_ECHO_RSP           				= 0x09,
+	L2CAP_INFORMATION_REQ           		= 0x0A,
+	L2CAP_INFORMATION_RSP           		= 0x0B,
+	L2CAP_CREATE_CHANNEL_REQ          		= 0x0C,
+	L2CAP_CREATE_CHANNEL_RSP           		= 0x0D,
+	L2CAP_MOVE_CHANNEL_REQ           		= 0x0E,
+	L2CAP_MOVE_CHANNEL_RSP           		= 0x0F,
+	L2CAP_MOVE_CHANNEL_CONFIRMATION_REQ		= 0x10,
+	L2CAP_MOVE_CHANNEL_CONFIRMATION_RSP     = 0x11,
+	L2CAP_CONN_PARAM_UPDATE_REQ				= 0x12,		L2CAP_CMD_CONN_UPD_PARA_REQ		= 0x12,
+	L2CAP_CONN_PARAM_UPDATE_RSP				= 0x13,		L2CAP_CMD_CONN_UPD_PARA_RESP 	= 0x13,
+	L2CAP_LE_CREDIT_BASED_CONNECTION_REQ 	= 0x14,
+	L2CAP_LE_CREDIT_BASED_CONNECTION_RSP 	= 0x15,
+	L2CAP_FLOW_CONTROL_CREDIT_IND 			= 0x16,
+	L2CAP_CREDIT_BASED_CONNECTION_REQ 		= 0x17,	//core_5.2
+	L2CAP_CREDIT_BASED_CONNECTION_RSP 		= 0x18,	//core_5.2
+	L2CAP_CREDIT_BASED_RECONFIGURE_REQ 		= 0x19,	//core_5.2
+	L2CAP_CREDIT_BASED_RECONFIGURE_RSP 		= 0x1A,	//core_5.2
+}l2cap_sig_pkt_format;
+
+/******************************************** LINKLAYER ***************************************************************/
+
+/**
+ *  @brief  Definition for LL Control PDU Opcode
+ */																		// rf_len without MIC
+#define					LL_CONNECTION_UPDATE_REQ	0x00							// 12
+#define					LL_CHANNEL_MAP_REQ			0x01							//	8
+#define					LL_TERMINATE_IND			0x02							//	2
+
+#define					LL_ENC_REQ					0x03	// encryption			// 23
+#define					LL_ENC_RSP					0x04	// encryption			// 13
+#define					LL_START_ENC_REQ			0x05	// encryption			//	1
+#define					LL_START_ENC_RSP			0x06	// encryption			//	1
+
+#define					LL_UNKNOWN_RSP				0x07							//	2
+#define 				LL_FEATURE_REQ              0x08							//	9
+#define 				LL_FEATURE_RSP              0x09							//	9
+
+#define					LL_PAUSE_ENC_REQ			0x0A	// encryption			//	1
+#define					LL_PAUSE_ENC_RSP			0x0B	// encryption			//	1
+
+#define 				LL_VERSION_IND              0x0C							//	6
+#define 				LL_REJECT_IND         		0x0D							//	2
+#define 				LL_SLAVE_FEATURE_REQ        0x0E	//core_4.1				//	9
+#define 				LL_CONNECTION_PARAM_REQ		0x0F	//core_4.1				// 24
+#define 				LL_CONNECTION_PARAM_RSP		0x10	//core_4.1				// 24
+#define					LL_REJECT_IND_EXT			0x11	//core_4.1				//	3
+#define 				LL_PING_REQ					0x12    //core_4.1				//	1
+#define					LL_PING_RSP					0x13    //core_4.1				//	1
+#define 				LL_LENGTH_REQ				0x14    //core_4.2				//	9
+#define					LL_LENGTH_RSP				0x15    //core_4.2				//	9
+#define 				LL_PHY_REQ					0x16	//core_5.0				//	3
+#define 				LL_PHY_RSP					0x17	//core_5.0				//	3
+#define 				LL_PHY_UPDATE_IND			0x18	//core_5.0				//	5
+#define 				LL_MIN_USED_CHN_IND			0x19	//core_5.0				//	3
+
+#define 				LL_CTE_REQ					0x1A	//core_5.1				//	2
+#define 				LL_CTE_RSP					0x1B	//core_5.1				//	2
+#define 				LL_PERIODIC_SYNC_IND		0x1C	//core_5.1				// 35
+#define 				LL_CLOCK_ACCURACY_REQ		0x1D	//core_5.1				//	2
+#define 				LL_CLOCK_ACCURACY_RSP		0x1E	//core_5.1				//	2
+
+
+#define 				LL_CIS_REQ					0x1F	//core_5.2				//	36
+#define 				LL_CIS_RSP					0x20	//core_5.2				//	9
+#define 				LL_CIS_IND					0x21	//core_5.2				//  16
+#define 				LL_CIS_TERMINATE_IND		0x22	//core_5.2				//	4
+#define 				LL_POWER_CONTROL_REQ		0x23	//core_5.2				//	4
+#define 				LL_POWER_CONTROL_RSP		0x24	//core_5.2				//	5
+#define 				LL_POWER_CHANGE_IND			0x25	//core_5.2				//	5
+
+
+
+/******************************************** GAP ***************************************************************/
+
+// https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+// EIR Data Type, Advertising Data Type (AD Type) and OOB Data Type Definitions
+
+typedef enum {
+	DT_FLAGS								= 0x01,		//	Flag
+	DT_INCOMPLETE_LIST_16BIT_SERVICE_UUID		= 0x02,		//	Incomplete List of 16-bit Service Class UUIDs
+	DT_COMPLETE_LIST_16BIT_SERVICE_UUID	    = 0x03,		//	Complete List of 16-bit Service Class UUIDs
+	DT_INCOMPLT_LIST_32BIT_SERVICE_UUID    	= 0x04,		//	Incomplete List of 32-bit Service Class UUIDs
+	DT_COMPLETE_LIST_32BIT_SERVICE_UUID		= 0x05,		//	Complete List of 32-bit Service Class UUIDs
+	DT_INCOMPLT_LIST_128BIT_SERVICE_UUID   	= 0x06,		//	Incomplete List of 128-bit Service Class UUIDs
+	DT_COMPLETE_LIST_128BIT_SERVICE_UUID	= 0x07,		//	Complete List of 128-bit Service Class UUIDs
+	DT_SHORTENED_LOCAL_NAME					= 0x08,		//	Shortened Local Name
+	DT_COMPLETE_LOCAL_NAME					= 0x09,		//	Complete Local Name
+	DT_TX_POWER_LEVEL						= 0x0A,		//	Tx Power Level
+
+	DT_CLASS_OF_DEVICE						= 0x0D,		//	Class of Device
+	DT_SERVICE_DATA							= 0x16,		//	Service Data
+	DT_APPEARANCE							= 0x19,		//	Appearance
+
+	DT_CHM_UPT_IND							= 0x28,		//	Channel Map Update Indication
+	DT_BIGINFO								= 0x2C,		//	BIGInfo
+	DT_BROADCAST_CODE						= 0x2D,		// 	Broadcast_Code
+	DT_3D_INFORMATION_DATA					= 0x3D,		//	3D Information Data
+
+	DT_MANUFACTURER_SPECIFIC_DATA 	= 0xFF,     //	Manufacturer Specific Data
+}data_type_t;
+
+
+/**
+ * @brief      get SDK and Lib version.User should get at least 5 bytes,first 5 bytes show the SDK
+ * 			   version and the rest is reserved for future.
+ * 			   For example, if the number you get is {3,4,0,0,1} after call this API(DEC), it stands for
+ * 			   the SDK version is 3.4.0.0 patch 1.
+ * @param[in]  pbuf - the point of buffer to store version message.
+ * @param[in]  number - the length of version message,should be 5 to 16.
+ * @return     0:success  1:number is invalid
+ */
+unsigned char blc_get_sdk_version(unsigned char *pbuf,unsigned char number);
 
 
 #endif

@@ -70,6 +70,7 @@ UIKIT_EXTERN NSString * const kFirmwareRevisionCharacteristicsID;
 UIKIT_EXTERN NSString * const kScanList_key;
 UIKIT_EXTERN NSString * const kJsonMeshUUID_key;
 UIKIT_EXTERN NSString * const kCurrentProvisionerUUID_key;
+UIKIT_EXTERN NSString * const kCurrenProvisionerSno_key;//3.3.3.5之前版本使用的kCurrenProvisionerSno_key存SequenceNumber，3.3.3.6之后使用kLocationIvIndexAndSequenceNumberDictionary_key存SequenceNumber，SDK v4.2.0.3之后自动转换。
 UIKIT_EXTERN NSString * const kLocationIvIndexAndSequenceNumberDictionary_key;//缓存当前首页的所有mesh的provisioner与ivIndex+sequenceNumber的映射字典。
 UIKIT_EXTERN NSString * const kLocalSolicitationSequenceNumberDictionary_key;//缓存当前首页的所有mesh的provisioner与Solicitation sequenceNumber的映射字典。
 UIKIT_EXTERN NSString * const kLocalNetworkPrivateBeaconDictionary_key;//缓存private beacon页面的数据。
@@ -513,7 +514,7 @@ UIKIT_EXTERN UInt8 const kScanNodeIdentityBeforeKeyBindTimeout;// 3
 /// publish设置的上报周期
 UIKIT_EXTERN UInt8 const kPublishInterval;// 20
 /// time model设置的上报周期
-UIKIT_EXTERN UInt8 const kTimePublishInterval;// 20
+UIKIT_EXTERN UInt8 const kTimePublishInterval;// 30
 /// 离线检测的时长
 UIKIT_EXTERN UInt8 const kOfflineInterval;// = (kPublishInterval * 3 + 1)
 

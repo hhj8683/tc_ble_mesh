@@ -25,20 +25,14 @@
 #include "proj_lib/sig_mesh/app_mesh.h"
 #include "mesh_access_layer.h"
 #include "mesh_ota.h"
-
-#if GATEWAY_ENABLE
-access_layer_dst_addr	p_access_layer_dst_addr_cb;
-void register_access_layer_dst_addr_callback(void *p){
-	p_access_layer_dst_addr_cb = p;
-}
-#endif
+#include "directed_forwarding.h"
 
 //---------- cache status response
 #if RELIABLE_CMD_EN
 #if GATEWAY_ENABLE
 #define MESH_RSP_BUF_CNT        8   // only gateway use hci tx fifo
 #else
-#if WIN32
+#ifdef WIN32
 #define MESH_RSP_BUF_CNT        8   // should be >= (ELE CNT + 1),    // 2   // hci tx fifo is not used, because it's process immediately in main loop
 #else
 #define MESH_RSP_BUF_CNT        2   // should be >= (ELE CNT + 1),    // 2   // hci tx fifo is not used, because it's process immediately in main loop
@@ -57,29 +51,29 @@ u8		slave_status_buffer_num = MESH_RSP_BUF_CNT;
 u8 		slave_status_buffer_rptr = 0;
 u8 		slave_status_buffer_wptr = 0;
 
-void    rf_link_slave_read_status_par_init()
+void    rf_link_slave_read_status_par_init(void)
 {
 	slave_status_buffer_rptr = slave_status_buffer_wptr = 0;
 }
 
-void	rf_link_slave_read_status_start ()
+void	rf_link_slave_read_status_start (void)
 {
     rf_link_slave_read_status_par_init();
-	#if WIN32 
+	#ifdef WIN32 
 	memset(slave_rsp_buf, 0, (int)slave_status_buffer_num*(sizeof(mesh_rc_rsp_t)));
 	#else
-	memset4(slave_rsp_buf, 0, (int)slave_status_buffer_num*(sizeof(mesh_rc_rsp_t)));
+	memset(slave_rsp_buf, 0, (int)slave_status_buffer_num*(sizeof(mesh_rc_rsp_t)));
 	#endif
 	slave_status_record_idx = 0;
 	memset(slave_status_record, 0, slave_status_record_size);
 }
 
-int		is_slave_read_status_buf_empty ()
+int		is_slave_read_status_buf_empty (void)
 {
 	return (slave_status_buffer_rptr == slave_status_buffer_wptr);
 }
 
-void	rf_link_slave_read_status_stop ()
+void	rf_link_slave_read_status_stop (void)
 {
     rf_link_slave_read_status_par_init();
 }
@@ -93,7 +87,7 @@ int mesh_tx_reliable_rc_rsp_handle(mesh_rc_rsp_t *p_rsp)
     return err;
 }
 
-void	rf_link_slave_read_status_update ()
+void	rf_link_slave_read_status_update (void)
 {
 #if (GATEWAY_ENABLE && (HCI_ACCESS != HCI_USE_NONE))
     if(my_fifo_data_cnt_get(&hci_tx_fifo) > 0)
@@ -125,7 +119,7 @@ int mesh_rsp_handle_cb(mesh_rc_rsp_t *p_rsp)
 	u16 op = 0;
 	size_op = size_op;  // just for cleaning compile warning, will be optimized.
 	op = op;            // just for cleaning compile warning, will be optimized.
-#if (!WIN32 && DEBUG_CFG_CMD_GROUP_AK_EN)
+#if (!defined(WIN32) && DEBUG_CFG_CMD_GROUP_AK_EN)
 	op = rf_link_get_op_by_ac(p_rsp->data);
 	size_op = SIZE_OF_OP(op);
 	if(op == VD_MESH_TRANS_TIME_STS && p_rsp->src != ele_adr_primary){
@@ -174,7 +168,7 @@ int mesh_rsp_handle(mesh_rc_rsp_t *p_rsp)
 #if ((IS_VC_PROJECT_MASTER || DONGLE_PROVISION_EN) && (0 == DEBUG_MESH_DONGLE_IN_VC_EN)&&!PTS_TEST_KEY_REFRESH_EN)
 	mesh_kr_cfgcl_status_update(p_rsp);
 #endif
-#if WIN32
+#ifdef WIN32
     mesh_rsp_handle_proc_win32(p_rsp);
 #else
 	mesh_rsp_handle_cb(p_rsp);
@@ -296,6 +290,153 @@ u8 * mesh_get_model_par_by_op_dst(u16 op, u16 ele_adr)
 	return model;
 }
 
+/**
+ * @brief  when received a message, this function would be called 
+ *   if opcode supported and address matched.
+ * @param  params: Pointer to message data (excluding Opcode).
+ * @param  par_len: The length of the message data.
+ * @param  cb_par: Some information about function callbacks.
+ * @retval Whether the message was processed
+ *   (0 Message processed or -1 Message not processed)
+ */
+int mesh_rc_data_layer_access_cb(u8 *params, int par_len, mesh_cb_fun_par_t *cb_par)
+{
+    __UNUSED int log_len = par_len;
+    #if HCI_LOG_FW_EN
+    if(log_len > 10){
+        if(BLOB_CHUNK_TRANSFER == cb_par->op){
+            log_len = 10;
+        }
+    }
+    #endif
+	mesh_op_resource_t *p_res = (mesh_op_resource_t *)cb_par->res;
+	#if AUDIO_MESH_EN
+	if(VD_ASYNC_AUDIO_DATA != cb_par->op)
+	#endif
+	{
+    LOG_MSG_LIB(TL_LOG_NODE_SDK,params, log_len,"rcv access layer,retransaction:%d,ttl:%d,src:0x%04x,dst:0x%04x sno:0x%06x op:0x%04x(%s),par_len:%d,par:",
+            cb_par->retransaction,cb_par->p_nw->ttl,cb_par->adr_src,cb_par->adr_dst, cb_par->p_nw->sno[0]+(cb_par->p_nw->sno[1]<<8)+(cb_par->p_nw->sno[2]<<16), cb_par->op, get_op_string(cb_par->op,p_res->op_string), par_len);
+	}
+
+    if(!is_use_device_key(p_res->id, p_res->sig) || DEBUG_CFG_CMD_GROUP_USE_AK(cb_par->adr_dst)){ // user should not handle config model op code
+        #if (VENDOR_MD_NORMAL_EN)
+            #if ((VENDOR_OP_MODE_SEL == VENDOR_OP_MODE_DEFAULT)&&(DRAFT_FEATURE_VENDOR_TYPE_SEL == DRAFT_FEATURE_VENDOR_TYPE_NONE))
+        if(IS_VENDOR_OP(cb_par->op)){
+            if((cb_par->op >= VD_OP_RESERVE_FOR_TELINK_START) && (cb_par->op <= VD_OP_RESERVE_FOR_TELINK_END)){
+                return -1;
+            }
+        }
+            #endif
+        #endif
+        
+        #if (!defined(WIN32) && !FEATURE_LOWPOWER_EN)
+        if(0 == mesh_tx_with_random_delay_ms){
+            if((blc_ll_getCurrentState() == BLS_LINK_STATE_ADV) && (cb_par->op_rsp != STATUS_NONE)){
+				u8 random_delay_step = 0;
+				if(is_group_adr(cb_par->adr_dst)){
+						#if DEBUG_CFG_CMD_GROUP_AK_EN
+					random_delay_step = MESH_RSP_BASE_DELAY_STEP + (rand() % max_time_10ms);    // unit : ADV_INTERVAL_MIN(10ms)
+						#else
+					u32 random_range = MESH_RSP_RANDOM_DELAY_320ms;   // unit: ADV_INTERVAL_MIN == 10ms
+					if(ADR_ALL_NODES == cb_par->adr_dst){
+			        	if(get_mesh_current_cache_num() <= 20){
+							
+						}
+						else if(get_mesh_current_cache_num() <= 50){
+							random_range = MESH_RSP_RANDOM_DELAY_500ms;
+						}
+						else if(get_mesh_current_cache_num() <= 100){
+							random_range = MESH_RSP_RANDOM_DELAY_1S;
+						}
+                       	else if(get_mesh_current_cache_num() < 205){
+							random_range = MESH_RSP_RANDOM_DELAY_2S;
+						}
+						else{
+							random_range = MESH_RSP_RANDOM_DELAY_3S;
+						}
+					}else{
+					    // default, 0x20;
+					}
+					random_delay_step = MESH_RSP_BASE_DELAY_STEP + (rand() % random_range);
+						#endif
+				}else if (is_unicast_adr(cb_par->adr_dst)){
+
+				}
+
+				#if FAST_PROVISION_ENABLE
+				if(VD_MESH_ADDR_SET == cb_par->op){
+					random_delay_step = 0;	// not need random delay when reply VD_MESH_ADDR_SET_STS.
+				}
+				#endif
+						
+				mesh_rsp_delay_set(random_delay_step, 0); // set mesh_tx_with_random_delay_ms inside.
+            }
+        }
+        #endif
+        
+        // TODO
+    }
+	
+	#if DU_ULTRA_PROV_EN
+	if(APPKEY_ADD == cb_par->op){
+		my_fifo_reset(&mesh_adv_cmd_fifo); // response appkey status quickly
+	}
+	#endif
+	
+    int err = 0;
+
+    #if (SAVE_SNO_CACHE_EN && SAVE_SNO_CACHE_ONLY_WHEN_DST_ADDR_MATCH_EN)
+    if((is_group_adr(cb_par->adr_dst)) && (!is_own_ele(cb_par->adr_dst))){ // has saved in mesh_update_rpl_() for unicast address.
+        cache_buf_t cache_write[1];
+        u32 sno = 0;
+        cache_write->ivi = cb_par->p_nw->ivi;
+        cache_write->src = cb_par->p_nw->src;
+        memcpy((u8 *)&sno, cb_par->p_nw->sno, sizeof(cb_par->p_nw->sno)); 
+        cache_write->sno = sno;
+        mesh_sno_cache_store(cache_write);
+    }
+    #endif
+    
+    /*! p_res->cb: callback function define in mesh_cmd_sig_func[] 
+     or mesh_cmd_vd_func[] */
+
+	if(p_res->cb){ // have been check in library, check again.
+		#if MD_SERVER_EN
+		g_op_access_layer_rx = cb_par->op;
+		#endif
+        err = p_res->cb(params, par_len, cb_par);   // use mesh_tx_with_random_delay_ms in this function in library.
+		#if MD_SERVER_EN
+		g_op_access_layer_rx = 0; // reset to invalid.
+		#endif
+    }
+
+    mesh_tx_with_random_delay_ms = 0; // must be clear here 
+    #if DF_TEST_MODE_EN
+	if(DIRECTED == mesh_key.sec_type_sel){
+		mesh_df_led_event(mesh_key.net_key[mesh_key.netkey_sel_dec][0].nid_d, 0);
+	}
+	#endif
+
+    #if ((0 == RELIABLE_CMD_EN) && DISTRIBUTOR_UPDATE_SERVER_EN)
+	if(((mesh_op_resource_t *)(cb_par->res))->status_cmd){
+    	u8 buf[sizeof(mesh_rc_rsp_t)] = {0};   // because block status may be very long. so set the size of buf to max.
+        u32 size_op = SIZE_OF_OP(cb_par->op);
+    	mesh_rc_rsp_t *p_rc_rsp = (mesh_rc_rsp_t *)buf;
+    	if((par_len + size_op) < (sizeof(buf) - OFFSETOF(mesh_rc_rsp_t,data))){
+        	p_rc_rsp->len = GET_RSP_LEN_FROM_PAR(par_len, size_op);
+        	p_rc_rsp->src = cb_par->adr_src;
+        	p_rc_rsp->dst = cb_par->adr_dst;
+        	memcpy(p_rc_rsp->data, &cb_par->op, size_op);
+        	memcpy(p_rc_rsp->data + size_op, params, par_len);
+        	
+        	mesh_ota_master_rx(p_rc_rsp, cb_par->op, size_op);
+    	}
+	}
+	#endif
+	
+    return err;
+}
+
 int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
 {
     int err = -1;
@@ -307,7 +448,7 @@ int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
 	LAYER_PARA_DEBUG(A_debug_access_layer_enter);
 	#if (TL_LOG_SEL_VAL	 & (BIT(TL_LOG_NODE_SDK)))
 	ut_log_t ut_log;
-	int log_len = len_ac + 4;
+	u32 log_len = len_ac + 4;
 	ut_log.src = adr_src;
 	ut_log.dst = adr_dst;
 	if(log_len > sizeof(ut_log.data)){
@@ -316,7 +457,9 @@ int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
 	memcpy(ut_log.data, ac, log_len);
     LOG_MSG_INFO(TL_LOG_NODE_SDK_NW_UT,(u8 *)&ut_log,log_len,"UT PDU:");
     #endif
-    
+
+//    LOG_MSG_LIB(TL_LOG_NODE_SDK, ac, min(len_ac, 8),"rcv access,ttl:%d,src:0x%04x,dst:0x%04x sno:0x%06x len:%d payload:", p_nw->ttl, p_nw->src, p_nw->dst, p_nw->sno[0]+(p_nw->sno[1]<<8)+(p_nw->sno[2]<<16), len_ac);
+
     int get_op_st = rf_link_get_op_para(ac, len_ac, &op, &params, &par_len);
     if(GET_OP_FAILED == get_op_st){
 		LAYER_PARA_DEBUG(A_debug_access_layer_opcode_ret);
@@ -326,14 +469,14 @@ int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
         LOG_MSG_LIB(TL_LOG_NODE_BASIC, ac, OP_TYPE_VENDOR,"RX remove extend op");
     }
 
-    #if (WIN32 && (!DEBUG_SHOW_VC_SELF_EN))
+    #if (defined(WIN32) && (!DEBUG_SHOW_VC_SELF_EN))
     if(is_cmd_skip_for_vc_self(adr_src, op)){
         // LOG_MSG_ERR(TL_LOG_MESH,0, 0 ,"is vc self adr"); // don't print as normal.
     	return 0;
     }
     #endif
     
-    #if WIN32
+    #ifdef WIN32
     if(!is_own_ele(adr_src)){
         LOG_MSG_INFO(TL_LOG_NODE_BASIC,ac,len_ac,"src:%04x,dst:%04x,ac RX:%04x(%s)",adr_src, adr_dst, op, get_op_string(op,0));
     }
@@ -349,6 +492,10 @@ int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
 	memset(ts_B_11_ac[(ts_B_11)%ARRAY_SIZE(ts_B_11_ac)], 0, 16);
 	memcpy(ts_B_11_ac[(ts_B_11++)%ARRAY_SIZE(ts_B_11_ac)], ac, len_log);
 	#endif
+
+    #if DEPRECATED_MESH_OTA_COMPAT
+    op = mesh_ota_adapt_rx_opcode(op);
+    #endif
 
 	__UNUSED int is_support_flag = 0;
 	__UNUSED int is_status_cmd = 0;
@@ -387,7 +534,7 @@ int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
         if(op_res.model_cnt){
             u8 retransaction = 0;
             
-            foreach(i,op_res.model_cnt){
+            foreach_uint(i,op_res.model_cnt){
                 model_common_t *p_model = (model_common_t *)op_res.model[i];
 				
 				#if !PRIVATE_SELF_PROVISION_EN
@@ -438,20 +585,10 @@ int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
                 	}
                 }
 				#endif
-
-				#if GATEWAY_ENABLE
-				u8 is_valid_addr = 0;
-				if(p_access_layer_dst_addr_cb && !is_unicast_adr(adr_dst)){
-					is_valid_addr = p_access_layer_dst_addr_cb(p_nw);
-				}
-				#endif
 				
                 if(is_unicast_adr(adr_dst)
                 || is_fixed_group(adr_dst)  // have been checked feature before in mesh_match_group_mac_()
                 || is_subscription_adr(p_model, adr_dst)
-				#if GATEWAY_ENABLE
-				|| is_valid_addr
-				#endif
 				){
                     if(op_res.cb){
                         mesh_cb_fun_par_t cb_par;
@@ -518,7 +655,10 @@ int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
         }else
         #endif
         {
-            LOG_MSG_LIB(TL_LOG_NODE_BASIC,0, 0 ,"mesh_rc_data_layer_access: not support op or model is not enable! src:0x%x dst:0x%x op:0x%x(%s)", p_nw->src, p_nw->dst, op, get_op_string(op,0));
+            // this is for rx handle, if enter here, it means that not found correct model to handle this op.
+            // for example, if op is G_ONOFF_SET, it need onoff server model to handle this op, so gateway will print this log, because gateway not enable onoff server model by default.
+            // for example, if op is G_ONOFF_STATUS, it need onoff client model to handle this op, so mesh light node will print this log, because light node not enable onoff client model by default.
+            LOG_MSG_LIB(TL_LOG_NODE_BASIC,0, 0 ,"for RX flow, not need to handle, because not support this op or server/client model is not enable! src:0x%x dst:0x%x op:0x%x(%s)", p_nw->src, p_nw->dst, op, get_op_string(op,0));
         }
     }
     }
@@ -535,7 +675,7 @@ int mesh_rc_data_layer_access2(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
     if(is_support_flag && is_status_cmd){
         // check more details later
         mesh_rc_rsp_t rc_rsp;
-        if(len_ac <= sizeof(rc_rsp.data)){
+        if((u32)len_ac <= sizeof(rc_rsp.data)){
             rc_rsp.src = adr_src;
             rc_rsp.dst = adr_dst;
             rc_rsp.len = len_ac + (OFFSETOF(mesh_rc_rsp_t,data) - OFFSETOF(mesh_rc_rsp_t,src));
@@ -570,9 +710,11 @@ int mesh_rc_data_layer_access(u8 *ac, int len_ac, mesh_cmd_nw_t *p_nw)
 
 // TID process
 void add2tid_cache(u16 adr, u8 tid, int idx){
+#if MESH_TIMER_MS_100MS_EN
     mesh_tid.rx[idx].adr = adr;
     mesh_tid.rx[idx].tid = tid;
     mesh_tid.rx[idx].tick_100ms = clock_time_100ms();
+#endif
 }
 
 u32 get_ele_idx(u16 ele_adr)
@@ -620,12 +762,14 @@ int is_retransaction(u16 adr, u8 tid){
     return 0;
 }
 
-void mesh_tid_timeout_check(){
+void mesh_tid_timeout_check(void){
     foreach(i, RX_TID_CNT){
         if(mesh_tid.rx[i].adr){
+            #if MESH_TIMER_MS_100MS_EN
             if(clock_time_exceed_100ms(mesh_tid.rx[i].tick_100ms, 60)){
                 add2tid_cache(0, 0, i);            // clear
             }
+            #endif
         }
     }
 }
@@ -657,7 +801,7 @@ int mesh_upper_transport_layer_cb(mesh_cmd_bear_t *p_bear)
 
 			mesh_rcv_cmd.total_time += cmd_delay_ms;
 			mesh_rcv_cmd.avr_time = mesh_rcv_cmd.total_time / mesh_rcv_cmd.rcv_cnt;
-			//LOG_USER_MSG_INFO(0, 0, "delay ms:%d idx:%d", cmd_delay_ms, p_ttc->transmit_index);
+			//LOG_MSG_LIB(TL_LOG_NODE_BASIC, 0, 0, "delay ms:%d idx:%d", cmd_delay_ms, p_ttc->transmit_index);
 			access_cmd_onoff(ele_adr_primary, 0, p_ttc->onoff, 0, 0);
 		}
 		else if(CMD_CTL_TTC_CMD_STATUS == p_bear->lt_ctl_unseg.opcode){

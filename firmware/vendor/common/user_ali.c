@@ -22,6 +22,8 @@
  *          limitations under the License.
  *
  *******************************************************************************************************/
+#include "tl_common.h"
+#include "stack/ble/ble.h"
 #include "user_ali.h"
 #include "app_health.h"
 #include "proj_lib/sig_mesh/app_mesh.h"
@@ -31,7 +33,9 @@
 #include "proj_lib/mesh_crypto/aes_cbc.h"
 #include "vendor/common/mesh_node.h"
 #include "vendor/common/mesh_ota.h"
-
+#if DU_ENABLE
+#include "user_du.h"
+#endif
 
 const char num2char[17] = "0123456789abcdef";
 
@@ -118,9 +122,11 @@ u8 con_sec_data[16];
 #endif
 #endif
 
+_attribute_data_retention_ int ota_adr_index = -1;
+
 #if(DUAL_VENDOR_EN)
 // default use mi_api's parameters, if device provisioned by spirit, reinit the parameters.
-void mesh_ais_global_var_set()
+void mesh_ais_global_var_set(void)
 {
     vendor_id_check_and_update();
 	#if 0 // can't change mac to ensure reconnect
@@ -138,9 +144,9 @@ void mesh_ais_global_var_set()
 }
 #endif
 
-void read_three_para_sha256_from_flash()
+void read_three_para_sha256_from_flash(void)
 {
-#if !WIN32
+#ifndef WIN32
 	u8 idx =0;
 	u32 product_id_flash;
 	flash_read_page(FLASH_ADR_THREE_PARA_ADR,sizeof(product_id_flash),(u8 *)(&product_id_flash));
@@ -171,7 +177,7 @@ void set_sha256_init_para_mode(u8 mode)
 	return ;
 }
 
-void set_dev_uuid_for_sha256()
+void set_dev_uuid_for_sha256(void)
 {
 	sha256_dev_uuid_str dev_uuid;
 	sha256_dev_uuid_str *p_uuid = &dev_uuid;
@@ -186,7 +192,11 @@ void set_dev_uuid_for_sha256()
 	#if(MESH_USER_DEFINE_MODE == MESH_MI_SPIRIT_ENABLE)
 	memcpy(p_uuid->mac, con_mac_address, sizeof(tbl_mac));
 	#endif
+    #if DU_ULTRA_PROV_EN
+    p_uuid->uuid_ver = DU_SDK_VIRSION;
+    #else
 	p_uuid->uuid_ver = 1;
+    #endif
 	p_uuid->adv_flag = 0;
 	memcpy(prov_para.device_uuid,(u8 *)(p_uuid),sizeof(sha256_dev_uuid_str));
 }
@@ -293,9 +303,9 @@ void calculate_sha256_to_create_pro_oob(u8 *pro_auth,u8 *random)
 	#endif
 }
 
-void calculate_sha256_to_create_static_oob()
+void calculate_sha256_to_create_static_oob(void)
 {
-	#if !WIN32		// confirm later
+	#ifndef WIN32		// confirm later
 	u8 sha256_out[32];
 	calculate_sha256_node_oob(sha256_out,dev_random);
 	mesh_set_dev_auth(sha256_out, 16);
@@ -303,7 +313,7 @@ void calculate_sha256_to_create_static_oob()
 }
 
 ais_gatt_auth_t ais_gatt_auth;
-void ais_gatt_auth_init()
+void ais_gatt_auth_init(void)
 {
 	ais_gatt_auth.auth_ok = 0;
 }
@@ -380,7 +390,7 @@ const ais_fw_info_t  ais_fw_info = {
     .fw_version = (MAIN_VERSION<<16) | (SUB_VERSION<<8) | MODIFY_VERSION, 
 };
 
-int ais_ota_version_get()
+int ais_ota_version_get(u16 conn_handle)
 {
 	ais_msg_t ais_version;
 	memset(&ais_version, 0x00, sizeof(ais_version));
@@ -392,10 +402,10 @@ int ais_ota_version_get()
 		AES128_pkcs7_padding(ais_version.data, sizeof(ais_fw_info), ais_version.data);
 		aes_cbc_encrypt(ais_version.data, sizeof(ais_fw_info), &ais_aes_ctx, ais_gatt_auth.ble_key, iv);
 	}
-	return bls_att_pushNotifyData(AIS_NOTIFY_HANDLE, (u8 *)&ais_version, OFFSETOF(ais_msg_t,data)+(ais_gatt_auth.auth_ok?AES_BLOCKLEN:sizeof(ais_fw_info)));
+	return blc_gatt_pushHandleValueIndicate(conn_handle, AIS_NOTIFY_HANDLE, (u8 *)&ais_version, OFFSETOF(ais_msg_t,data)+(ais_gatt_auth.auth_ok?AES_BLOCKLEN:sizeof(ais_fw_info)));
 }
 
-int ais_ota_req(u8 *p)
+int ais_ota_req(u16 conn_handle, u8 *p)
 {
 	ais_msg_t ais_msg_rsp;
 	//ais_ota_req_t *ota_req_p = (ais_ota_req_t *)p;
@@ -411,12 +421,10 @@ int ais_ota_req(u8 *p)
 		ais_msg_rsp.ais_ota_rsp.allow_ota = ais_gatt_auth.auth_ok;
 
 		ota_adr_index = -1;
-		#if __TLSR_RISCV_EN__
-		blotaSvr.ota_busy = ais_gatt_auth.auth_ok;   //set flag
-		#else
-		blcOta.ota_start_flag = ais_gatt_auth.auth_ok;   //set flag
-		#endif
-		blt_ota_start_tick = clock_time()|1;  //mark time
+        if(ais_gatt_auth.auth_ok){
+            blc_ota_set_busy(); //set ota busy flag
+        }
+        blc_ota_set_start_tick(); //mark time
 		if(otaStartCb && ais_gatt_auth.auth_ok){
 			otaStartCb();
 		}
@@ -434,10 +442,10 @@ int ais_ota_req(u8 *p)
 		aes_cbc_encrypt(ais_msg_rsp.data, sizeof(ais_ota_rsp_t), &ais_aes_ctx, ais_gatt_auth.ble_key, iv);
 	}
 	
-	return bls_att_pushNotifyData(AIS_NOTIFY_HANDLE, (u8 *)&ais_msg_rsp, OFFSETOF(ais_msg_t,data)+(ais_gatt_auth.auth_ok?AES_BLOCKLEN:sizeof(ais_ota_rsp_t)));
+	return blc_gatt_pushHandleValueIndicate(conn_handle, AIS_NOTIFY_HANDLE, (u8 *)&ais_msg_rsp, OFFSETOF(ais_msg_t,data)+(ais_gatt_auth.auth_ok?AES_BLOCKLEN:sizeof(ais_ota_rsp_t)));
 }
 
-int ais_ota_result(u8 result)
+int ais_ota_result(u16 conn_handle, u8 result)
 {
 	ais_msg_t ais_msg_result;
 	memset(&ais_msg_result, 0x00, sizeof(ais_msg_result));		
@@ -451,10 +459,10 @@ int ais_ota_result(u8 result)
 		AES128_pkcs7_padding(ais_msg_result.data, 1, ais_msg_result.data);
 		aes_cbc_encrypt(ais_msg_result.data, 1, &ais_aes_ctx, ais_gatt_auth.ble_key, iv);
 	}
-	return bls_att_pushNotifyData(AIS_NOTIFY_HANDLE, (u8 *)&ais_msg_result, OFFSETOF(ais_msg_t,data)+(ais_gatt_auth.auth_ok?AES_BLOCKLEN:1));
+	return blc_gatt_pushHandleValueIndicate(conn_handle, AIS_NOTIFY_HANDLE, (u8 *)&ais_msg_result, OFFSETOF(ais_msg_t,data)+(ais_gatt_auth.auth_ok?AES_BLOCKLEN:1));
 }
 
-int ais_ota_rc_report(u8 frame_desc, u32 trans_size)
+int ais_ota_rc_report(u16 conn_handle, u8 frame_desc, u32 trans_size)
 {
 	ais_msg_t ais_msg_result;
 	memset(&ais_msg_result, 0x00, sizeof(ais_msg_result));		
@@ -468,17 +476,19 @@ int ais_ota_rc_report(u8 frame_desc, u32 trans_size)
 		AES128_pkcs7_padding(ais_msg_result.data, sizeof(ais_ota_receive_t), ais_msg_result.data);
 		aes_cbc_encrypt(ais_msg_result.data, sizeof(ais_ota_receive_t), &ais_aes_ctx, ais_gatt_auth.ble_key, iv);
 	}
-	return bls_att_pushNotifyData(AIS_NOTIFY_HANDLE, (u8 *)&ais_msg_result, OFFSETOF(ais_msg_t,data)+(ais_gatt_auth.auth_ok?AES_BLOCKLEN:sizeof(ais_ota_receive_t)));
+	return blc_gatt_pushHandleValueIndicate(conn_handle, AIS_NOTIFY_HANDLE, (u8 *)&ais_msg_result, OFFSETOF(ais_msg_t,data)+(ais_gatt_auth.auth_ok?AES_BLOCKLEN:sizeof(ais_ota_receive_t)));
 }
 
 
 const u8 company[4] = {'K', 'N', 'L', 'T'};
 #if BLE_MULTIPLE_CONNECTION_ENABLE
 int ais_otaWrite(u16 conn_handle, void * p)
+{
 #else
 int ais_otaWrite(void * p)
-#endif
 {
+    u16 conn_handle = BLS_CONN_HANDLE;
+#endif
 	rf_packet_att_data_t *req = (rf_packet_att_data_t*)p;
 	static u8 err_flg = OTA_SUCCESS;
 	static u32 fw_rcv_total_size = 0;
@@ -489,22 +499,16 @@ int ais_otaWrite(void * p)
 	}
 	
 	if(msg_p->msg_type == AIS_FW_VERSION_GET){
-		ais_ota_version_get();
+		ais_ota_version_get(conn_handle);
 	}
 	else if(msg_p->msg_type == AIS_OTA_REQ){
-		ais_ota_req(msg_p->data);
+		ais_ota_req(conn_handle, msg_p->data);
 	}
 
-#if __TLSR_RISCV_EN__
-	if(!blotaSvr.ota_busy){
+	if(!blt_ota_isOtaBusy()){
 		return 0;
 	}
-#else
-	if(!blcOta.ota_start_flag){
-		return 0;
-	}
-#endif
-	
+
 	if(msg_p->msg_type == AIS_OTA_END){
 		if(FW_CHECK_AGTHM1 == get_ota_check_type()){
 			if(is_valid_ota_check_type1()){
@@ -514,17 +518,15 @@ int ais_otaWrite(void * p)
 				err_flg = OTA_DATA_CRC_ERR;
 			}
 		}
-		 	
-		blt_ota_finished_flag_set(err_flg);
 
-		ais_ota_result(err_flg);
+        blt_ota_setResult(OTA_STEP_FEEDBACK, err_flg);
+
+		ais_ota_result(conn_handle, err_flg);
 	}
 	else if(msg_p->msg_type == AIS_OTA_DATA){
 		u16 cur_index =  ota_adr_index+1;
 		if((msg_p->frame_seq == (cur_index%(msg_p->frame_total+1)))){
-			#if !__TLSR_RISCV_EN__
-			blt_ota_start_tick = clock_time()|1;  //mark time			
-			#endif
+            blc_ota_refresh_packet_tick();
 			u16 data_len = msg_p->length;
 			
 			if(cur_index == 0){
@@ -533,21 +535,18 @@ int ais_otaWrite(void * p)
 				}
 			}
 			//log_data(TR_24_ota_adr,ota_adr);
-			if((cur_index*data_len)>=(ota_firmware_size_k<<10)){
+			if((cur_index*data_len) >= ota_firmware_max_size){
 				err_flg = OTA_FW_SIZE_ERR;
 			}else{
-				#if __TLSR_RISCV_EN__
 				ota_save_data (fw_rcv_total_size, data_len, req->dat + 4);
-				#else
-				ota_save_data (fw_rcv_total_size, req->dat + 4, data_len);
-				#endif
+
 				flash_read_page(ota_program_offset + fw_rcv_total_size, data_len, mesh_cmd_ut_rx_seg);
 
 				if(!memcmp(mesh_cmd_ut_rx_seg,req->dat + 4, data_len)){  //OK
 					ota_adr_index++;
 					fw_rcv_total_size += data_len;				
 					if((!ais_gatt_auth.auth_ok) || (msg_p->frame_total == msg_p->frame_seq)){
-						ais_ota_rc_report(msg_p->frame_desc, fw_rcv_total_size);
+						ais_ota_rc_report(conn_handle, msg_p->frame_desc, fw_rcv_total_size);
 					}
 				}
 				else{ //flash write err
@@ -557,23 +556,23 @@ int ais_otaWrite(void * p)
 				
 		}
 		else if(msg_p->frame_seq == (cur_index%(msg_p->frame_total+1))){  //maybe repeated OTA data, we neglect it, do not consider it ERR
-			ais_ota_rc_report((msg_p->frame_desc & 0xf0)|(ota_adr_index % (msg_p->frame_total+1)), fw_rcv_total_size);
+			ais_ota_rc_report(conn_handle, (msg_p->frame_desc & 0xf0)|(ota_adr_index % (msg_p->frame_total+1)), fw_rcv_total_size);
 		}
 		else{  //adr index err, missing at least one OTA data
-			ais_ota_rc_report((msg_p->frame_desc & 0xf0)|(ota_adr_index % (msg_p->frame_total+1)), fw_rcv_total_size);
+			ais_ota_rc_report(conn_handle, (msg_p->frame_desc & 0xf0)|(ota_adr_index % (msg_p->frame_total+1)), fw_rcv_total_size);
 		}
 	}
 
 	if(err_flg){
-		blt_ota_finished_flag_set(err_flg);
+        blt_ota_setResult(OTA_STEP_FEEDBACK, err_flg);
 	}
 
 	return 0;
 }
 #else
 void set_sha256_init_para_mode(u8 mode){}
-void set_dev_uuid_for_sha256(){}
-void calculate_sha256_to_create_static_oob(){}
+void set_dev_uuid_for_sha256(void){}
+void calculate_sha256_to_create_static_oob(void){}
 
 #endif
 void create_sha256_input_string(char *p_input,u8 *pid,u8 *p_mac,u8 *p_secret)
@@ -639,7 +638,7 @@ void ali_new_create_sha256_input_string(char *p_input,u8 *pid,u8 *p_mac,u8 *p_se
 	}
 }
 
-void calculate_auth_value()
+void calculate_auth_value(void)
 {
 	static u8 ali_input_string[87];
 	static u8 ali_output_sha[32];

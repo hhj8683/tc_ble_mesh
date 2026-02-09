@@ -105,6 +105,18 @@ extern "C" {
 #define TRANSITION_TIME_DEFAULT_VAL (0)  // 0x41: 1 second // 0x00: means no default transition time
 #endif
 
+#if EXTENDED_ADV_ENABLE
+#define MESH_DLE_MODE               MESH_DLE_MODE_EXTEND_BEAR
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION) // must MAX_OCTETS_DATA_LEN_EXTENSION
+#define DLE_LEN_MAX_TX              (40)
+#else
+#define MESH_DLE_MODE               0 //MESH_DLE_MODE_EXTEND_BEAR // MESH_DLE_MODE_GATT
+    #if MESH_DLE_MODE
+#define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION)
+#define DLE_LEN_MAX_TX              (40)
+    #endif
+#endif
+
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			1
 #if BLE_REMOTE_PM_ENABLE
@@ -251,20 +263,20 @@ extern "C" {
 
 //---------------  LED / PWM
 #if(PCBA_8258_SEL == PCBA_8258_DONGLE_48PIN)
-#define PWM_R       GPIO_PWM1A3		//red
-#define PWM_G       GPIO_PWM0A2		//green
-#define PWM_B       GPIO_PWM3B0		//blue
-#define PWM_W       GPIO_PWM4B1		//white
+#define PWM_R       GPIO_PA3		//red
+#define PWM_G       GPIO_PA2		//green
+#define PWM_B       GPIO_PB0		//blue
+#define PWM_W       GPIO_PB1		//white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_0)   // PCBA_8258_DEVELOPMENT_BOARD
-#define PWM_R       GPIO_PWM1ND3	//red
-#define PWM_G       GPIO_PWM2ND4	//green
+#define PWM_R       GPIO_PD3	    //red
+#define PWM_G       GPIO_PD4	    //green
 #define PWM_B       GPIO_PD5		//blue
-#define PWM_W       GPIO_PWM3D2		//white
+#define PWM_W       GPIO_PD2		//white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_2)
-#define PWM_R       GPIO_PD5	//red
-#define PWM_G       GPIO_PWM1ND3	//green
-#define PWM_B       GPIO_PWM3D2		//blue
-#define PWM_W       GPIO_PWM2ND4		//white
+#define PWM_R       GPIO_PD5	    //red
+#define PWM_G       GPIO_PD3	    //green
+#define PWM_B       GPIO_PD2		//blue
+#define PWM_W       GPIO_PD4		//white
 #endif
 
 #define PWM_FUNC_R  AS_PWM  // AS_PWM_SECOND

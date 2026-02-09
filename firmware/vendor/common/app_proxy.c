@@ -117,7 +117,7 @@ void mesh_proxy_sar_err_terminate(u8 idx)
 		//reset para part 
 		mesh_proxy_sar_para_init(idx);
 		// send terminate ind cmd to the master part 
-		#if WIN32 
+		#ifdef WIN32 
 		// the upper tester should reliaze the function 
 		//mesh_proxy_master_terminate_cmd(); 
 		#else
@@ -130,13 +130,13 @@ void mesh_proxy_sar_err_terminate(u8 idx)
 	}	
 }
 
-void mesh_proxy_sar_timeout_terminate()
+void mesh_proxy_sar_timeout_terminate(void)
 {
 	foreach(idx, ACL_PERIPHR_MAX_NUM){
 		if(proxy_sar[idx].sar_tick&&clock_time_exceed(proxy_sar[idx].sar_tick,PROXY_PDU_TIMEOUT_TICK)){
 			mesh_proxy_sar_para_init(idx);
 			LOG_MSG_ERR(TL_LOG_PROXY,0, 0 ,"TL_LOG_PROXY:sar timeout terminate");
-			#if WIN32 
+			#ifdef WIN32 
 			mesh_proxy_master_terminate_cmd();
 			#else
 				#if BLE_MULTIPLE_CONNECTION_ENABLE
@@ -246,7 +246,7 @@ u8 proxy_In_ccc[2]=	{0x01,0x00};
 u8  provision_In_ccc[2]={0x01,0x00};// set it can work enable 
 u8  provision_Out_ccc[2]={0x00,0x00}; 
 
-void reset_all_ccc()
+void reset_all_ccc(void)
 {
 	// wait for the whole dispatch 	
 	#if BLE_MULTIPLE_CONNECTION_ENABLE
@@ -326,26 +326,32 @@ int proxy_out_ccc_cb(u16 connHandle, void *p)
 int proxy_out_ccc_cb(void *p)
 #endif
 {
+    #if !BLE_MULTIPLE_CONNECTION_ENABLE
+    u16 connHandle = BLS_CONN_HANDLE;
+    #endif
+
 	rf_packet_att_data_t *pw = (rf_packet_att_data_t *)p;
 	proxy_Out_ccc[0] = pw->dat[0];
 	proxy_Out_ccc[1] = pw->dat[1];
-	beacon_send.conn_beacon_flag =1;
+	beacon_send.conn_handle = connHandle;
 	beacon_send.tick = clock_time();
 
+#if 0 // move to mesh_beacon_send_proc() in loop to avoid service discovery busy in extended adv mode
 	if (proxy_Out_ccc[0]==1 && proxy_Out_ccc[1]==0){
 		if(is_provision_success()){
 			mesh_tx_sec_private_beacon_proc(1);// send conn beacon to the provisioner		 
-			beacon_send.conn_beacon_flag =0;						
+			beacon_send.conn_handle =0;						
 		}
 					
-		#if (MD_DF_CFG_SERVER_EN && !WIN32)
+		#if (MD_DF_CFG_SERVER_EN && !defined(WIN32))
 			#if !BLE_MULTIPLE_CONNECTION_ENABLE
 		u16 connHandle = BLS_CONN_HANDLE;
 			#endif
 		mesh_directed_proxy_capa_report_upon_connection(connHandle); // report after security network beacon.
 		#endif
 	}
-	
+#endif
+
 	return 1;	
 }
 
@@ -460,7 +466,7 @@ void set_proxy_initial_mode(u8 special_mode)
 }
 	
 
-void proxy_cfg_list_init_upon_connection(u16 conn_handle)
+void proxy_filter_list_init(u16 conn_handle)
 {
 	int idx = 0;
 	#if BLE_MULTIPLE_CONNECTION_ENABLE
@@ -469,7 +475,8 @@ void proxy_cfg_list_init_upon_connection(u16 conn_handle)
 		return;
 	}
 	#endif
-	
+
+    app_adr[idx] = 0;
 	memset(&proxy_mag[idx], 0x00, sizeof(proxy_mag[idx]));
 	proxy_mag[idx].filter_type = proxy_filter_initial_mode;
 	#if DU_ENABLE
@@ -528,14 +535,21 @@ int is_valid_addr_in_proxy_list(int idx, u16 addr)
  */
 int is_valid_adv_with_proxy_filter(u16 dst_addr)
 {
-	int valid = 1;
+	int valid = 0;
+    
 	if(dst_addr == PROXY_CONFIG_FILTER_DST_ADR){
+        valid = 1;
 	}else{
 		foreach(idx, ACL_PERIPHR_MAX_NUM){
-			valid = is_valid_addr_in_proxy_list(idx, dst_addr);
-			if(valid){
-				break;
-			}
+            #if BLE_MULTIPLE_CONNECTION_ENABLE
+            if(conn_dev_list[ACL_CENTRAL_MAX_NUM + idx].conn_state)
+            #endif
+            {
+    			valid = is_valid_addr_in_proxy_list(idx, dst_addr);
+    			if(valid){
+    				break;
+    			}
+            }
 		}
 		
 		if(!valid){
@@ -550,23 +564,28 @@ int is_valid_adv_with_proxy_filter(u16 dst_addr)
 int is_proxy_client_addr(u16 addr)
 {
 	foreach(idx, ACL_PERIPHR_MAX_NUM){
-		if((DIRECTED_PROXY_CLIENT == proxy_mag[idx].proxy_client_type) || (PROXY_CLIENT == proxy_mag[idx].proxy_client_type)){
-			if(DIRECTED_PROXY_CLIENT == proxy_mag[idx].proxy_client_type){
-				foreach(netkey_offset, NET_KEY_MAX){			
-					if(addr == proxy_mag[idx].directed_server[netkey_offset].client_addr){
-						return 1;
-					}
-				}
-			}
-				
-			if(FILTER_WHITE_LIST == proxy_mag[idx].filter_type){
-				foreach(i, MAX_LIST_LEN){
-					if(addr == proxy_mag[idx].addr_list[i]){
-						return 1;
-					}
-				}
-			}
-		}	
+        #if BLE_MULTIPLE_CONNECTION_ENABLE
+        if(conn_dev_list[ACL_CENTRAL_MAX_NUM + idx].conn_state)
+        #endif
+        {
+    		if((DIRECTED_PROXY_CLIENT == proxy_mag[idx].proxy_client_type) || (PROXY_CLIENT == proxy_mag[idx].proxy_client_type)){
+    			if(DIRECTED_PROXY_CLIENT == proxy_mag[idx].proxy_client_type){
+    				foreach(netkey_offset, NET_KEY_MAX){			
+    					if(addr == proxy_mag[idx].directed_server[netkey_offset].client_addr){
+    						return 1;
+    					}
+    				}
+    			}
+    				
+    			if(FILTER_WHITE_LIST == proxy_mag[idx].filter_type){
+    				foreach(i, MAX_LIST_LEN){
+    					if(addr == proxy_mag[idx].addr_list[i]){
+    						return 1;
+    					}
+    				}
+    			}
+    		}	
+        }
 	}
 
 	return 0;
@@ -582,14 +601,19 @@ int is_proxy_client_addr(u16 addr)
 int get_directed_proxy_client_idx(u16 addr, u8 *netkey_offset)
 {
 	foreach(acl_idx, ACL_PERIPHR_MAX_NUM){
-		if(DIRECTED_PROXY_CLIENT == proxy_mag[acl_idx].proxy_client_type){
-			for(u8 key_idx = 0; key_idx < NET_KEY_MAX; key_idx++){			
-				if(addr == proxy_mag[acl_idx].directed_server[key_idx].client_addr){
-					*netkey_offset = key_idx;
-					return acl_idx;
-				}
-			}
-		}
+        #if BLE_MULTIPLE_CONNECTION_ENABLE
+        if(conn_dev_list[ACL_CENTRAL_MAX_NUM + acl_idx].conn_state)
+        #endif
+        {
+    		if(DIRECTED_PROXY_CLIENT == proxy_mag[acl_idx].proxy_client_type){
+    			for(u8 key_idx = 0; key_idx < NET_KEY_MAX; key_idx++){			
+    				if(addr == proxy_mag[acl_idx].directed_server[key_idx].client_addr){
+    					*netkey_offset = key_idx;
+    					return acl_idx;
+    				}
+    			}
+    		}
+        }
 	}
 
 	return -1;
@@ -677,17 +701,22 @@ void set_pair_login_ok(u8 val)
 u8 proxy_proc_filter_mesh_cmd(int idx, u16 src)
 {
 	if(idx < ACL_PERIPHR_MAX_NUM){
-	    if(proxy_mag[idx].filter_type == FILTER_WHITE_LIST){
-	        add_data_to_list(idx, src);
-	    }else if (proxy_mag[idx].filter_type == FILTER_BLACK_LIST){
-	        delete_data_from_list(idx, src);
-	    }else{
+        #if BLE_MULTIPLE_CONNECTION_ENABLE
+        if(conn_dev_list[ACL_CENTRAL_MAX_NUM + idx].conn_state)
+        #endif
+        {
+    	    if(proxy_mag[idx].filter_type == FILTER_WHITE_LIST){
+    	        add_data_to_list(idx, src);
+    	    }else if (proxy_mag[idx].filter_type == FILTER_BLACK_LIST){
+    	        delete_data_from_list(idx, src);
+    	    }else{
 
-	    }
+    	    }
 
-		if(is_unicast_adr(src)){
-			app_adr[idx] = src;
-		}
+    		if(is_unicast_adr(src)){
+    			app_adr[idx] = src;
+    		}
+        }
 	}
 
     return 0;
@@ -734,7 +763,7 @@ u8 proxy_config_dispatch(mesh_cmd_bear_t *p_bear, u8 len)
 		case PROXY_FILTER_SET_TYPE:
 			// switch the list part ,and if switch ,it should clear the certain list 
 			LOG_MSG_LIB(TL_LOG_NODE_SDK,0, 0,"set filter type %d ",p_str->para[0]);
-			#if (MD_DF_CFG_SERVER_EN && !FEATURE_LOWPOWER_EN && !WIN32)
+			#if (MD_DF_CFG_SERVER_EN && !FEATURE_LOWPOWER_EN && !defined(WIN32))
 			if(FILTER_BLACK_LIST ==  p_str->para[0]){
 				directed_proxy_dependent_node_delete(idx);
 				proxy_mag[idx].proxy_client_type = BLACK_LIST_CLIENT;
@@ -760,7 +789,7 @@ u8 proxy_config_dispatch(mesh_cmd_bear_t *p_bear, u8 len)
 				// suppose the data is little endianness 
 				proxy_unicast = p_addr[2*i]+(p_addr[2*i+1]<<8);
 				add_data_to_list(idx, proxy_unicast);
-				#if (MD_DF_CFG_SERVER_EN && !FEATURE_LOWPOWER_EN && !WIN32)
+				#if (MD_DF_CFG_SERVER_EN && !FEATURE_LOWPOWER_EN && !defined(WIN32))
 				if(FILTER_WHITE_LIST == proxy_mag[idx].filter_type){
 					directed_forwarding_solication_start(mesh_key.netkey_sel_dec, (mesh_ctl_path_request_solication_t *)&proxy_unicast, 1);
 				}
@@ -780,7 +809,7 @@ u8 proxy_config_dispatch(mesh_cmd_bear_t *p_bear, u8 len)
 			}
 			send_filter_sts(idx, p_nw);
 			break;
-		#if (MD_DF_CFG_SERVER_EN && !WIN32)
+		#if (MD_DF_CFG_SERVER_EN && !defined(WIN32))
 		case DIRECTED_PROXY_CONTROL:{
 				directed_proxy_ctl_t *p_directed_ctl = (directed_proxy_ctl_t *)p_str->para;
 				endianness_swap_u16((u8 *)&p_directed_ctl->addr_range);
@@ -828,8 +857,7 @@ u8 proxy_config_dispatch(mesh_cmd_bear_t *p_bear, u8 len)
 }
 
 void tn_aes_128(u8 *key, u8 *plaintext, u8 *result);
-extern u8 aes_ecb_encryption(u8 *key, u8 mStrLen, u8 *mStr, u8 *result); // is the same as tn_aes_128, but no len. so use tn_aes_128 instead to decrease code size.
-#if WIN32
+#ifdef WIN32
 void aes_win32(char *p, int plen, char *key);
 #endif
 int proxy_adv_calc_with_node_identity(u8 random[8],u8 node_key[16],u16 ele_adr,u8 hash[8])
@@ -840,7 +868,7 @@ int proxy_adv_calc_with_node_identity(u8 random[8],u8 node_key[16],u16 ele_adr,u
 	memset(adv_para,0,6);
 	memcpy(adv_para+6,random,8);
 	memcpy(adv_para+14,(u8 *)&ele_adr,2);
-	#if WIN32
+	#ifdef WIN32
 	aes_win32((char *)adv_para,sizeof(adv_para),(char *)node_key);
 	memcpy(hash,adv_para+8,8);
 	#else
@@ -857,7 +885,7 @@ int proxy_adv_calc_with_private_net_id(u8 random[8],u8 net_id[8],u8 idk[16],u8 h
 	u8 adv_para[16];
 	memcpy(adv_para,net_id,8);
 	memcpy(adv_para+8,random,8);
-	#if WIN32
+	#ifdef WIN32
 	aes_win32((char *)adv_para,sizeof(adv_para),(char *)idk);
 	memcpy(hash,adv_para+8,8);
 	#else
@@ -876,7 +904,7 @@ int proxy_adv_calc_with_private_node_identity(u8 random[8],u8 node_key[16],u16 e
 	adv_para[5] = PRIVATE_NODE_IDENTITY_TYPE;
 	memcpy(adv_para+6,random,8);
 	memcpy(adv_para+14,(u8 *)&ele_adr,2);
-	#if WIN32
+	#ifdef WIN32
 	aes_win32((char *)adv_para,sizeof(adv_para),(char *)node_key);
 	memcpy(hash,adv_para+8,8);
 	#else
@@ -921,7 +949,7 @@ void set_proxy_adv_header(proxy_adv_node_identity * p_proxy)
 	GATT Proxy state must be set to Disabled.
 		GATT Proxy state		Private GATT Proxy state
 		not_supported			not_supported
-		 Enabled				diabled
+		 Enabled				disabled
 		 disabled				enabled
 		 disabled		        disabled
 		 enabled                enabled(not support)
@@ -935,7 +963,7 @@ void set_proxy_adv_header(proxy_adv_node_identity * p_proxy)
 	the Private Node Identity state to Enabled, the Node Identity state must be set to Disabled for all subnets
 		Node Identity 		    private Node Identity
 		not_supported			not_supported
-		 Enabled				diabled
+		 Enabled				disabled
 		 disabled				enabled
 		 disabled		        disabled
 		 enabled                enabled(not support)
@@ -995,7 +1023,7 @@ u8 mesh_get_identity_type(mesh_net_key_t *p_netkey)
 
 #endif
 
-u8 mesh_get_proxy_privacy_para()// only can proc in the connection state
+u8 mesh_get_proxy_privacy_para(void)// only can proc in the connection state
 {
 	#if MD_PRIVACY_BEA
 	foreach(i,NET_KEY_MAX){

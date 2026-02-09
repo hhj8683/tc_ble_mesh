@@ -1,3 +1,238 @@
+# V4.1.1.0 (PR)
+
+### Version
+* SDK version: tc_ble_mesh_V4.1.1.0
+* Chip Version
+  - B85: TLSR825X
+  - B87: TLSR827X
+  - TC321X (A0/A1)
+* Hardware Version
+  - B85: C1T139A30_V1_2, C1T139A5_V1_4, C1T139A3_V2_0
+  - B87: C1T197A30_V1_1, C1T197A5_V1_1, C1T201A3_V1_0
+  - TC321X: C1T357A20_V1_2, C1T357A20_V2_0
+* BLE sdk Version
+  - tc_ble_single_sdk V3.4.2.8_Patch_0001
+* Toolchain Version
+  - TC32 ELF GCC4.3 ( IDE: [Telink IoT Studio](https://www.telink-semi.com/development-tools) )
+
+### Features
+* **Firmware**
+  - Support TC321X chip A0/A1.
+  - Sync the BLE SDK to version tc_ble_single_sdk V3.4.2.8_Patch_0001.
+  - Add attention timer feature(PROVISION_ATTENTION_TIMER event).The selected node flashes its LED as a visual indicator.This requires the app to use normal (confirm) mode.
+  - Add SAVE_SNO_CACHE_EN option to save replay protection list in flash, disable by default, set to 1 to enable.
+  - Add the 825x_kma_master_dongle firmware to be used with the sig_mesh_tool.exe PC tool.
+* **Android/iOS**
+  - support provision confirm mode.
+* **Harmony**
+  - support for device provisioning and key binding.
+  - support for on off/lightness/ ct / HSL control.
+  - support for device grouping configuration and grouping control.
+  - support for setting device publication.
+  - support for device gatt OTA.
+  - support for modifying device config information.
+  - support for setting device scheduler.
+  - support for scene configuration.
+  - support for local network management.
+
+### Bug Fixes
+* **Firmware**
+	* **PLL**
+	  * for B87
+		- The criteria for determining the stability of the PLL have become more stringent.
+		- Detailed Description: Previously, the criteria for determining the stability of the PLL was considered passed if detected once.
+		- After Fix: The criteria for determining the stability of the PLL is only considered passed if it is detected three times consecutively (to improve reliability).
+		- Update Recommendation: Recommended update.
+	* **PM**
+		* For B85, fix cpu_long_sleep_wakeup() failure with external 32k crystal.
+			- Detailed Description: cpu_long_sleep_wakeup() function abnormal when using an external 32k crystal configured via the blc_pm_select_external_32k_crystal() function.
+			- After Fix: If an external 32k crystal is used, the macro cpu_long_sleep_wakeup must be redefined as cpu_long_sleep_wakeup_32k_xtal in pm.h to ensure the function operates correctly.
+			- Update Recommendation: Mandatory update if external 32k crystal and cpu_long_sleep_wakeup() are used.		
+		* For (B85/B87), Resolve the low-probability inaccuracy in sleep duration caused by the delayed disabling of global interrupt during the sleep entry process.
+			- Detailed Description：If an interrupt happened to trigger and the interrupt handling took a long time when entering sleep mode. It may cause an incorrect sleep duration.
+			- After fix：Interrupts are now disabled immediately when entering sleep mode.
+			- Update Recommendation: If power management was used, must update.
+	* **Application**
+		* spirit_lpn
+		  - For B85/B87，fixed the issue where spirit_lpn failed to enter scan mode after waking up from suspend.
+			- Detailed Description：The default sleep interval for Spirit LPN is 360ms, and scan is enabled in user_init_deepRetn(). If the sleep time is less than 50 ms, device will enter suspend mode.
+									Scan was not re-enabled after suspend up, which may cause packet reception loss.
+			- After fix: Scan is enabled according to the scanning cycle after waking up from suspend.
+			- Update Recommendation: If use spirit_lpn, must update.
+		* private online status
+		  - Fixed the issue where the online status callback function light_node_status_change_cb() did not report offline status.
+			- Detailed Description：When ONLINE_STATUS_EN was enabled and register_mesh_node_status_callback(light_node_status_change_cb) was called to register the callback, the light_node_status_change_cb() function did not report offline status.
+			- After fix：The light_node_status_change_cb() function now correctly reports offline status.
+			- Update Recommendation: If ONLINE_STATUS_EN was enabled and register_mesh_node_status_callback(light_node_status_change_cb) was called, must update.
+		* mesh_switch
+		  - Fixed incorrect sleep duration for mesh_switch in switch_check_and_enter_sleep().
+			  - Detailed Description: When the switch IV update timer exceeded 32 hours (SWITCH_LONG_SLEEP_TIME_S) but was less than 96 hours (SWITCH_IV_SEARCHING_INTERVAL_S), the sleep interval was only 1 second.
+			  - After Fix: When the switch IV update timer exceeds 32 hours (SWITCH_LONG_SLEEP_TIME_S) but is less than 96 hours (SWITCH_IV_SEARCHING_INTERVAL_S), the sleep interval is now 32 hours.
+			  - Update Recommendation: If the application uses switch_check_and_enter_sleep() for sleep, must update.
+
+### Refactoring
+* N/A
+
+### Optimization
+* **Firmware**
+	- add CONFIG_ALWAYS_GET_ROUTE_FROM_FLASH option in directed forwarding to save non-fixed entries in flash, reducing RAM usage. Enable by default。
+* **iOS**
+	- Optimize the timeout calculation method for LPN device instructions.
+	- Optimize the judgment of the retrievedUpdatePhase parameter completed by MeshOTA.
+	- Optimize the timeout calculation method for KeyBind on non-directly connected nodes.
+	- Optimize the method for converting HSL to RGB.
+
+### BREAKING CHANGES
+* N/A
+
+### Notes
+* to avoid compilation errors or loss of functionality, please update all files when upgrading the SDK.
+
+### CodeSize
+* **B85**
+
+| reference design   | Firmware size (kBytes)    | total SRAM size (kBytes)     | deepsleep retention SRAM size (kBytes) | code stack size (kBytes)  | 
+| :-------------     | :-----------------------: | :--------------------------: | :-----------------------------------:  | :-----------------------: |
+| 8258_mesh          | 129.5                     | 27.3                         | N/A                                    | 3.0						  |
+| 8258_mesh_gw       | 129.0                     | 30.5                         | N/A                                    | 3.0						  |
+| 8258_mesh_lpn      | 123.8                     | 21.8                         | 20.7                                   | 3.0						  |
+| 8258_mesh_switch   | 115.9                     | 24.6                         | 23.5                                   | 3.0						  |
+
+* **B87**
+
+| reference design   | Firmware size (kBytes)    | total SRAM size (kBytes)     | deepsleep retention SRAM size (kBytes) | code stack size (kBytes)  |
+| :-------------     | :-----------------------: | :--------------------------: | :-----------------------------------:  | :-----------------------: |
+| 8278_mesh          | 128.9                     | 29.0                         | N/A                                    | 3.0						  |
+| 8278_mesh_gw       | 128.4                     | 31.1                         | N/A                                    | 3.0						  |
+| 8278_mesh_lpn      | 123.1                     | 23.6                         | 22.5                                   | 3.0						  |
+| 8278_mesh_switch   | 115.0                     | 26.1                         | 25.0                                   | 3.0						  |
+
+* **TC321X**
+
+| reference design   | Firmware size (kBytes)    | total SRAM size (kBytes)     | deepsleep retention SRAM size (kBytes) | code stack size (kBytes)  |
+| :-------------     | :-----------------------: | :--------------------------: | :-----------------------------------:  | :-----------------------: |
+| tc321x_mesh        | 133.2                     | 26.3                         | N/A                                    | 3.0						  |
+| tc321x_mesh_gw     | 134.4                     | 31.2                         | N/A                                    | 3.0						  |
+| tc321x_mesh_lpn    | 127.9                     | 21.8                         | 20.6                                   | 3.0						  |
+| tc321x_mesh_switch | 118.5                     | 22.2                         | 21.1                                   | 3.0						  |
+
+### Version
+
+* SDK 版本: tc_ble_mesh_V4.1.1.0
+* Chip 版本
+  - B85: TLSR825X
+  - B87: TLSR827X
+  - TC321X (A0/A1)
+* Hardware 版本
+  - B85: C1T139A30_V1_2, C1T139A5_V1_4, C1T139A3_V2_0
+  - B87: C1T197A30_V1_1, C1T197A5_V1_1, C1T201A3_V1_0
+  - TC321X: C1T357A20_V1_2, C1T357A20_V2_0
+* BLE sdk 版本
+  - tc_ble_single_sdk V3.4.2.8_Patch_0001
+* Toolchain 版本
+  - TC32 ELF GCC4.3 ( IDE: [Telink IoT Studio](https://www.telink-semi.com/development-tools) )
+
+### Features
+* **Firmware**
+  - 支持 TC321X A0/A1芯片。
+  - 同步BLE SDK 到版本 tc_ble_single_sdk V3.4.2.8_Patch_0001。
+  - 添加LED闪灯事件来指示哪个节点被选中进行组网，即attention timer功能，对应PROVISION_ATTENTION_TIMER事件。使用时，App的组网模式需要选择normal(confirm)模式。
+  - 添加SAVE_SNO_CACHE_EN选项，保存收到的mesh消息的sequence number（即消息重放表）到flash，默认关闭。
+  - 添加搭配sig_mesh_tool.exe上位机工具使用的825x_kma_master_dongle固件。
+* **Android/iOS**
+  - 添加支持provision confirm 模式。
+* **Harmony**
+  - 支持设备provision及keybind。
+  - 支持调节开关/亮度/色温/HSL。
+  - 支持设备分组配置与分组控制。
+  - 支持配置设备publish状态。
+  - 支持设备OTA。
+  - 支持修改设备config信息。
+  - 支持闹钟配置。
+  - 支持场景配置。
+  - 支持本地网络管理。
+
+### Bug Fixes
+* **Firmware**
+	* **PLL**
+	  * for B87
+		- 将PLL稳定性判断的标准变得更严格。
+		- 详细描述：之前，判断PLL稳定性的标准是只要检测到一次就认为通过了。
+		- 修复效果：判断PLL稳定性的标准仅在连续检测到三次时才认为通过了（提高可靠性）。
+		- 更新建议：建议更新。
+	* **PM**
+		* 对于 B85, 修复使用外部32k晶振时cpu_long_sleep_wakeup()失败问题.
+			- 详细描述: 当通过 blc_pm_select_external_32k_crystal() 函数配置使用外部 32k 晶振时，cpu_long_sleep_wakeup()休眠功能异常。
+			- 修复效果: 如果使用外部晶振，需在pm.h文件中将宏 cpu_long_sleep_wakeup 重定义为 cpu_long_sleep_wakeup_32k_xtal保证cpu_long_sleep_wakeup()函数正常工作。
+			- 更新建议: 当外部晶振和cpu_long_sleep_wakeup()使用时，需要更新。
+		* 对于B85/B87，修复进入休眠时由于未及时关中断导致的低概率休眠时间不对问题。
+			- 详细描述：进入休眠时，如果刚好触发中断且中断处理时间长，会导致休眠时间不对。
+			- 修复效果：进入休眠时，立刻关闭中断。
+			- 更新建议: 如果有使用低功耗，需要更新。
+	* **Application**
+		* spirit_lpn
+		- 对于B85/B87，修复spirit_lpn从suspend唤醒后未进入扫描问题。
+			- 详细描述：默认spirit_lpn休眠间隔360ms，扫描是在user_init_deepRetn()中打开的。如果spirit_lpn休眠间隔小于50ms，会进入suspend休眠，唤醒后未重新打开扫描，可能导致接收丢包。
+			- 修复效果：suspend唤醒后也会按照扫描周期打开扫描。
+			- 更新建议: 如果使用spirit_lpn，需要更新。
+		* private online status
+		- 修复online status状态回调处理函数light_node_status_change_cb()未上报离线状态问题。
+			- 详细描述：代码中打开ONLINE_STATUS_EN，调用register_mesh_node_status_callback(light_node_status_change_cb)注册后，light_node_status_change_cb中未上报离线状态。
+			- 修复效果：light_node_status_change_cb中正常上报离线状态。
+			- 更新建议：如果有使用私有的online status功能，且调用register_mesh_node_status_callback(light_node_status_change_cb)注册回调函数，需要更新。
+		* mesh_switch
+		  - 修复mesh_switch中switch_check_and_enter_sleep()函数休眠时间设置不对问题。
+			- 详细描述：switch iv更新计时超过在32小时(SWITCH_LONG_SLEEP_TIME_S)，但小于96小时（SWITCH_IV_SEARCHING_INTERVLAL_S）时，休眠间隔只有1秒钟。
+			- 修复效果：switch iv更新计时超过在32小时(SWITCH_LONG_SLEEP_TIME_S)，但小于96小时（SWITCH_IV_SEARCHING_INTERVLAL_S）时，休眠间隔32小时。
+			- 更新建议：如果使用mesh_switch，需要更新。
+
+### Refactoring
+* N/A
+
+### Optimization
+* **固件**
+	- 路由功能添加CONFIG_ALWAYS_GET_ROUTE_FROM_FLASH选项，把非固定路由表保存到flash来节省ram，默认打开。
+* **iOS**
+	- 优化LPN设备指令的超时计算方法。
+	- 优化MeshOTA完成的retrievedUpdatePhase参数的判断。
+	- 优化对非直连节点KeyBind的超时计算方法。
+	- 优化HSL转RGB的方法。
+
+### BREAKING CHANGES
+* N/A
+
+### Notes
+* 为避免编译错误以及功能丢失，升级SDK时，请确认更新全部SDK文件。
+
+### CodeSize
+* **B85**
+
+| reference design   | Firmware size (kBytes)    | total SRAM size (kBytes)     | deepsleep retention SRAM size (kBytes) | code stack size (kBytes)  | 
+| :-------------     | :-----------------------: | :--------------------------: | :-----------------------------------:  | :-----------------------: |
+| 8258_mesh          | 129.5                     | 27.3                         | N/A                                    | 3.0						  |
+| 8258_mesh_gw       | 129.0                     | 30.5                         | N/A                                    | 3.0						  |
+| 8258_mesh_lpn      | 123.8                     | 21.8                         | 20.7                                   | 3.0						  |
+| 8258_mesh_switch   | 115.9                     | 24.6                         | 23.5                                   | 3.0						  |
+
+* **B87**
+
+| reference design   | Firmware size (kBytes)    | total SRAM size (kBytes)     | deepsleep retention SRAM size (kBytes) | code stack size (kBytes)  |
+| :-------------     | :-----------------------: | :--------------------------: | :-----------------------------------:  | :-----------------------: |
+| 8278_mesh          | 128.9                     | 29.0                         | N/A                                    | 3.0						  |
+| 8278_mesh_gw       | 128.4                     | 31.1                         | N/A                                    | 3.0						  |
+| 8278_mesh_lpn      | 123.1                     | 23.6                         | 22.5                                   | 3.0						  |
+| 8278_mesh_switch   | 115.0                     | 26.1                         | 25.0                                   | 3.0						  |
+
+* **TC321X**
+
+| reference design   | Firmware size (kBytes)    | total SRAM size (kBytes)     | deepsleep retention SRAM size (kBytes) | code stack size (kBytes)  |
+| :-------------     | :-----------------------: | :--------------------------: | :-----------------------------------:  | :-----------------------: |
+| tc321x_mesh        | 133.2                     | 26.3                         | N/A                                    | 3.0						  |
+| tc321x_mesh_gw     | 134.4                     | 31.2                         | N/A                                    | 3.0						  |
+| tc321x_mesh_lpn    | 127.9                     | 21.8                         | 20.6                                   | 3.0						  |
+| tc321x_mesh_switch | 118.5                     | 22.2                         | 21.1                                   | 3.0						  |
+
+
 ## V4.1.0.1
 
 ### Version

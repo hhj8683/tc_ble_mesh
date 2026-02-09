@@ -2638,6 +2638,12 @@ typedef enum : UInt8 {
 + (void)updateIvIndexWithKeyRefreshFlag:(BOOL)keyRefreshFlag ivUpdateActive:(BOOL)ivUpdateActive networkId:(NSData *)networkId ivIndex:(UInt32)ivIndex usingNetworkKey:(SigNetkeyModel *)networkKey;
 
 /**
+ * @brief   ivIndex increase one by APP.
+ * @note    SDK will update ivIndex automatically, when sequenceNumber of APP is more than 0xC00000.
+ */
++ (void)ivIndexIncreaseOne;
+
+/**
  * @brief   Update the now time to node without response.
  * @note    SDK will call this api automatically, when SDK set filter success.
  */

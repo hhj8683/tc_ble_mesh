@@ -190,30 +190,27 @@ extern "C" {
 #define	SW2_GPIO				GPIO_PD1
 #endif
 
-#define XIAOMI_MODULE_ENABLE	MI_API_ENABLE
-#define XIAOMI_TEST_CODE_ENABLE 	0
-
 //---------------  LED / PWM
 #if(PCBA_8258_SEL == PCBA_8258_DONGLE_48PIN)
-#define PWM_R       GPIO_PWM1A3		//red
-#define PWM_G       GPIO_PWM0A2		//green
-#define PWM_B       GPIO_PWM3B0		//blue
-#define PWM_W       GPIO_PWM4B1		//white
+#define PWM_R       GPIO_PA3		//red
+#define PWM_G       GPIO_PA2		//green
+#define PWM_B       GPIO_PB0		//blue
+#define PWM_W       GPIO_PB1		//white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T140A3_V1_1)
-#define PWM_R       GPIO_PWM2ND4    //red
-#define PWM_G       GPIO_PWM0NA0    //green
-#define PWM_B       GPIO_PWM1ND3    //blue
-#define PWM_W       GPIO_PWM3D2		//yellow as white
+#define PWM_R       GPIO_PD4        //red
+#define PWM_G       GPIO_PA0        //green
+#define PWM_B       GPIO_PD3        //blue
+#define PWM_W       GPIO_PD2		//yellow as white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_0)   // PCBA_8258_DEVELOPMENT_BOARD
-#define PWM_R       GPIO_PWM1ND3	//red
-#define PWM_G       GPIO_PWM2ND4	//green
+#define PWM_R       GPIO_PD3	    //red
+#define PWM_G       GPIO_PD4	    //green
 #define PWM_B       GPIO_PD5		//blue
-#define PWM_W       GPIO_PWM3D2		//white
+#define PWM_W       GPIO_PD2		//white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_2)
-#define PWM_R       GPIO_PD5	//red
-#define PWM_G       GPIO_PWM1ND3	//green
-#define PWM_B       GPIO_PWM3D2		//blue
-#define PWM_W       GPIO_PWM2ND4		//white
+#define PWM_R       GPIO_PD5	    //red
+#define PWM_G       GPIO_PD3	    //green
+#define PWM_B       GPIO_PD2		//blue
+#define PWM_W       GPIO_PD4		//white
 
 #endif
 

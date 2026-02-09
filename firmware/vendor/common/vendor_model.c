@@ -41,9 +41,11 @@
 #if PAIR_PROVISION_ENABLE
 #include "pair_provision.h"
 #endif
+#include "vendor/common/energy_harvest_eno.h"
 
 #if (VENDOR_MD_NORMAL_EN)
 model_vd_light_t       	model_vd_light;
+STATIC_ASSERT(sizeof(model_vd_light_t) <= (4096 - 48));    // only one sector to save
 
 #if (DUAL_VENDOR_EN)
 STATIC_ASSERT((VENDOR_MD_LIGHT_S && 0xffff) != VENDOR_ID_MI);
@@ -159,6 +161,8 @@ int cb_vd_group_g_get(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
     }
 }
 
+u8 g_vd_group_g_set_err_status = 0;
+
 int cb_vd_group_g_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
 {
     int err = -1;
@@ -167,6 +171,7 @@ int cb_vd_group_g_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
     vd_group_g_set_t *p_set = (vd_group_g_set_t *)par;
     u8 sub_op = p_set->sub_op;
 
+    g_vd_group_g_set_err_status = 0; // init
     if(!cb_par->retransaction){
         cb_vd_group_g_sub_set p_cb_set = (cb_vd_group_g_sub_set)search_vd_group_g_func(sub_op, SEARCH_VD_GROUP_G_FUNC_TYPE_SET);
         if(p_cb_set){
@@ -196,10 +201,11 @@ int cb_vd_group_g_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
         }
     }
     
+    g_vd_group_g_set_err_status = 0; // init
     return err;
 }
 
-vd_group_g_func_t vd_group_g_func[] = {
+const vd_group_g_func_t vd_group_g_func[] = {
     /* telink use sub op from 0x00 to 0x7f*/
     {VD_GROUP_G_OFF, vd_group_g_light_onoff, vd_light_tx_cmd_onoff_st},
     {VD_GROUP_G_ON, vd_group_g_light_onoff, vd_light_tx_cmd_onoff_st},
@@ -209,10 +215,15 @@ vd_group_g_func_t vd_group_g_func[] = {
 #if AUDIO_MESH_EN
     {VD_GROUP_G_MIC_TX_REQ,cb_vd_group_g_mic_tx_req, 0},
 #endif
+#if ENERGY_HARVEST_RX_EN
+    {VD_GROUP_G_EH_PAIR_MAC_AND_KEY_SET, vd_rx_group_g_eh_pair_mac_and_key_set, vd_rx_group_g_eh_pair_mac_and_key_status},
+    {VD_GROUP_G_EH_PUBLISH_SET, vd_rx_group_g_eh_pair_publish_generic_set, vd_rx_group_g_eh_pair_publish_generic_status},
+    {VD_GROUP_G_EH_PAIR_DELETE, vd_rx_group_g_eh_pair_delete, vd_rx_group_g_eh_pair_delete_status},
+#endif
 
     /* user use sub op from 0x80 to 0xff*/
 #if VENDOR_SUB_OP_USER_DEMO_EN
-	{VD_GROUP_G_SUB_OP_USER_DEMO, vd_rx_group_g_sub_op_user_demo_set, vd_rx_group_g_sub_op_user_demo_st}
+	{VD_GROUP_G_SUB_OP_USER_DEMO, vd_rx_group_g_sub_op_user_demo_set, vd_rx_group_g_sub_op_user_demo_st},
 #endif
     //{VD_GROUP_G_USER_START, , , },
 };
@@ -306,7 +317,7 @@ void vd_msg_attr_indica_retry_start(u16 interval_ms)
 	mesh_indication_retry.interval_tick = interval_ms*1000*sys_tick_per_us;
 }
 
-void vd_msg_attr_indica_retry_stop()
+void vd_msg_attr_indica_retry_stop(void)
 {
 	mesh_indication_retry.busy = 0;
 }
@@ -370,12 +381,12 @@ int access_cmd_attr_indication(u16 op, u16 adr_dst, u16 attr_type, u8 *attr_par,
 
 }
 
-void mesh_tx_indication_tick_refresh()
+void mesh_tx_indication_tick_refresh(void)
 {
 	mesh_indication_retry.tick = clock_time();
 }
 
-void mesh_tx_indication_proc()
+void mesh_tx_indication_proc(void)
 {
  	if(mesh_indication_retry.busy){
 	    if(clock_time_exceed(mesh_indication_retry.tick, mesh_indication_retry.interval_tick/sys_tick_per_us)){
@@ -696,13 +707,14 @@ int cb_vd_key_report(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
 // ------ end --------
 
 #if (LPN_VENDOR_SENSOR_EN && MD_SERVER_EN)
-typedef struct{
+typedef struct __attribute__((packed)) {
     u16 hunmidity;
     u16 temp; 
 }hx300t_sensor_t;
+
 #define HX300T_MSG_RSP_MODE 0
 #define HX300T_MSG_PUB_MODE 1
-typedef struct{
+typedef struct __attribute__((packed)) {
     u8 hx300t_tick ;
     u8 msg_mode;
     u16 hx300t_src ;
@@ -721,14 +733,14 @@ hx300t_sensor_t hx300t_sensor;
 	#elif(MCU_CORE_TYPE == MCU_CORE_8278)
 #include "drivers/8278/i2c.h"
 	#endif
-void i2c_io_init()
+void i2c_io_init(void)
 {
     i2c_master_init(HX300_SENSOR_ID,8);//set clk to 500k
     i2c_gpio_set(I2C_GPIO_GROUP_C0C1);
 }
 #elif (MCU_CORE_TYPE == MCU_CORE_8269)
 #include "proj/drivers/i2c.h"
-void i2c_io_init()
+void i2c_io_init(void)
 {
       // i2c init
     gpio_set_func(PIN_I2C_SDA,AS_GPIO);
@@ -769,7 +781,7 @@ void sensor_read_fun(u16 *p_humi,u16 *p_temp)
     *p_temp = tempreture;
 }
 
-void sensor_proc_loop()
+void sensor_proc_loop(void)
 {
     if(hx300t_mag.hx300t_tick && clock_time_exceed(hx300t_mag.hx300t_tick,HX300_INTER_TIME)){
         hx300t_mag.hx300t_tick =0;
@@ -829,7 +841,7 @@ int cb_vd_lpn_sensor_st_publish(u8 idx)
 	#endif
 	return 0;
 }
-void mesh_vd_lpn_pub_set()
+void mesh_vd_lpn_pub_set(void)
 {
     mesh_cfg_model_pub_set_t pub_set = {0};
     pub_set.ele_adr = ele_adr_primary;
@@ -961,7 +973,7 @@ int cb_vd_du_time_cmd_rsp(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
 
 #endif
 
-#if !WIN32
+#ifndef WIN32
 const 
 #endif
 mesh_cmd_sig_func_t mesh_cmd_vd_func[] = {
@@ -1055,7 +1067,7 @@ mesh_cmd_sig_func_t mesh_cmd_vd_func[] = {
 };
 
 #if VENDOR_ID_2ND_ENABLE
-#if !WIN32
+#ifndef WIN32
 const 
 #endif
 mesh_cmd_sig_func_t mesh_cmd_vd_func2[] = {
@@ -1066,7 +1078,7 @@ mesh_cmd_sig_func_t mesh_cmd_vd_func2[] = {
 };
 #endif
 
-#if !WIN32
+#ifndef WIN32
 const 
 #endif
 mesh_vd_func_t mesh_vd_id_func[] = {
@@ -1076,7 +1088,7 @@ mesh_vd_func_t mesh_vd_id_func[] = {
 	#endif
 };
 
-#if WIN32
+#ifdef WIN32
 void APP_set_vd_id_mesh_cmd_vd_func(u16 vd_id)
 {
     foreach_arr(i,mesh_cmd_vd_func){

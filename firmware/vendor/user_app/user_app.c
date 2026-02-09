@@ -23,7 +23,8 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#if !WIN32
+#include "stack/ble/ble.h"
+#ifndef WIN32
 #include "proj_lib/mesh_crypto/mesh_md5.h"
 #include "vendor/common/myprintf.h"
 #endif 
@@ -44,12 +45,6 @@
 #include "vendor/common/directed_forwarding.h"
 #include "vendor/common/certify_base/certify_base_crypto.h"
 
-#if(__TL_LIB_8258__ || (MCU_CORE_TYPE == MCU_CORE_8258))
-#include "stack/ble/ble.h"
-#elif(MCU_CORE_TYPE == MCU_CORE_8278)
-#include "stack/ble_8278/ble.h"
-#endif
-
 #if FAST_PROVISION_ENABLE
 #include "vendor/common/fast_provision_model.h"
 #endif
@@ -59,7 +54,7 @@
 #endif
 
 
-void cb_user_factory_reset_additional()
+void cb_user_factory_reset_additional(void)
 {
     // TODO
 }

@@ -117,8 +117,23 @@
     .wMenuAnimalSet(PageTitleMenuPDD);
     self.param = param;
 
-    //设置返回按钮文字为空
-    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:self action:nil];
+    if (weakSelf.model.isRemote) {
+        UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(clickBackButton)];
+        self.navigationItem.leftBarButtonItem = leftItem;
+    } else {
+        //设置返回按钮文字为空
+        self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:self action:nil];
+    }
+}
+
+- (void)clickBackButton {
+    // 退出该界面则无需再直连遥控器，因为遥控器不具备proxy功能。
+    SigBearer.share.isAllowConnectSwitch = NO;
+    // 有可能还处于扫描连接过程中，导致返回首页依然寻找遥控器来连接，所以无论是连接成功还是正在重新连接过程中都需要断开，回首页再重新连接Mesh
+    __weak typeof(self) weakSelf = self;
+    [ConnectTools.share stopConnectToolsWithComplete:^(BOOL successful) {
+        [weakSelf.navigationController popViewControllerAnimated:YES];
+    }];
 }
 
 -(void)dealloc{

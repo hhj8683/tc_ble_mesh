@@ -24,16 +24,16 @@
  *******************************************************************************************************/
 #include "tl_common.h"
 #include "config_model.h"
-#if __TLSR_RISCV_EN__
 #include "stack/ble/ble.h"
-#else
-#include "proj_lib/ble/ll/ll.h"
-#endif
 #include "proj_lib/ble/blt_config.h"
 #include "proj_lib/mesh_crypto/mesh_crypto.h"
 #include "vendor/common/user_config.h"
 #include "directed_forwarding.h"
 #include "app_heartbeat.h"
+#include "mesh_ota.h"
+#if DU_ENABLE
+#include "user_du.h"
+#endif
 
 STATIC_ASSERT(sizeof(model_common_t) % 4 == 0);
 STATIC_ASSERT(sizeof(model_g_light_s_t) % 4 == 0);
@@ -71,7 +71,7 @@ void endianness_swap_ut_ctl(u8 *nw, u8 *par, u32 len_ac/*len_ut*/, int filter_cf
             endianness_swap_u16((u8 *)&p_fri_clear->LPNAdr);
             endianness_swap_u16((u8 *)&p_fri_clear->LPNCounter);
         }else if(CMD_CTL_SUBS_LIST_ADD == op || CMD_CTL_SUBS_LIST_REMOVE == op){
-            u32 subsc_cnt = (len_ac-1)/2; // for unsegment, it is equal to mesh_subsc_adr_cnt_get(p_br). and it must be unsegment for subs_list_add or remove.
+            int subsc_cnt = (len_ac-1)/2; // for unsegment, it is equal to mesh_subsc_adr_cnt_get(p_br). and it must be unsegment for subs_list_add or remove.
             foreach(i,subsc_cnt){
                 endianness_swap_u16(par + (1 + i*2));
             }
@@ -144,7 +144,7 @@ void endianness_swap_ut_ctl(u8 *nw, u8 *par, u32 len_ac/*len_ut*/, int filter_cf
 			endianness_swap_u16((u8 *)&p_dependent_update->dependent_addr);
 		}else if(CMD_CTL_PATH_REQUEST_SOLICITATION == op){
 			mesh_ctl_path_request_solication_t *p_dependent_update = (mesh_ctl_path_request_solication_t *)par;
-			foreach(i, len_ac/2){
+			foreach_uint(i, len_ac/2){
 				endianness_swap_u16((u8 *)&p_dependent_update->addr_list[i]);
 			}
 		}
@@ -208,41 +208,41 @@ int mesh_sec_prov_session_key_fun(unsigned char sk[16], unsigned char *sn, unsig
 	return 0;
 }
 
-u8 mesh_get_network_transmit()
+u8 mesh_get_network_transmit(void)
 {
 	return model_sig_cfg_s.nw_transmit.val;
 }
 
-u8 mesh_get_relay_retransmit()
+u8 mesh_get_relay_retransmit(void)
 {
-#if AUDIO_MESH_MULTY_NODES_TX_EN
+#if AUDIO_MESH_MULTI_NODES_TX_EN
 	return audio_mesh_get_tx_retransmit_cnt();
 #else
 	return model_sig_cfg_s.relay_retransmit.val;
 #endif
 }
 
-u8 mesh_get_ttl()
+u8 mesh_get_ttl(void)
 {
 	return model_sig_cfg_s.ttl_def;
 }
 
-u8 mesh_get_hb_pub_ttl()
+u8 mesh_get_hb_pub_ttl(void)
 {
 	return model_sig_cfg_s.hb_pub.ttl;
 }
 
-u8 mesh_get_gatt_proxy()
+u8 mesh_get_gatt_proxy(void)
 {
 	return model_sig_cfg_s.gatt_proxy;
 }
 
-u8 mesh_get_friend()
+u8 mesh_get_friend(void)
 {
 	return model_sig_cfg_s.frid;
 }
 
-u8 mesh_get_relay()
+u8 mesh_get_relay(void)
 {
 	return model_sig_cfg_s.relay;
 }
@@ -277,17 +277,21 @@ int is_adr_in_sub_list(model_common_t *p_model, u16 adr)
 
 /**
  * @brief       This function check if current node subscribed the address.
- * @param[in/out] p_model: if it is NULL, it is used to output the first model resource which subscribe the address.
- *                         if not, it is input parameter to check if this model subscribed the address.
+ * @param[in]   p_model: 0: search all model resource in the node.
+ *                       other: search the model p_model pointed to.
  * @param[in]   adr		- subscription address or group address
- * @return      1: ture. 0: false.
+ * @return      0: adr is not subscribed the address.
+ *              other: pointer of the model reource which subscribed the address.
  * @note        
  */
 int is_subscription_adr(model_common_t *p_model, u16 adr)
 {
 	if(p_model){
-	    return is_adr_in_sub_list(p_model, adr);
+	    if(is_adr_in_sub_list(p_model, adr)){
+            return 1;
+        }
 	}else{
+        model_common_t *p_tmp_model = 0;
 		int pos = 0;
 		int offset_ele = OFFSETOF(mesh_page0_t, ele);
 	    const mesh_element_head_t *p_ele = &gp_page0->ele;
@@ -297,8 +301,8 @@ int is_subscription_adr(model_common_t *p_model, u16 adr)
 		while (pos < total_len_ele){
 	        foreach(i, p_ele->nums){
 				if(!is_use_device_key(p_ele->md_sig[i], 1)){
-					p_model = (model_common_t *)mesh_find_ele_resource_in_model(ele_adr, p_ele->md_sig[i], 1,&model_idx, 0);
-					if(is_adr_in_sub_list(p_model, adr)){
+					p_tmp_model = (model_common_t *)mesh_find_ele_resource_in_model(ele_adr, p_ele->md_sig[i], 1,&model_idx, 0);
+					if(is_adr_in_sub_list(p_tmp_model, adr)){
 						return 1;
 					}
 				}
@@ -306,8 +310,8 @@ int is_subscription_adr(model_common_t *p_model, u16 adr)
 
 	        foreach(i, p_ele->numv){
 	        	u32 vd_model_id = get_cps_vd_model_id(p_ele, i);
-	        	p_model = (model_common_t *)mesh_find_ele_resource_in_model(ele_adr, vd_model_id, 0,&model_idx, 0);
-				if(is_adr_in_sub_list(p_model, adr)){
+	        	p_tmp_model = (model_common_t *)mesh_find_ele_resource_in_model(ele_adr, vd_model_id, 0,&model_idx, 0);
+				if(is_adr_in_sub_list(p_tmp_model, adr)){
 					return 1;
 				}
 	        }
@@ -318,6 +322,7 @@ int is_subscription_adr(model_common_t *p_model, u16 adr)
 			ele_adr += 1;
 		}
 	}
+
     return 0;
 }
 
@@ -363,6 +368,7 @@ int mesh_cmd_sig_cfg_friend_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
 {
     u8 frid = par[0];
     if( frid < FRIEND_NOT_SUPPORT){
+#if FEATURE_FRIEND_EN
 		if(model_sig_cfg_s.frid < FRIEND_NOT_SUPPORT){
 			if(model_sig_cfg_s.frid != frid){
 				model_sig_cfg_s.frid = frid;
@@ -391,6 +397,8 @@ int mesh_cmd_sig_cfg_friend_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
 		}else{
 			par[0] = model_sig_cfg_s.frid;
 		}
+#endif
+
 		return mesh_cmd_sig_cfg_friend_get(par, par_len, cb_par);
     }
     return -1;
@@ -408,10 +416,12 @@ int mesh_cmd_sig_cfg_gatt_proxy_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_
 		if(model_sig_cfg_s.gatt_proxy < GATT_PROXY_NOT_SUPPORT){
 			if(model_sig_cfg_s.gatt_proxy != gatt_proxy){
 				model_sig_cfg_s.gatt_proxy = gatt_proxy;
+				#if MESH_HEARTBEAT_EN
 				if(model_sig_cfg_s.hb_pub.feature & BIT(MESH_HB_PROXY_BIT)){
 					hb_sts_change = 1;
 					hb_pub_100ms = clock_time_100ms();
-				}	
+				}
+				#endif
 			}
 			mesh_model_store_cfg_s();
 			// and the if the proxy state is being set to 0 ,the connection will be terminate 
@@ -441,7 +451,7 @@ int mesh_cmd_sig_cfg_gatt_proxy_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_
 		}else{
 			par[0] = model_sig_cfg_s.gatt_proxy;
 		}
-		#if MD_PRIVACY_BEA&&!WIN32&&MD_SERVER_EN
+		#if (MD_PRIVACY_BEA && !defined(WIN32) && MD_SERVER_EN)
 		u8 *p_private_sts = &(g_mesh_model_misc_save.privacy_bc.proxy_sts);
 		mesh_private_proxy_change_by_gatt_proxy(*p_private_sts,p_private_sts);
 		mesh_privacy_beacon_save();
@@ -466,6 +476,7 @@ int mesh_cmd_sig_cfg_relay_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
 {
     mesh_cfg_model_relay_set_t *p_set = (mesh_cfg_model_relay_set_t *)par;
     if(p_set->relay < RELAY_NOT_SUPPORT){
+#if FEATURE_RELAY_EN
 		if(model_sig_cfg_s.relay < RELAY_NOT_SUPPORT){
 			if(model_sig_cfg_s.relay != p_set->relay){
 				model_sig_cfg_s.relay = p_set->relay;
@@ -481,6 +492,7 @@ int mesh_cmd_sig_cfg_relay_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
 		else{
 			memcpy(par, &model_sig_cfg_s.relay_retransmit, sizeof(model_sig_cfg_s.relay_retransmit));
 		}
+#endif
 		return mesh_cmd_sig_cfg_relay_get(par, par_len, cb_par);
     }
     return -1;
@@ -778,7 +790,7 @@ u8 mesh_cmd_sig_cfg_model_sub_set2(u16 op, u16 sub_adr, u8 *uuid, model_common_t
         
         st = add_ok ? ST_SUCCESS : ST_INSUFFICIENT_RES;
         
-		#if (MD_DF_CFG_SERVER_EN && !FEATURE_LOWPOWER_EN && !WIN32)
+		#if (MD_DF_CFG_SERVER_EN && !FEATURE_LOWPOWER_EN && !defined(WIN32))
 		if(add_ok && save_flash){
 			directed_forwarding_solication_start(mesh_key.netkey_sel_dec, (mesh_ctl_path_request_solication_t *)&sub_adr, 1);
 		}
@@ -819,7 +831,7 @@ u8 mesh_cmd_sig_cfg_model_sub_set2(u16 op, u16 sub_adr, u8 *uuid, model_common_t
 	    if(save_flash){
 		    mesh_model_store(sig_model, model_id);
 		}
-		rf_link_light_event_callback(LGT_CMD_SET_SUBSCRIPTION);
+        mesh_event_handler(EVENT_MESH_CFG_SUB_SET, 0, 0);
 	}
 
     return st;
@@ -1112,6 +1124,194 @@ int mesh_cmd_sig_cfg_netkey_list(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par
 }
 
 // ----------------APP KEY
+mesh_app_key_t * mesh_app_key_empty_search(mesh_net_key_t *p_netkey)
+{
+    foreach(i,APP_KEY_MAX){
+    	mesh_app_key_t * p_app_key = &p_netkey->app_key[i];
+        if(KEY_INVALID == p_app_key->valid){
+            return p_app_key;
+        }
+    }
+    return 0;
+}
+
+mesh_app_key_t * is_mesh_app_key_exist(u16 app_key_idx, u16 *p_net_key_idx)
+{
+    foreach(i,NET_KEY_MAX){
+        mesh_net_key_t *key = &mesh_key.net_key[i][0];
+        if(KEY_INVALID != key->valid){
+			foreach(i,APP_KEY_MAX){
+				mesh_app_key_t *p_appkey = &(key->app_key[i]);
+				if((p_appkey->valid)&&(app_key_idx == p_appkey->index)){
+					*p_net_key_idx = key->index;
+					return p_appkey;
+				}
+			}
+        }
+    }
+    return 0;
+}
+
+void app_key_set2(mesh_app_key_t *p_appkey, const u8 *ak, u16 app_key_idx, int save)
+{
+	memcpy(p_appkey->key, ak, 16);
+	p_appkey->aid = mesh_sec_get_aid(p_appkey->key);
+	p_appkey->index = app_key_idx;
+	p_appkey->valid = KEY_VALID;
+
+	if(save){
+		mesh_key_save();
+	}
+}
+
+void app_key_del2(mesh_app_key_t *p_appkey)
+{
+	mesh_unbind_by_del_appkey(p_appkey->index);
+	memset(p_appkey->key, 0, sizeof(mesh_app_key_t));
+	mesh_key_save();
+}
+
+u8 mesh_app_key_set(u16 op, const u8 *ak, u16 app_key_idx, u16 net_key_idx, int save)
+{
+    u8 st = ST_UNSPEC_ERR;
+    u16 net_key_idx_found = -1;
+	mesh_app_key_t *p_appkey_exist = is_mesh_app_key_exist(app_key_idx, &net_key_idx_found);
+	if(p_appkey_exist){
+		mesh_net_key_t * p_netkey = is_mesh_net_key_exist(net_key_idx);
+		if(net_key_idx == net_key_idx_found){
+			int same = !memcmp(ak, p_appkey_exist->key, 16);
+			if(APPKEY_ADD == op){
+				st = (same ? ST_SUCCESS : ST_KEYIDX_ALREADY_STORE);
+			}else if(APPKEY_UPDATE == op){
+				if(KEY_REFRESH_PHASE1 == p_netkey->key_phase){
+					u8 *p_ak_new = ((u8 *)p_appkey_exist) + sizeof(mesh_net_key_t);
+					app_key_set2((mesh_app_key_t *)p_ak_new, ak, app_key_idx, save);
+					st = ST_SUCCESS;
+				}else{
+					st = ST_CAN_NOT_UPDATE;
+				}
+			}else if(APPKEY_DEL == op){
+				app_key_del2(p_appkey_exist);
+				st = ST_SUCCESS;
+			}
+		}else{
+			if((APPKEY_UPDATE == op) && p_netkey){
+				st = ST_INVALID_BIND;
+			}else{
+				st = ST_INVALID_NETKEY;
+			}
+		}
+	}else{
+		mesh_net_key_t * p_netkey = is_mesh_net_key_exist(net_key_idx);
+		if(p_netkey){
+			if(APPKEY_ADD == op){
+				if(p_netkey){
+					mesh_app_key_t * p_ak_empty = mesh_app_key_empty_search(p_netkey);
+					if(p_ak_empty){
+						app_key_set2(p_ak_empty, ak, app_key_idx, save);
+				        mesh_node_refresh_binding_tick();
+                        mesh_event_handler(EVENT_MESH_CFG_APPKEY_SET, 0, 0);
+					#if PROVISION_FLOW_SIMPLE_EN
+						#if DUAL_VENDOR_EN
+						if(DUAL_VENDOR_ST_ALI == provision_mag.dual_vendor_st)
+						#endif
+						{
+    						if(!mesh_init_flag){
+    						    if(get_all_appkey_cnt() == 1){    						        
+                                    ev_handle_traversal_cps(EV_TRAVERSAL_BIND_APPKEY, (u8 *)&app_key_idx);
+                                    #if MD_SERVER_EN
+                                    // bind share model 
+                                    user_set_def_sub_adr();
+                                    #endif
+									#if DU_ENABLE									
+									cfg_cmd_heartbeat_pub_set(ele_adr_primary, VD_DU_GROUP_DST, 0xff, 0x07, 0x04, 0, 0);
+									#endif
+									#if MESH_OTA_DEFAULT_SUB_EN
+									cfg_cmd_sub_set(CFG_MODEL_SUB_ADD, ele_adr_primary, ele_adr_primary, MESH_OTA_DEFAULT_GROUP_ADDR, SIG_MD_BLOB_TRANSFER_S, !DRAFT_FEAT_VD_MD_EN);
+									#endif
+    						    }                                         
+    						}
+						}
+					#endif
+						st = ST_SUCCESS;
+					}else{
+						st = ST_INSUFFICIENT_RES;
+					}
+				}else{
+					st = ST_UNSPEC_ERR;
+					// while(1);	// should not happen
+				}
+			}else if(APPKEY_UPDATE == op){
+				st = ST_INVALID_APPKEY;
+			}else if(APPKEY_DEL == op){
+				st = ST_SUCCESS;
+			}
+		}else{
+			st = ST_INVALID_NETKEY;
+		}
+	}
+
+    #if PROV_APP_KEY_SETUP_TIMEOUT_CHECK_EN
+    if((APPKEY_ADD == op) && (st = ST_SUCCESS)){
+        prov_app_key_setup_tick = 0;    // kill timer
+    }
+    #endif
+    
+    return st;
+}
+
+u32 mesh_app_key_get(u8 *list)		// get all app key
+{
+    u8 st = ST_UNSPEC_ERR;
+	mesh_appkey_list_t *p_list = (mesh_appkey_list_t *)list;
+	u32 cnt = 0;
+    unsigned int i;
+    for(i = 0; i < (NET_KEY_MAX); ++i){
+    	mesh_net_key_t *p_netkey = &mesh_key.net_key[i][0];
+    	if((p_netkey->valid) && (p_list->netkey_idx == p_netkey->index)){
+    		memset(p_list->appkey_idx_enc, 0, sizeof(p_list->appkey_idx_enc));
+    		foreach(i,APP_KEY_MAX){
+				mesh_app_key_t *p_appkey = &(p_netkey->app_key[i]);
+    			if(p_appkey->valid){
+    				if(cnt & 1){
+    					SET_KEY_INDEX_H(p_list->appkey_idx_enc[cnt/2], p_appkey->index);
+    				}else{
+    					SET_KEY_INDEX_L(p_list->appkey_idx_enc[cnt/2], p_appkey->index);
+    				}
+    				cnt++;
+    			}
+    		}
+    		
+    		st = ST_SUCCESS;
+		    break;
+		}
+	}
+
+	if(NET_KEY_MAX == i){
+		st = ST_INVALID_NETKEY;
+	}
+
+    p_list->st = st;
+    
+    return cnt;
+}
+
+mesh_app_key_t * mesh_app_key_search_by_index(u16 netkey_idx, u16 appkey_idx)
+{
+    foreach(i, NET_KEY_MAX){
+    	mesh_net_key_t *p_netkey = &mesh_key.net_key[i][0];
+    	if(p_netkey->valid && (p_netkey->index == netkey_idx)){
+    		foreach(k,APP_KEY_MAX){
+				mesh_app_key_t *p_appkey = &(p_netkey->app_key[k]);
+    			if(p_appkey->valid && (p_appkey->index == appkey_idx)){
+    				return p_appkey;
+    			}
+    		}
+		}
+	}
+	return 0;
+}
+
 /**
  * @brief       This function will be called when receive the opcode of "Config AppKey Add"
  * @param[in]   par		- parameter of this message
@@ -1331,6 +1531,8 @@ u8 mesh_appkey_bind(u16 op, u16 ele_adr, u32 model_id, bool4 sig_model, u16 appk
     	st = ST_INVALID_MODEL;
     }
 	mesh_node_refresh_binding_tick();
+    mesh_event_handler(EVENT_MESH_CFG_MODEL_BIND, 0, 0);
+
     return st;
 }
 
@@ -1383,7 +1585,7 @@ int mesh_cmd_sig_cfg_bind(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
             }else{
                 bind_rsp.st = mesh_appkey_bind_and_share(cb_par->op, p_bind->ele_adr, model_id, sig_model,p_bind->index);
                 if(key_bind_all_ele_en && (g_ele_cnt > 1) && (p_bind->ele_adr == ele_adr_primary)){
-                    foreach(i,(u32)(g_ele_cnt - 1)){
+                    foreach(i,(int)(g_ele_cnt - 1)){
                         mesh_appkey_bind_and_share(cb_par->op, ele_adr_primary + 1 + i, model_id, sig_model,p_bind->index);
                     }
                 }
@@ -1464,7 +1666,9 @@ int mesh_save_pub_and_refresh_tick(model_common_t *p_model, mesh_cfg_model_pub_s
         }
     }
     
+#if MESH_TIMER_MS_100MS_EN
     p_model->cb_tick_ms = clock_time_ms();
+#endif
 
     return change_flag;
 }
@@ -1552,7 +1756,7 @@ static u8  pub_random_delay_flag = PUBLISH_2ND_DELAY_DEFAULT;
  * @return      0:not allow; 1:allow
  * @note        
  */
-int is_publish_allow()
+int is_publish_allow(void)
 {
 	return (my_fifo_data_cnt_get(&mesh_adv_fifo_relay) <= 1); // <=1 means should not publish now when there is more than 1 other node is publishing.
 }
@@ -1560,7 +1764,7 @@ int is_publish_allow()
 
 void mesh_tx_pub_period(u16 ele_adr, u32 model_id, bool4 sig_model)
 {
-#if (MD_SERVER_EN || (GATEWAY_ENABLE == 0)) // no need period publish for gateway client.
+#if (MESH_TIMER_MS_100MS_EN && (MD_SERVER_EN || (GATEWAY_ENABLE == 0))) // no need period publish for gateway client.
 	model_common_t *p_model;
 	u8 model_idx = 0;
 	p_model = (model_common_t *)mesh_find_ele_resource_in_model(ele_adr,model_id,sig_model,&model_idx, 0);
@@ -1632,7 +1836,7 @@ int mesh_is_existed_share_model(mesh_model_id_t *md_out, u32 model_id, bool4 sig
 		}else if(SIG_MD_G_LEVEL_C == model_id){
 			model_id_share = SIG_MD_G_ONOFF_C;
 		}
-		if(-1 != model_id_share){
+		if((u32)-1 != model_id_share){
 			md_out->sig_model = 1;
 			md_out->id = model_id_share;
 			return 1;
@@ -1733,7 +1937,9 @@ int mesh_pub_set(u8 *par, mesh_cb_fun_par_t *cb_par, u32 model_id, bool4 sig_mod
             if(st == ST_SUCCESS){
                 //refresh cb_ticks
                 if(SIG_MD_HEALTH_SERVER == model_id){
+                    #if MESH_TIMER_MS_100MS_EN
                     model_sig_health.srv.com.cb_tick_ms = clock_time_ms();
+                    #endif
                 }
                 #if 0 // SUBSCRIPTION_PUBLISH_SHARE_EN
                 mesh_model_id_t md_bind;    
@@ -1813,6 +2019,298 @@ int mesh_rsp_sub_status(u8 st, mesh_cfg_model_sub_set_t *p_set, bool4 sig_model,
     return mesh_tx_cmd_rsp_cfg_model(CFG_MODEL_SUB_STATUS, (u8 *)&sub_status_rsp, sizeof(sub_status_rsp)-FIX_SIZE(sig_model), adr_dst);
 }
 
+// SUBSCRIPTION SHARE
+STATIC_ASSERT(SUBSCRIPTION_BOUND_STATE_SHARE_EN == 1);
+
+#if SUBSCRIPTION_BOUND_STATE_SHARE_EN
+	#ifndef SHARE_ALL_LIGHT_STATE_MODEL_EN      // user can define in user_app_config.h
+#define SHARE_ALL_LIGHT_STATE_MODEL_EN      (AIS_ENABLE)
+	#endif
+
+#define LOG_SHARE_MODEL_DEBUG(pbuf, len, format, ...)		//LOG_MSG_LIB(TL_LOG_NODE_BASIC, pbuf, len, format, ##__VA_ARGS__)
+
+
+/**
+ * @brief       all sig models that have extend relation ship with onoff server model 
+ *              they should share the same subscription list.
+ *              please refer to "4.2.4 Subscription List" of MshMDL_v1.1.pdf.
+ */
+const u16 sub_share_model_sig_onoff_server_extend[] = { // model list for onoff extend. // should share when it is extend model.
+    #if MD_SERVER_EN
+        #if MD_ONOFF_EN
+    SIG_MD_G_ONOFF_S, 
+        #endif
+        #if MD_LEVEL_EN
+    SIG_MD_G_LEVEL_S, 
+        #endif
+        #if MD_LIGHTNESS_EN
+    SIG_MD_LIGHTNESS_S, 
+            #if 1 // SHARE_ALL_LIGHT_STATE_MODEL_EN 		// should share when it is extend model.
+    SIG_MD_LIGHTNESS_SETUP_S, 								// SIG_MD_LIGHTNESS_SETUP_S extend lightness server.
+            #endif
+        #endif
+        #if LIGHT_TYPE_CT_EN
+    SIG_MD_LIGHT_CTL_S, SIG_MD_LIGHT_CTL_TEMP_S,
+            #if 1 // SHARE_ALL_LIGHT_STATE_MODEL_EN 		// should share when it is extend model.
+    SIG_MD_LIGHT_CTL_SETUP_S, 
+            #endif
+        #endif
+        #if LIGHT_TYPE_HSL_EN
+    SIG_MD_LIGHT_HSL_S, SIG_MD_LIGHT_HSL_HUE_S, SIG_MD_LIGHT_HSL_SAT_S,
+            #if 1 // SHARE_ALL_LIGHT_STATE_MODEL_EN 		// should share when it is extend model.
+    SIG_MD_LIGHT_HSL_SETUP_S, 
+            #endif
+        #endif
+        #if MD_LIGHT_CONTROL_EN
+    SIG_MD_LIGHT_LC_S, SIG_MD_LIGHT_LC_SETUP_S,
+        #endif
+    	#if MD_DEF_TRANSIT_TIME_EN
+    SIG_MD_G_DEF_TRANSIT_TIME_S, 							// lightness setup extend power onoff setup extend default transition time server.
+        #endif
+    	#if MD_POWER_ONOFF_EN
+    SIG_MD_G_POWER_ONOFF_S, SIG_MD_G_POWER_ONOFF_SETUP_S,	// SIG_MD_G_POWER_ONOFF_SETUP_S extend default transition time server.
+        #endif
+    	#if (LIGHT_TYPE_SEL == LIGHT_TYPE_POWER)
+    SIG_MD_G_POWER_LEVEL_S, SIG_MD_G_POWER_LEVEL_SETUP_S,	// SIG_MD_G_POWER_LEVEL_S extend level.
+        #endif
+    	#if MD_SCENE_EN
+        	#if 1// SHARE_ALL_LIGHT_STATE_MODEL_EN
+    SIG_MD_SCENE_S, SIG_MD_SCENE_SETUP_S, 					// SIG_MD_SCENE_SETUP_S extend default transition time server.
+        	#endif
+        #endif
+        #if (SHARE_ALL_LIGHT_STATE_MODEL_EN)
+			#if MD_LOCATION_EN
+	SIG_MD_G_LOCATION_S, SIG_MD_G_LOCATION_SETUP_S,
+			#endif
+			#if MD_PROPERTY_EN
+	SIG_MD_G_USER_PROP_S, SIG_MD_G_ADMIN_PROP_S, SIG_MD_G_MFG_PROP_S, SIG_MD_G_CLIENT_PROP_S, //  is root model and is not extended by any other model.
+			#endif
+			#if MD_SENSOR_EN
+	SIG_MD_SENSOR_S, SIG_MD_SENSOR_SETUP_S,
+			#endif
+			#if MD_TIME_EN
+	SIG_MD_TIME_S, SIG_MD_TIME_SETUP_S,
+			#endif
+			#if MD_SCHEDULE_EN
+	SIG_MD_SCHED_S, SIG_MD_SCHED_SETUP_S,
+			#endif
+			#if MD_MESH_OTA_EN
+			// should not include Mesh OTA model.
+			#endif
+        #endif
+    #endif
+    
+    #if MD_CLIENT_EN
+    // most client models are root model, except OTA which set in sub_share_model_sig_others_server_extend_[]: both Firmware Update Client and The Firmware Distribution Client model extend BLOB Transfer Client model.
+    #endif
+
+    #ifdef WIN32 
+    0, //  because WIN32 can't assigned 0 size array.
+    #endif
+};
+
+/**
+ * @brief       sig models of each array inside that have extend relation ship, the first model is root model,
+ *              they should share the same subscription list.
+ *              such as SIG_MD_TIME_S is root model, SIG_MD_TIME_SETUP_S extend SIG_MD_TIME_S, so the should share the same subscription list.
+ *              but SIG_MD_SENSOR_S should not share the same subscription list with SIG_MD_TIME_S.
+ */
+const u16 sub_share_model_sig_others_server_extend[][3] = { // model list for others. // should share when it is extend model.
+#if MD_SERVER_EN
+	// server model, the first model of each array is root model.
+	#if MD_LOCATION_EN
+	{SIG_MD_G_LOCATION_S, SIG_MD_G_LOCATION_SETUP_S},
+	#endif
+	#if MD_PROPERTY_EN
+	{SIG_MD_G_USER_PROP_S, SIG_MD_G_ADMIN_PROP_S, SIG_MD_G_MFG_PROP_S}, // SIG_MD_G_CLIENT_PROP_S is root model and is not extended by any other model.
+	#endif
+	#if MD_SENSOR_EN
+	{SIG_MD_SENSOR_S, SIG_MD_SENSOR_SETUP_S},
+	#endif
+	#if MD_TIME_EN
+	{SIG_MD_TIME_S, SIG_MD_TIME_SETUP_S},
+	#endif
+	#if MD_SCHEDULE_EN
+	{SIG_MD_SCHED_S, SIG_MD_SCHED_SETUP_S},
+	#endif
+#endif
+	
+	// client model
+#if MD_MESH_OTA_EN
+	#if 1 // (MD_SERVER_EN || MD_CLIENT_EN) // because SIG_MD_BLOB_TRANSFER_C and SIG_MD_FW_UPDATE_C will be used in light node.
+	{SIG_MD_BLOB_TRANSFER_S, SIG_MD_FW_UPDATE_S, SIG_MD_FW_DISTRIBUT_S},
+	{SIG_MD_BLOB_TRANSFER_C, SIG_MD_FW_UPDATE_C, SIG_MD_FW_DISTRIBUT_C},
+	#endif
+#endif
+};
+
+const u32 sub_share_model_vendor_server_extend[] = {
+    #if MD_SERVER_EN
+        #if (SHARE_ALL_LIGHT_STATE_MODEL_EN)
+    VENDOR_MD_LIGHT_S,
+            #if MD_VENDOR_2ND_EN
+    VENDOR_MD_LIGHT_S2,
+            #endif
+        #endif
+    #endif
+    
+    #ifdef WIN32 
+    0, //  because WIN32 can't assigned 0 size array.
+    #endif
+};
+
+
+
+/**
+ * @brief       This function set subscription for model which extend onoff model.
+ * @param[in]   ele_adr	- element address
+ * @param[in]   op		- opcode
+ * @param[in]   sub_adr	- subscription list
+ * @param[in]   uuid	- if sub_adr is virtual address, it is the Label UUID of it. if not virtual address, set to NULL.
+ * @return      1: MODEL_SHARE_TYPE_ONOFF_SERVER_EXTEND
+ * @note        
+ */
+model_share_type_e share_model_sub_onoff_server_extend(u16 op, u16 sub_adr, u8 *uuid, u16 ele_adr)
+{
+	//for(light_idx = 0; light_idx < (LIGHT_CNT); ++light_idx) // should not share to other element. if not, level command will not be able to send to group address.
+	{			
+		foreach_arr(i,sub_share_model_sig_onoff_server_extend){
+			u32 model_list_set = sub_share_model_sig_onoff_server_extend[i];
+			__UNUSED u8 st = 0;
+			st = mesh_sub_search_and_set(op, ele_adr, sub_adr, uuid, model_list_set, 1);
+			LOG_SHARE_MODEL_DEBUG(0, 0,"share  onoff model sub addr:0x%04x, ele_adr:0x%04x, model id:0x%04x, st:%d", sub_adr, ele_adr, model_list_set, st);
+		}
+			
+		foreach_arr(i,sub_share_model_vendor_server_extend){
+			u32 model_list_set = sub_share_model_vendor_server_extend[i]; // must u32 for vendor model id
+			__UNUSED u8 st = 0;
+			st = mesh_sub_search_and_set(op, ele_adr, sub_adr, uuid, model_list_set, 0);
+			LOG_SHARE_MODEL_DEBUG(0, 0,"share vendor model sub addr:0x%04x, ele_adr:0x%04x, model id:0x%04x, st:%d", sub_adr, ele_adr, model_list_set, st);
+		}
+			
+#if 0 // (LEVEL_STATE_CNT_EVERY_LIGHT >= 2) // no need to set twice. have been set in sub_share_model_sig.
+   	#if (LIGHT_TYPE_CT_EN)
+		mesh_sub_search_and_set(op, ele_adr, sub_adr, uuid, SIG_MD_LIGHT_CTL_TEMP_S, 1);
+    #endif
+    #if (LIGHT_TYPE_HSL_EN)
+		mesh_sub_search_and_set(op, ele_adr, sub_adr, uuid, SIG_MD_LIGHT_HSL_HUE_S, 1);
+		mesh_sub_search_and_set(op, ele_adr, sub_adr, uuid, SIG_MD_LIGHT_HSL_SAT_S, 1);
+    #endif
+#endif
+	}
+
+	return MODEL_SHARE_TYPE_ONOFF_SERVER_EXTEND;
+}
+
+
+
+/**
+ * @brief       This function Check whether it is extend model of onoff model.
+ * @param[in]   model_id	- model id
+ * @param[in]   sig_model	- model id is sig model(1) or vendor model(0).
+ * @return      0:no; 1:yes
+ * @note        
+ */
+int is_need_share_model_sub_onoff_server_extend(u32 model_id, bool4 sig_model)
+{
+    if(sig_model){
+        foreach_arr(i,sub_share_model_sig_onoff_server_extend){
+            if(sub_share_model_sig_onoff_server_extend[i] == model_id){
+                return 1;
+            }
+        }
+    }else{
+    	#if (SHARE_ALL_LIGHT_STATE_MODEL_EN)
+		foreach_arr(i,sub_share_model_vendor_server_extend){
+            if(sub_share_model_vendor_server_extend[i] == model_id){
+                return 1;
+            }
+		}
+		#endif
+	}
+	
+    return 0;
+}
+
+/**
+ * @brief       This function set subscription for current model and its extend model.
+ * @param[in]   op			- opcode
+ * @param[in]   sub_adr		- subscription address.
+ * @param[in]   uuid		- if sub_adr is virtual address, it is the Label UUID of it. if not virtual address, set to NULL.
+ * @param[in]   ele_adr		- element address
+ * @param[in]   model_id	- model id
+ * @param[in]   sig_model	- 1: model id is sig model; 0: vendor model.
+ * @return      
+ * @note        
+ */
+static inline model_share_type_e subscription_check_and_set_share_model(u16 op, u16 sub_adr, u8 *uuid, u16 ele_adr, u32 model_id, bool4 sig_model)
+{
+	if(is_need_share_model_sub_onoff_server_extend(model_id, sig_model)){
+		return share_model_sub_onoff_server_extend(op, sub_adr, uuid, ele_adr);
+	}else if(sig_model){
+        foreach_arr(i,sub_share_model_sig_others_server_extend){
+        	foreach_arr(j, sub_share_model_sig_others_server_extend[0]){
+        		u32 model_list_search = sub_share_model_sig_others_server_extend[i][j];
+        		if(model_list_search == model_id){
+		        	foreach_arr(k, sub_share_model_sig_others_server_extend[i]){
+						u32 model_list_set = sub_share_model_sig_others_server_extend[i][k];
+						if(0 != model_list_set){ // 0 is config server model, and it is also invalid model here.
+							__UNUSED u8 st = 0;
+							st = mesh_sub_search_and_set(op, ele_adr, sub_adr, uuid, model_list_set, 1);
+							LOG_SHARE_MODEL_DEBUG(0, 0,"share others model sub addr:0x%04x, ele_adr:0x%04x, model id:0x%04x, st:%d", sub_adr, ele_adr, model_list_set, st);
+						}
+					}
+		        	return MODEL_SHARE_TYPE_OTHERS_SERVER_EXTEND;
+	            }
+            }
+        }
+    }
+    
+    return MODEL_SHARE_TYPE_NONE;
+}
+
+
+/**
+ * @brief       This function set subscription address for extend model which also said share model.
+ * @param[in]   op			- opcode
+ * @param[in]   ele_adr		- element address
+ * @param[in]   sub_adr		- subscription address
+ * @param[in]   dst_adr		- destination address
+ * @param[in]   uuid		- if sub_adr is virtual address, it is the Label UUID of it. if not virtual address, set to NULL.
+ * @param[in]   model_id	- model id
+ * @param[in]   sig_model	- model id is sig model(1) or vendor model(0).
+ * @return      none
+ * @note        
+ */
+_USER_CAN_REDEFINE_ void share_model_sub_by_rx_cmd(u16 op, u16 ele_adr, u16 sub_adr, u16 dst_adr,u8 *uuid, u32 model_id, bool4 sig_model)
+{
+    #if DUAL_VENDOR_EN
+	if(DUAL_VENDOR_ST_ALI == provision_mag.dual_vendor_st)
+    #endif
+    {
+        if(is_own_ele(ele_adr)){
+            //u32 light_idx = (ele_adr - ele_adr_primary) / ELE_CNT_EVERY_LIGHT;
+            subscription_check_and_set_share_model(op, sub_adr, uuid, ele_adr, model_id, sig_model);
+        }
+    }
+}
+#endif
+
+
+/**
+ * @brief       This function return to subscription status
+ * @param[in]   st			- status
+ * @param[in]	p_sub_set	- subscription parameters
+ * @param[in]   sig_model	- model id is sig model(1) or vendor model(0).
+ * @param[in]   adr_src		- source address
+ * @return      0: success; others: error code of tx_errno_e
+ * @note        
+ */
+int mesh_cmd_sig_cfg_model_sub_cb(u8 st,mesh_cfg_model_sub_set_t * p_sub_set,bool4 sig_model,u16 adr_src)
+{
+	return mesh_rsp_sub_status(st, p_sub_set, sig_model, adr_src);
+}
+
 u8 mesh_sub_search_and_set(u16 op, u16 ele_adr, u16 sub_adr, u8 *uuid, u32 model_id, bool4 sig_model)
 {
     u8 st = ST_UNSPEC_ERR;
@@ -1836,6 +2334,16 @@ u8 mesh_sub_search_and_set(u16 op, u16 ele_adr, u16 sub_adr, u8 *uuid, u32 model
     }
     
 	return st;
+}
+
+u8 mesh_sub_search_ele_and_set(u16 op, u16 ele_adr, u16 sub_adr, u8 *uuid, u32 model_id, bool4 sig_model)
+{
+    u8 offset = get_ele_offset_by_model((mesh_page0_t *)(gp_page0), SIZE_OF_PAGE0_LOCAL, ele_adr, ele_adr, model_id, sig_model);
+    if(offset == MODEL_NOT_FOUND){
+        return ST_INVALID_MODEL;
+    }else{
+        return mesh_sub_search_and_set(op, ele_adr+offset,sub_adr, uuid, model_id, sig_model);
+    }
 }
 
 int mesh_cmd_sig_cfg_model_sub_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_par)
@@ -1881,6 +2389,11 @@ int mesh_cmd_sig_cfg_model_sub_set(u8 *par, int par_len, mesh_cb_fun_par_t *cb_p
 		p_sub_set->ele_adr = ele_adr_primary;
 	}
 #endif
+
+#if DEPRECATED_MESH_OTA_COMPAT
+    model_id = mesh_ota_adapt_rx_md_id(model_id);
+#endif
+
     st = mesh_sub_search_and_set(op, p_sub_set->ele_adr, p_sub_set->sub_adr, uuid, model_id, sig_model);
 	if(ST_SUCCESS == st){
 		share_model_sub_by_rx_cmd(op, p_sub_set->ele_adr, p_sub_set->sub_adr,cb_par->adr_dst, uuid, model_id, sig_model);
@@ -1971,7 +2484,7 @@ int mesh_cmd_sig_vendor_model_sub_list(u8 *par, int par_len, mesh_cb_fun_par_t *
  * @return      1: enable. 0: disable
  * @note        
  */
-int mesh_get_on_demand_private_proxy() // can not be inline, because it is used in library.
+int mesh_get_on_demand_private_proxy(void) // can not be inline, because it is used in library.
 {
 #if MD_ON_DEMAND_PROXY_EN
 	return (g_mesh_model_misc_save.on_demand_proxy ? 1 : 0);
@@ -1980,7 +2493,7 @@ int mesh_get_on_demand_private_proxy() // can not be inline, because it is used 
 #endif
 }
 
-u8 mesh_get_private_proxy()
+u8 mesh_get_private_proxy(void)
 {
 #if MD_PRIVACY_BEA
 	if(g_mesh_model_misc_save.privacy_bc.proxy_sts == PRIVATE_PROXY_ENABLE){
@@ -1993,7 +2506,7 @@ u8 mesh_get_private_proxy()
 #endif
 }
 
-u8 mesh_get_private_node_identity()
+u8 mesh_get_private_node_identity(void)
 {
 #if (PRIVATE_PROXY_FUN_EN && MD_PRIVACY_BEA)
 	mesh_net_key_t *p_in = &mesh_key.net_key[0][0];

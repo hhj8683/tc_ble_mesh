@@ -6248,7 +6248,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 
 
-#pragma mark 8.4.1.1 Firmware Update Information Get, opcode:0xB601
+#pragma mark 8.4.1.1 Firmware Update Information Get, opcode:0x8308
 
 
 /// The Firmware Update Information Get message is an acknowledged
@@ -6289,7 +6289,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.1.2 Firmware Update Information Status, opcode:0xB602
+#pragma mark 8.4.1.2 Firmware Update Information Status, opcode:0x8309
 
 
 /// The Firmware Update Information Status message is an unacknowledged
@@ -6323,7 +6323,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.1.3 Firmware Update Firmware Metadata Check, opcode:0xB603
+#pragma mark 8.4.1.3 Firmware Update Firmware Metadata Check, opcode:0x830A
 
 
 /// The Firmware Update Firmware Metadata Check message is an acknowledged
@@ -6359,7 +6359,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.1.4 Firmware Update Firmware Metadata Status, opcode:0xB604
+#pragma mark 8.4.1.4 Firmware Update Firmware Metadata Status, opcode:0x830B
 
 
 /// The Firmware Update Firmware Metadata Status message is an unacknowledged
@@ -6395,7 +6395,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.1.5 Firmware Update Get, opcode:0xB605
+#pragma mark 8.4.1.5 Firmware Update Get, opcode:0x830C
 
 
 /// The Firmware Update Get message is an acknowledged message
@@ -6417,7 +6417,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.1.6 Firmware Update Start, opcode:0xB606
+#pragma mark 8.4.1.6 Firmware Update Start, opcode:0x830D
 
 
 /// The Firmware Update Start message is an acknowledged message used to
@@ -6460,7 +6460,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.1.7 Firmware Update Cancel, opcode:0xB607
+#pragma mark 8.4.1.7 Firmware Update Cancel, opcode:0x830E
 
 
 /// The Firmware Update Cancel message is an acknowledged message
@@ -6483,7 +6483,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.1.8 Firmware Update Apply, opcode:0xB608
+#pragma mark 8.4.1.8 Firmware Update Apply, opcode:0x830F
 
 
 /// The Firmware Update Apply message is an acknowledged message
@@ -6506,7 +6506,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.1.9 Firmware Update Status, opcode:0xB609
+#pragma mark 8.4.1.9 Firmware Update Status, opcode:0x8310
 
 
 /// The Firmware Update Status message is an unacknowledged message
@@ -6589,7 +6589,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 8.4.2 Firmware Distribution model messages
 
 
-#pragma mark 8.4.2.8 Firmware Distribution Get, opcode:0xB60A
+#pragma mark 8.4.2.8 Firmware Distribution Get, opcode:0x8318
 
 
 /// The Firmware Distribution Get message is an acknowledged message
@@ -6612,7 +6612,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.9 Firmware Distribution Start, opcode:0xB60B
+#pragma mark 8.4.2.9 Firmware Distribution Start, opcode:0x8319
 
 
 /// The Firmware Distribution Start message is an acknowledged message
@@ -6671,7 +6671,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.10 Firmware Distribution Cancel, opcode:0xB60C
+#pragma mark 8.4.2.10 Firmware Distribution Cancel, opcode:0x831B
 
 
 /// The Firmware Distribution Cancel message is an acknowledged message
@@ -6694,7 +6694,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.11 Firmware Distribution Apply, opcode:0xB60D
+#pragma mark 8.4.2.11 Firmware Distribution Apply, opcode:0x831C
 
 
 /// The Firmware Distribution Apply message is an acknowledged message
@@ -6717,7 +6717,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.12 Firmware Distribution Status, opcode:0xB60E
+#pragma mark 8.4.2.12 Firmware Distribution Status, opcode:0x831D
 
 
 /// The Firmware Distribution Status message is an unacknowledged message
@@ -6815,7 +6815,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.13 Firmware Distribution Upload Get, opcode:0xB616
+#pragma mark 8.4.2.13 Firmware Distribution Upload Get, opcode:0x831E
 
 
 /// The Firmware Distribution Upload Get message is an acknowledged
@@ -6838,7 +6838,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.14 Firmware Distribution Upload Start, opcode:0xB617
+#pragma mark 8.4.2.14 Firmware Distribution Upload Start, opcode:0x831F
 
 
 /// The Firmware Distribution Upload Start message is an acknowledged message sent
@@ -6893,7 +6893,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.15 Firmware Distribution Upload OOB Start, opcode:0xB618
+#pragma mark 8.4.2.15 Firmware Distribution Upload OOB Start, opcode:0x8320
 
 
 /// The Firmware Distribution Upload OOB Start message is an acknowledged message
@@ -6928,7 +6928,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.16 Firmware Distribution Upload Cancel, opcode:0xB619
+#pragma mark 8.4.2.16 Firmware Distribution Upload Cancel, opcode:0x8321
 
 
 /// The Firmware Distribution Upload Cancel message is an acknowledged
@@ -6951,7 +6951,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.17 Firmware Distribution Upload Status, opcode:0xB61A
+#pragma mark 8.4.2.17 Firmware Distribution Upload Status, opcode:0x8322
 
 
 /// The Firmware Distribution Upload Status message is an unacknowledged message
@@ -6994,7 +6994,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.18 Firmware Distribution Firmware Get, opcode:0xB61B
+#pragma mark 8.4.2.18 Firmware Distribution Firmware Get, opcode:0x8323
 
 
 /// The Firmware Distribution Firmware Get message is an acknowledged message
@@ -7020,7 +7020,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.22 Firmware Distribution Firmware Status, opcode:0xB61C
+#pragma mark 8.4.2.22 Firmware Distribution Firmware Status, opcode:0x8327
 
 
 /// The Firmware Distribution Firmware Status message is an unacknowledged message
@@ -7069,7 +7069,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.19 Firmware Distribution Firmware Get By Index, opcode:0xB61D
+#pragma mark 8.4.2.19 Firmware Distribution Firmware Get By Index, opcode:0x8324
 
 
 /// The Firmware Distribution Firmware Get By Index message is an acknowledged message
@@ -7097,7 +7097,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.20 Firmware Distribution Firmware Delete, opcode:0xB61E
+#pragma mark 8.4.2.20 Firmware Distribution Firmware Delete, opcode:0x8325
 
 
 /// The Firmware Distribution Firmware Delete message is an acknowledged message
@@ -7125,7 +7125,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.21 Firmware Distribution Firmware Delete All, opcode:0xB61F
+#pragma mark 8.4.2.21 Firmware Distribution Firmware Delete All, opcode:0x8326
 
 
 /// The Firmware Distribution Firmware Delete All message is an acknowledged message
@@ -7148,7 +7148,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.4 Firmware Distribution Receivers Get, opcode:0xB60F
+#pragma mark 8.4.2.4 Firmware Distribution Receivers Get, opcode:0x8314
 
 
 /// The Firmware Distribution Receivers Get message is an acknowledged message
@@ -7183,7 +7183,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.5 Firmware Distribution Receivers List, opcode:0xB610
+#pragma mark 8.4.2.5 Firmware Distribution Receivers List, opcode:0x8315
 
 
 /// The Firmware Distribution Receivers List message is an unacknowledged message sent
@@ -7216,7 +7216,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.1 Firmware Distribution Receivers Add, opcode:0xB611
+#pragma mark 8.4.2.1 Firmware Distribution Receivers Add, opcode:0x8311
 
 
 /// The Firmware Distribution Receivers Add message is an acknowledged message sent
@@ -7242,7 +7242,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.2 Firmware Distribution Receivers Delete All, opcode:0xB612
+#pragma mark 8.4.2.2 Firmware Distribution Receivers Delete All, opcode:0x8312
 
 
 /// The Firmware Distribution Receivers Delete All message is an acknowledged
@@ -7265,7 +7265,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.3 Firmware Distribution Receivers Status, opcode:0xB613
+#pragma mark 8.4.2.3 Firmware Distribution Receivers Status, opcode:0x8313
 
 
 /// The Firmware Distribution Receivers Status message is an unacknowledged
@@ -7299,7 +7299,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.6 Firmware Distribution Capabilities Get, opcode:0xB614
+#pragma mark 8.4.2.6 Firmware Distribution Capabilities Get, opcode:0x8316
 
 
 /// The Firmware Distribution Capabilities Get message is an acknowledged message
@@ -7322,7 +7322,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 8.4.2.7 Firmware Distribution Capabilities Status, opcode:0xB615
+#pragma mark 8.4.2.7 Firmware Distribution Capabilities Status, opcode:0x8317
 
 
 /// The Firmware Distribution Capabilities Status message is an unacknowledged
@@ -7378,7 +7378,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 7.3.1 BLOB Transfer messages
 
 
-#pragma mark 7.3.1.1 BLOB Transfer Get, opcode:0xB701
+#pragma mark 7.3.1.1 BLOB Transfer Get, opcode:0x8300
 
 
 /// BLOB Transfer Get is an acknowledged message used to get
@@ -7400,7 +7400,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 7.3.1.2 BLOB Transfer Start, opcode:0xB702
+#pragma mark 7.3.1.2 BLOB Transfer Start, opcode:0x8301
 
 
 /// BLOB Transfer Start is an acknowledged message used to start
@@ -7446,7 +7446,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 7.3.1.3 BLOB Transfer Cancel, opcode:0xB703
+#pragma mark 7.3.1.3 BLOB Transfer Cancel, opcode:0x8302
 
 
 /// BLOB Transfer Cancel is an acknowledged message used to cancel
@@ -7472,7 +7472,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 7.3.1.4 BLOB Transfer Status, opcode:0xB704
+#pragma mark 7.3.1.4 BLOB Transfer Status, opcode:0x8303
 
 
 /// BLOB Transfer Status is an unacknowledged message used to report
@@ -7535,7 +7535,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 3.1.3.1.6 BLOB Block Start, opcode:0xB705
+#pragma mark 3.1.3.1.6 BLOB Block Start, opcode:0x8304
 
 
 /// BLOB Block Start is an acknowledged message used to start
@@ -7566,7 +7566,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 3.1.3.1.8 BLOB Chunk Transfer, opcode:0x7D
+#pragma mark 3.1.3.1.8 BLOB Chunk Transfer, opcode:0x66
 
 
 /// BLOB Chunk Transfer is an unacknowledged message used to
@@ -7599,7 +7599,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 3.1.3.1.5 BLOB Block Get, opcode:0xB707
+#pragma mark 3.1.3.1.5 BLOB Block Get, opcode:0x8305
 
 
 /// BLOB Block Get is an acknowledged message used to retrieve the phase
@@ -7622,7 +7622,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 7.3.1.8 BLOB Partial Block Report, opcode:0x7C
+#pragma mark 7.3.1.8 BLOB Partial Block Report, opcode:0x68
 
 
 /// BLOB Partial Block Report is an unacknowledged message used
@@ -7646,7 +7646,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 3.1.3.1.7 BLOB Block Status, opcode:0x7E
+#pragma mark 3.1.3.1.7 BLOB Block Status, opcode:0x67
 
 
 /// BLOB Block Status is an unacknowledged message used to report
@@ -7703,7 +7703,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 7.3.1.10 BLOB Information Get, opcode:0xB70A
+#pragma mark 7.3.1.10 BLOB Information Get, opcode:0x8306
 
 
 /// BLOB Information Get is an acknowledged message used to get
@@ -7725,7 +7725,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 7.3.1.11 BLOB Information Status, opcode:0xB70B
+#pragma mark 7.3.1.11 BLOB Information Status, opcode:0x8307
 
 
 /// BLOB Information Get is an acknowledged message used to get
@@ -7785,7 +7785,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 
 
-#pragma mark 4.3.X.1 SUBNET_BRIDGE_GET, opcode:0xBF70
+#pragma mark 4.3.11.1 SUBNET_BRIDGE_GET, opcode:0x80B1
 
 
 /// The SUBNET_BRIDGE_GET message is an acknowledged message used to get
@@ -7807,7 +7807,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.X.2 SUBNET_BRIDGE_SET, opcode:0xBF71
+#pragma mark 4.3.11.2 SUBNET_BRIDGE_SET, opcode:0x80B2
 
 
 /// The SUBNET_BRIDGE_SET message is an acknowledged message used to set
@@ -7855,7 +7855,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.X.4 BRIDGING_TABLE_ADD, opcode:0xBF73
+#pragma mark 4.3.11.4 BRIDGING_TABLE_ADD, opcode:0x80B4
 
 
 /// The BRIDGING_TABLE_ADD message is an acknowledged message used to add
@@ -7880,7 +7880,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.X.5 BRIDGING_TABLE_REMOVE, opcode:0xBF74
+#pragma mark 4.3.11.5 BRIDGING_TABLE_REMOVE, opcode:0x80B5
 
 
 /// The BRIDGING_TABLE_REMOVE message is an acknowledged message
@@ -7922,7 +7922,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.X.6 BRIDGING_TABLE_STATUS, opcode:0xBF75
+#pragma mark 4.3.X.6 BRIDGING_TABLE_STATUS, opcode:0x80B6
 
 
 /// The BRIDGING_TABLE_STATUS message is an unacknowledged message
@@ -7950,7 +7950,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.X.7 BRIDGED_SUBNETS_GET, opcode:0xBF76
+#pragma mark 4.3.11.7 BRIDGED_SUBNETS_GET, opcode:0x80B7
 
 
 /// The BRIDGED_SUBNETS_GET message is an acknowledged message used to get
@@ -7990,7 +7990,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.X.8 BRIDGED_SUBNETS_LIST, opcode:0xBF77
+#pragma mark 4.3.X.8 BRIDGED_SUBNETS_LIST, opcode:0x80B8
 
 
 /// The BRIDGED_SUBNETS_LIST message is an unacknowledged message used
@@ -8034,7 +8034,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.X.9 BRIDGING_TABLE_GET, opcode:0xBF78
+#pragma mark 4.3.11.9 BRIDGING_TABLE_GET, opcode:0x80B9
 
 
 /// The BRIDGING_TABLE_GET message is an acknowledged message used to get
@@ -8071,7 +8071,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.X.10 BRIDGING_TABLE_LIST, opcode:0xBF79
+#pragma mark 4.3.11.10 BRIDGING_TABLE_LIST, opcode:0x80BA
 
 
 /// The BRIDGING_TABLE_LIST message is an unacknowledged message used to
@@ -8117,7 +8117,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.11.11 BRIDGING_TABLE_SIZE_GET, opcode:0xBF7A
+#pragma mark 4.3.11.11 BRIDGING_TABLE_SIZE_GET, opcode:0x80BB
 
 
 /// A BRIDGING_TABLE_SIZE_GET message is an acknowledged message used to get
@@ -8139,7 +8139,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-#pragma mark 4.3.11.12 BRIDGING_TABLE_SIZE_STATUS, opcode:0xBF7B
+#pragma mark 4.3.11.12 BRIDGING_TABLE_SIZE_STATUS, opcode:0x80BC
 
 
 /// A BRIDGING_TABLE_SIZE_STATUS message is an unacknowledged message used to

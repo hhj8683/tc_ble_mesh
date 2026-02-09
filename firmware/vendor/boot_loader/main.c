@@ -23,15 +23,17 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#include "proj/mcu/watchdog_i.h"
-#include "vendor/common/user_config.h"
-#include "proj_lib/rf_drv.h"
-#include "proj_lib/pm.h"
-#include "proj_lib/ble/blt_config.h"
-#include "proj_lib/ble/ll/ll.h"
+#include "stack/ble/ble.h"
+#include "drivers.h"
 #include "proj_lib/sig_mesh/app_mesh.h"
 
-#define DEBUG_PIN                (PWM_R)
+#define DEBUG_PIN_EN            0
+#if DEBUG_PIN_EN
+#define DEBUG_PIN               (PWM_R)
+#define DEBUG_GPIO_TOGGLE(pin)  gpio_toggle(DEBUG_PIN)
+#else
+#define DEBUG_GPIO_TOGGLE(pin)
+#endif
 
 // user define
 
@@ -82,7 +84,7 @@ void sha256_test_fun()
 	sha256_tick1 = clock_time();
 	sha256_tick1_inter = (sha256_tick1 - sha256_tick0)/16;
 	while(1){
-        gpio_toggle(DEBUG_PIN);
+        DEBUG_GPIO_TOGGLE(DEBUG_PIN);
         WaitMs(1000);
 		static volatile u32 AA_debug1=0;
 		AA_debug1++;
@@ -164,7 +166,7 @@ _attribute_ram_code_ void boot_load_with_ota_check(u32 addr_load)
 #if 0 // test
         u32 cnt = 100000;
         while (T_DBG_CNT[3] && (cnt--)) {
-            gpio_toggle(DEBUG_PIN);
+            DEBUG_GPIO_TOGGLE(DEBUG_PIN);
             WaitMs(100);
         }
 #endif
@@ -178,14 +180,19 @@ _attribute_ram_code_ int main(void)
     T_DBG_CNT[0]++;
 
     /* cpu_clk_init */
+#if(MCU_CORE_TYPE == MCU_CORE_825x)
     cpu_wakeup_init();
-    clock_init(SYS_CLK_CRYSTAL);
+#else
+    cpu_wakeup_init(LDO_MODE,INTERNAL_CAP_XTAL24M);
+#endif
+    clock_init(SYS_CLK_TYPE);
 
-
+#if DEBUG_PIN_EN
     // gpio_set_func(DEBUG_PIN, AS_GPIO);  // default is GPIO
     gpio_set_output_en(DEBUG_PIN, 1);   //enable output
     gpio_set_input_en(DEBUG_PIN, 0);    //disable input
     gpio_write(DEBUG_PIN, 0);           //LED OFF
+#endif
     //sha256_test_fun();
 
 	blc_app_loadCustomizedParameters();		// call to handle zbit flash
@@ -194,13 +201,14 @@ _attribute_ram_code_ int main(void)
     app_battery_power_check_and_sleep_handle(0); //battery check must do before OTA relative operation
 #endif
 
-
+#if DEBUG_PIN_EN
     //WaitMs(500);
     //gpio_write(DEBUG_PIN, 0); //LED Off
     //WaitMs(500);
     //gpio_write(DEBUG_PIN, 1); //LED On
     //WaitMs(50);
     //gpio_write(DEBUG_PIN, 0); //LED Off
+#endif
 
 #if 1 //jump to selected firmware
     irq_disable();  // must, can't enter irq, because cstartup have been changed.
@@ -233,7 +241,7 @@ _attribute_ram_code_ int main(void)
     // my_func_t func = (my_func_t)(0xa000);
     // func();
     while (1) {
-        gpio_toggle(DEBUG_PIN);
+        DEBUG_GPIO_TOGGLE(DEBUG_PIN);
         WaitMs(500);
     }
 }

@@ -23,12 +23,7 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#include "proj/mcu/watchdog_i.h"
-#include "vendor/common/user_config.h"
-#include "proj_lib/rf_drv.h"
-#include "proj_lib/pm.h"
-#include "proj_lib/ble/blt_config.h"
-#include "proj_lib/ble/ll/ll.h"
+#include "stack/ble/ble.h"
 #include "proj_lib/sig_mesh/app_mesh.h"
 
 extern void user_init();
@@ -36,7 +31,7 @@ extern void main_loop ();
 void blc_pm_select_none();
 
 #if (HCI_ACCESS==HCI_USE_UART)
-#include "proj/drivers/uart.h"
+#include "drivers.h"
 extern my_fifo_t hci_rx_fifo;
 
 u16 uart_tx_irq=0, uart_rx_irq=0;
@@ -62,6 +57,14 @@ _attribute_ram_code_ void irq_uart_handle()
 		uart_tx_irq++;
 		reg_dma_rx_rdy0 = FLD_DMA_CHN_UART_TX;
 	}
+
+    #if(MCU_CORE_TYPE == MCU_CORE_TC321X)
+	if(reg_uart_status1(UART0) & FLD_UART_TX_DONE)
+	{
+		uart0_tx_done_flag = 1;
+		uart_clr_tx_done(UART0);
+	}
+    #endif
 }
 #endif
 
@@ -157,36 +160,18 @@ _attribute_ram_code_ void irq_handler(void)
 }
 
 FLASH_ADDRESS_DEFINE;
-#if(MCU_CORE_TYPE == MCU_CORE_8269)
-int main (void) {
-	FLASH_ADDRESS_CONFIG;
-	cpu_wakeup_init();
 
-	clock_init();
-	set_tick_per_us(CLOCK_SYS_CLOCK_HZ/1000000);
-
-	gpio_init();
-
-	rf_drv_init(CRYSTAL_TYPE);
-
-	user_init ();
-
-    irq_enable();
-
-	while (1) {
-#if (MODULE_WATCHDOG_ENABLE)
-		wd_clear(); //clear watch dog
+#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+_attribute_ram_code_
 #endif
-		main_loop ();
-	}
-}
-#elif((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
-_attribute_ram_code_ int main (void)    //must run in ramcode
+int main (void) // must run in ramcode if enable retention sleep
 {
 	FLASH_ADDRESS_CONFIG;
 #if (PINGPONG_OTA_DISABLE && (0 == FW_START_BY_LEGACY_BOOTLOADER_EN))
     ota_fw_check_over_write();  // must at first for main_
 #endif
+
+    blc_ota_setFirmwareSizeAndBootAddress(FW_SIZE_MAX_K, FLASH_ADR_UPDATE_NEW_FW);
 
 #if SLEEP_FUNCTION_DISABLE
     blc_pm_select_none();
@@ -195,17 +180,17 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 #endif
 #if(MCU_CORE_TYPE == MCU_CORE_8258)
 	cpu_wakeup_init();
-#elif(MCU_CORE_TYPE == MCU_CORE_8278)
-	cpu_wakeup_init(LDO_MODE,EXTERNAL_XTAL_24M);
+#else
+	cpu_wakeup_init(LDO_MODE,INTERNAL_CAP_XTAL24M);
 #endif
 
 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup();  //MCU deep retention wakeUp
 
-	rf_drv_init(RF_MODE_BLE_1M);
+	rf_drv_ble_init();
 
 	gpio_init( !deepRetWakeUp );  //analog resistance will keep available in deepSleep mode, so no need initialize again
 
-    clock_init(SYS_CLK_CRYSTAL);
+	clock_init(SYS_CLK_TYPE);
 
 
 #if	(PM_DEEPSLEEP_RETENTION_ENABLE)
@@ -232,4 +217,4 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 		main_loop ();
 	}
 }
-#endif
+

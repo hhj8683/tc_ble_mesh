@@ -44,6 +44,10 @@ extern "C" {
 #endif
 #endif
 
+#define ENERGY_HARVEST_RX_EN	        0
+#if ENERGY_HARVEST_RX_EN
+#define ENERGY_HARVEST_DEBUG_LOG_EN     0
+#endif
 
 #define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
 #define	__LOG_RT_ENABLE__		0
@@ -54,11 +58,7 @@ extern "C" {
 #elif DUAL_VENDOR_EN
 #define FLASH_1M_ENABLE         0
 #else
-	#if MI_API_ENABLE
-#define FLASH_1M_ENABLE        	1
-	#else
 #define FLASH_1M_ENABLE        	0	
-	#endif
 #endif
 
 #if FLASH_1M_ENABLE
@@ -73,6 +73,12 @@ extern "C" {
 #endif
 
 #define APP_FLASH_PROTECTION_ENABLE     1
+
+#define SAVE_SNO_CACHE_EN				0
+#if SAVE_SNO_CACHE_EN
+// if save cache once receive a new message, it will need to do many flash save action when such as get all lightness, all publish to all.
+#define SAVE_SNO_CACHE_ONLY_WHEN_DST_ADDR_MATCH_EN      1 // 0 means save cache once receiving a new message. 1 means save only when need to handle this message.
+#endif
 
 //////////// product  Information  //////////////////////////////
 #define ID_VENDOR				0x248a			// for report
@@ -161,21 +167,11 @@ extern "C" {
 #if (MESH_RX_TEST || (!MD_DEF_TRANSIT_TIME_EN))
 #define TRANSITION_TIME_DEFAULT_VAL (0)
 #else
-	#if MI_API_ENABLE
-#define TRANSITION_TIME_DEFAULT_VAL	0
-	#elif LPN_CONTROL_EN
-#define TRANSITION_TIME_DEFAULT_VAL	0
-	#else
 #define TRANSITION_TIME_DEFAULT_VAL (GET_TRANSITION_TIME_WITH_STEP(1, TRANSITION_STEP_RES_1S)) // (0x41)  // 0x41: 1 second // 0x00: means no default transition time
-	#endif
 #endif
 #endif
 
-#if MI_API_ENABLE
-#define MESH_DLE_MODE               MESH_DLE_MODE_GATT
-#define DLE_LEN_MAX_RX              (136)
-#define DLE_LEN_MAX_TX              (40)
-#elif GATT_LPN_EN
+#if GATT_LPN_EN
 #define MESH_DLE_MODE               MESH_DLE_MODE_EXTEND_BEAR
 #define DLE_LEN_MAX_RX              (MAX_OCTETS_DATA_LEN_EXTENSION)
 #define DLE_LEN_MAX_TX              (80)
@@ -196,7 +192,7 @@ extern "C" {
 #endif
 
 /////////////////// MODULE /////////////////////////////////
-#if (MI_SWITCH_LPN_EN || GATT_LPN_EN||DU_LPN_EN)
+#if (GATT_LPN_EN)
 #define BLE_REMOTE_PM_ENABLE			1
 #else
 #define BLE_REMOTE_PM_ENABLE			0
@@ -223,7 +219,7 @@ extern "C" {
 #endif
 
 //----------------------- GPIO for UI --------------------------------
-#if (GATT_LPN_EN || DF_TEST_MODE_EN || IV_UPDATE_TEST_EN || DU_ENABLE)
+#if (GATT_LPN_EN || DF_TEST_MODE_EN || IV_UPDATE_TEST_EN || DU_ENABLE || MESH_RX_TEST)
 #define	UI_KEYBOARD_ENABLE 				1
 #endif
 
@@ -365,30 +361,27 @@ extern "C" {
 #endif
 #endif
 
-#define XIAOMI_MODULE_ENABLE	MI_API_ENABLE
-#define XIAOMI_TEST_CODE_ENABLE 	0
-
 //---------------  LED / PWM
 #if(PCBA_8258_SEL == PCBA_8258_DONGLE_48PIN)
-#define PWM_R       GPIO_PWM1A3		//red
-#define PWM_G       GPIO_PWM0A2		//green
-#define PWM_B       GPIO_PWM3B0		//blue
-#define PWM_W       GPIO_PWM4B1		//white
+#define PWM_R       GPIO_PA3		//red
+#define PWM_G       GPIO_PA2		//green
+#define PWM_B       GPIO_PB0		//blue
+#define PWM_W       GPIO_PB1		//white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T140A3_V1_1)
-#define PWM_R       GPIO_PWM2ND4    //red
-#define PWM_G       GPIO_PWM0NA0    //green
-#define PWM_B       GPIO_PWM1ND3    //blue
-#define PWM_W       GPIO_PWM3D2		//yellow as white
+#define PWM_R       GPIO_PD4        //red
+#define PWM_G       GPIO_PA0        //green
+#define PWM_B       GPIO_PD3        //blue
+#define PWM_W       GPIO_PD2		//yellow as white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_0)   // PCBA_8258_DEVELOPMENT_BOARD
-#define PWM_R       GPIO_PWM1ND3	//red
-#define PWM_G       GPIO_PWM2ND4	//green
+#define PWM_R       GPIO_PD3	    //red
+#define PWM_G       GPIO_PD4	    //green
 #define PWM_B       GPIO_PD5		//blue
-#define PWM_W       GPIO_PWM3D2		//white
+#define PWM_W       GPIO_PD2		//white
 #elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_2)
-#define PWM_R       GPIO_PD5	//red
-#define PWM_G       GPIO_PWM1ND3	//green
-#define PWM_B       GPIO_PWM3D2		//blue
-#define PWM_W       GPIO_PWM2ND4		//white
+#define PWM_R       GPIO_PD5	    //red
+#define PWM_G       GPIO_PD3	    //green
+#define PWM_B       GPIO_PD2		//blue
+#define PWM_W       GPIO_PD4		//white
 
 #endif
 
@@ -433,8 +426,6 @@ extern "C" {
 #define CLOCK_SYS_CLOCK_HZ  	32000000
 #elif EXTENDED_ADV_ENABLE
 #define CLOCK_SYS_CLOCK_HZ  	48000000		// need to process rx buffer quickly
-#elif (MI_API_ENABLE)
-#define CLOCK_SYS_CLOCK_HZ  	48000000
 #else
 #define CLOCK_SYS_CLOCK_HZ  	32000000
 #endif
@@ -443,33 +434,8 @@ extern "C" {
 
 /////////////////// watchdog  //////////////////////////////
 #define MODULE_WATCHDOG_ENABLE		1
-#if (MI_API_ENABLE)
-#define WATCHDOG_INIT_TIMEOUT		20000  //in mi mode the watchdog timeout is 20s
-#else
 #define WATCHDOG_INIT_TIMEOUT		2000  //in mi mode the watchdog timeout is 20s
-#endif
 
-#if MI_API_ENABLE && (MSC_TYPE != MSC_NONE)
-/////////////////// MSC //////////////////////////////////
-#define PULL_WAKEUP_SRC_PB4             PM_PIN_PULLUP_10K
-#define GPIO_MSC_RESET                  GPIO_PB4
-#define PB4_FUNC                        AS_GPIO
-
-#define PULL_WAKEUP_SRC_PC2             PM_PIN_PULLUP_10K
-#define GPIO_MSC_SDA                    GPIO_PC2
-
-#define PULL_WAKEUP_SRC_PC3             PM_PIN_PULLUP_10K
-#define GPIO_MSC_SCL                    GPIO_PC3    
-
-//i2c clock = system_clock/(4*DivClock)
-#define I2C_CLOCK_100K                  (CLOCK_SYS_CLOCK_HZ/(4*100000))
-#define I2C_CLOCK_400K                  (CLOCK_SYS_CLOCK_HZ/(4*400000))
-#define I2C_MSC_FREQ                    I2C_CLOCK_400K 
-#endif
-
-#if MI_API_ENABLE
-#include "mi_config.h"
-#endif
 /////////////////// set default   ////////////////
 
 #include "../common/default_config.h"

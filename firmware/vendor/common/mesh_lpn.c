@@ -23,7 +23,7 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#include "proj_lib/ble/blt_config.h"
+#include "stack/ble/ble.h"
 #include "vendor/common/user_config.h"
 #include "app_health.h"
 #include "proj_lib/sig_mesh/app_mesh.h"
@@ -34,15 +34,10 @@
 #include "vendor/common/app_heartbeat.h"
 #include "blt_soft_timer.h"
 #include "vendor/common/mesh_ota.h"
-#if(HCI_ACCESS == HCI_USE_UART)
 #include "drivers.h"
-#endif
+
 #if UI_KEYBOARD_ENABLE
-#if __TLSR_RISCV_EN__
 #include "application/keyboard/keyboard.h"
-#else
-#include "proj/drivers/keyboard.h"
-#endif
 #endif
 
 #if (FEATURE_LOWPOWER_EN || SPIRIT_PRIVATE_LPN_EN)
@@ -60,14 +55,13 @@ u8 lpn_provision_ok = 0;
 #define RETRY_POLL_AGAIN_FLIP_FSN_EN		1	// change FSN to retry the 2nd round.
 
 //u8 fri_request_retry_max = FRI_REQ_RETRY_MAX;
-lpn_sub_list_event_t mesh_lpn_subsc_pending;
-u8 mesh_lpn_poll_md_pending = 0;
 #if PTS_TEST_EN
 u8 mesh_lpn_rx_master_key = 1;
 #else
 u8 mesh_lpn_rx_master_key = 0;
 #endif
 
+u32 g_lpn_poll_intvl_ms = FRI_POLL_INTERVAL_MS;
 u8 lpn_mode = LPN_MODE_NORMAL;
 u32 lpn_mode_tick = 0;
 u32 lpn_wakeup_tick = 0;
@@ -75,23 +69,30 @@ u32 lpn_wakeup_tick = 0;
 STATIC_ASSERT(LPN_ADV_INTERVAL_MS > (FRI_ESTABLISH_REC_DELAY_MS + FRI_ESTABLISH_WIN_MS + 10));//FRI_ESTABLISH_PERIOD_MS
 STATIC_ASSERT(FRI_REQ_TIMEOUT_MS > FRI_ESTABLISH_PERIOD_MS);
 STATIC_ASSERT(LPN_POLL_TIMEOUT_100MS * 100 >= FRI_POLL_INTERVAL_MS * 2); // timeout should not be too short.
-STATIC_ASSERT(FRI_POLL_INTERVAL_MS <= 40*1000); // FRI_POLL_INTERVAL_MS max 40s, because intervalMin in bls_ll_setAdvInterval is u16, max is (0xffff*625)us = 40s.
 STATIC_ASSERT(SUB_LIST_MAX_LPN <= SUB_LIST_MAX);    // SUB_LIST_MAX_LPN should be equal to sub_list_max later
 STATIC_ASSERT(5 == SUB_LIST_MAX_IN_ONE_MSG);    // because subscription add/remove must be unsegment by spec.
-STATIC_ASSERT(BLT_TIMER_SAFE_MARGIN_POST >= FRI_POLL_INTERVAL_MS*1000*sys_tick_per_us); // BLT_TIMER_SAFE_MARGIN_POST should set to larger than ADV_INTERVAL_MAX
 
 #if GATT_LPN_EN
 STATIC_ASSERT(MESH_DLE_MODE != MESH_DLE_MODE_EXTEND_BEAR); // extend bear need extend adv for friend ship
 #endif
 
-mesh_fri_ship_proc_lpn_t fri_ship_proc_lpn = {};	// for VC
+#if (BLE_MULTIPLE_CONNECTION_ENABLE && EXTENDED_ADV_ENABLE)
+#if((MCU_CORE_TYPE == MCU_CORE_B91) && PM_DEEPSLEEP_RETENTION_ENABLE)
+#error "B91 max retention ram size 64k, not enough to support extended adv mode!!"
+#endif
+#endif
+
+mesh_fri_ship_proc_lpn_t fri_ship_proc_lpn = {};	// will re-init after friendship establish in mesh_friend_ship_proc_init_lpn()
 mesh_lpn_subsc_list_t lpn_subsc_list;
 mesh_subsc_list_retry_t subsc_list_retry = {};  // for retry procedure
 mesh_lpn_par_t mesh_lpn_par = {0};
+#if LPN_PREPARE_NEXT_POLL_EN
+mesh_cmd_bear_t mesh_friend_poll_cache;
+#endif
 
 STATIC_ASSERT((FRI_REC_DELAY_MS > FRI_ESTABLISH_REC_DELAY_MS));
 
-void friend_ship_establish_ok_cb_lpn()
+void friend_ship_establish_ok_cb_lpn(void)
 {
 	gatt_adv_send_flag = 0;
 	rf_link_light_event_callback(LGT_CMD_FRIEND_SHIP_OK);
@@ -110,7 +111,7 @@ void friend_ship_establish_ok_cb_lpn()
 	#endif
 }
 
-void friend_ship_disconnect_cb_lpn()
+void friend_ship_disconnect_cb_lpn(void)
 {
 	#if GATT_LPN_EN
 	gatt_adv_send_flag = GATT_LPN_EN;
@@ -127,7 +128,7 @@ void friend_ship_disconnect_cb_lpn()
 	#endif
 }
 
-int is_friend_ship_link_ok_lpn()
+int is_friend_ship_link_ok_lpn(void)
 {
 	return mesh_lpn_par.link_ok;
 }
@@ -151,7 +152,7 @@ int is_unicast_friend_msg_to_fn(mesh_cmd_nw_t *p_nw)
         && (mesh_lpn_par.FriAdr == p_nw->dst));    // must because of group address
 }
 
-void friend_cmd_send_request()
+void friend_cmd_send_request(void)
 {
 	mesh_lpn_par.link_ok = 0;
     mesh_lpn_par.req.LPNCounter++;   // must before
@@ -159,12 +160,92 @@ void friend_cmd_send_request()
     mesh_tx_cmd_layer_upper_ctl(CMD_CTL_REQUEST, (u8 *)&mesh_lpn_par.req, sizeof(mesh_ctl_fri_req_t), ele_adr_primary, ADR_ALL_FRIEND,0);
 }
 
-void friend_cmd_send_poll()
+/**
+ * @brief       This function server to update friend sequence number when send friend poll.
+ * @return      none.
+ * @note        mesh_lpn_par.fsn_update is set to 1 after receive message from friend node.
+ */
+static inline void friend_poll_fsn_update(void)
+{
+    if(mesh_lpn_par.fsn_update){
+        mesh_lpn_par.fsn_update = 0;
+        mesh_lpn_par.poll.FSN = !mesh_lpn_par.poll.FSN;
+    }
+}
+
+void friend_cmd_send_poll(void)
 {
 	//LOG_MSG_LIB(TL_LOG_FRIEND,(u8 *)(&mesh_lpn_par.poll), sizeof(mesh_ctl_fri_poll_t),"send friend poll sno:0x%x par:",mesh_adv_tx_cmd_sno);
-    fri_ship_proc_lpn.poll_tick = clock_time()|1;
-    mesh_tx_cmd_layer_upper_ctl(CMD_CTL_POLL, (u8 *)(&mesh_lpn_par.poll), sizeof(mesh_ctl_fri_poll_t), ele_adr_primary, mesh_lpn_par.FriAdr,0);	
+    fri_ship_proc_lpn.poll_time_ms = clock_time_ms();
+
+    friend_poll_fsn_update();
+#if LPN_PREPARE_NEXT_POLL_EN
+    bear_fn_poll_t *p_bear_poll = (bear_fn_poll_t *)&mesh_friend_poll_cache.tx_head;
+    if((p_bear_poll->par_type == BEAR_TX_PAR_TYPE_SRC_SNO) && ((p_bear_poll->low_sno + 1) == (u8)mesh_adv_tx_cmd_sno) && (p_bear_poll->fsn == mesh_lpn_par.poll.FSN)){
+        mesh_lpn_sleep_prepare(CMD_CTL_POLL);
+        mesh_tx_cmd_add_packet((u8 *)&mesh_friend_poll_cache); // friend pool in mesh_friend_poll_cache is valid, push directly.
+        lpn_quick_tx(1);
+        LOG_MSG_LIB(TL_LOG_FRIEND, 0, 0, "lpn send friend poll in cache sno:0x%x fsn:%d", mesh_adv_tx_cmd_sno - 1, p_bear_poll->fsn);
+    }
+    else
+#endif
+    {
+        #if LPN_PREPARE_NEXT_POLL_EN
+        if((p_bear_poll->par_type == BEAR_TX_PAR_TYPE_SRC_SNO) && ((p_bear_poll->low_sno + 1) == (u8)mesh_adv_tx_cmd_sno)){
+            mesh_adv_tx_cmd_sno = mesh_adv_tx_cmd_sno - 1; // friend poll in mesh_friend_poll_cache will be drop when friend poll retry , can reuse tx sno.(mesh_adv_tx_cmd_sno=1 when reset tx sno)
+        }
+        #endif
+
+        mesh_tx_cmd_layer_upper_ctl(CMD_CTL_POLL, (u8 *)(&mesh_lpn_par.poll), sizeof(mesh_ctl_fri_poll_t), ele_adr_primary, mesh_lpn_par.FriAdr,0);	
+        LOG_MSG_LIB(TL_LOG_FRIEND, 0, 0,"lpn send friend poll sno:0x%x fsn:%d",mesh_adv_tx_cmd_sno - 1, mesh_lpn_par.poll.FSN);
+    }
+
+#if LPN_PREPARE_NEXT_POLL_EN
+    mesh_friend_poll_cache.tx_head.par_type = BEAR_TX_PAR_TYPE_NONE; // drop friend poll in mesh_friend_poll_cache.
+#endif
 }
+
+#if LPN_PREPARE_NEXT_POLL_EN
+/**
+ * @brief       This function server to cache encrypted friend poll
+ * @param[io]   p_bear	- pointer of encrypted message
+ * @return      0: success
+ * @note        
+ */
+int mesh_tx_cmd_add_packet_fn_poll_cache(u8 *p_bear)
+{
+    mesh_cmd_bear_t *p_bear_tmp = (mesh_cmd_bear_t *)p_bear;
+    bear_fn_poll_t *p_bear_poll = (bear_fn_poll_t *)&p_bear_tmp->tx_head;
+    p_bear_poll->par_type = BEAR_TX_PAR_TYPE_SRC_SNO;
+    p_bear_poll->low_sno = (u8)mesh_adv_tx_cmd_sno;
+    p_bear_poll->fsn = mesh_lpn_par.poll.FSN;
+    
+    memcpy(&mesh_friend_poll_cache, p_bear, sizeof(mesh_friend_poll_cache));
+    
+    return 0;
+}
+
+/**
+ * @brief       This function server to prepare next friend poll and push it into mesh_friend_poll_cache
+ * @param[io]   void- 
+ * @return      0: success. other: fail
+ * @note        
+ */
+int mesh_next_fn_poll_prepare(void)
+{
+    material_tx_cmd_t mat;
+    u8 tmp_fsn = mesh_lpn_par.poll.FSN;
+    
+    mesh_lpn_par.poll.FSN = !tmp_fsn;
+    use_mesh_adv_fifo_fn2lpn = 1;  
+    set_material_tx_cmd(&mat, CMD_CTL_POLL, (u8 *)(&mesh_lpn_par.poll), sizeof(mesh_ctl_fri_poll_t), ele_adr_primary, mesh_lpn_par.FriAdr, g_reliable_retry_cnt_def, 0, 0, 0, 0, 0, MESH_CONN_HANDLE_AUTO, 1, 0);
+    int err = mesh_tx_cmd_layer_upper_ctl_ll(&mat, 0);
+    mesh_lpn_par.poll.FSN = tmp_fsn;
+    use_mesh_adv_fifo_fn2lpn = 0;
+
+    return err;
+}
+#endif
 
 void friend_cmd_send_subsc_add(u8 *par_subsc, u32 len)  // only LPN support
 {
@@ -180,10 +261,10 @@ void friend_cmd_send_subsc_rmv(u8 *par_subsc, u32 len)  // only LPN support
     mesh_tx_cmd_layer_upper_ctl(CMD_CTL_SUBS_LIST_REMOVE, (u8 *)par_subsc, len, ele_adr_primary, mesh_lpn_par.FriAdr,0);
 }
 
-void friend_subsc_repeat()
+void friend_subsc_repeat(void)
 {
     if(fri_ship_proc_lpn.poll_retry){
-        fri_ship_proc_lpn.poll_tick = clock_time()|1;
+        fri_ship_proc_lpn.poll_time_ms = clock_time_ms();
     }
     
     if(SUBSC_ADD == subsc_list_retry.retry_type){
@@ -193,14 +274,10 @@ void friend_subsc_repeat()
     }
 }
 
-inline void friend_subsc_stop()
+inline void friend_subsc_stop(void)
 {
     subsc_list_retry.retry_cnt = 0;
 	subsc_list_retry.tick = 0;
-	
-	if(0 == mesh_lpn_subsc_pending.cnt){
-		mesh_lpn_subsc_pending.op = 0;		
-	}
 }
 
 int friend_subsc_list_cmd_start(u8 type, u16 *adr_list, u32 subsc_cnt)
@@ -210,23 +287,9 @@ int friend_subsc_list_cmd_start(u8 type, u16 *adr_list, u32 subsc_cnt)
 	   messages with the SRC field set to the unicast address of the primary element of the node that supports
 	   the Low Power feature.
 	*/
-    if(subsc_cnt > SUB_LIST_MAX_IN_ONE_MSG){
-		u16 op = (type == SUBSC_ADD)?CMD_CTL_SUBS_LIST_ADD:CMD_CTL_SUBS_LIST_REMOVE;
-		mesh_lpn_subsc_pending_add(op, adr_list+SUB_LIST_MAX_IN_ONE_MSG, subsc_cnt - SUB_LIST_MAX_IN_ONE_MSG, 1);
-		subsc_cnt = SUB_LIST_MAX_IN_ONE_MSG;
-    }
-	else{
-		mesh_lpn_subsc_pending.cnt = 0;	
-	}
-	
-    if(subsc_cnt > LPN_SUBSC_LIST_ADD_CNT_MAX){ // default is 10.
-    	// subsc_cnt will be trimmed to be 10 in mesh_lpn_subsc_pending_add_().
-    }
-    
-    subsc_list_retry.subsc_cnt = subsc_cnt;
+	friend_subsc_list_retry_update(type, adr_list, subsc_cnt, 1);
+    subsc_list_retry.subsc_cnt = (subsc_cnt > SUB_LIST_MAX_IN_ONE_MSG) ? SUB_LIST_MAX_IN_ONE_MSG : subsc_cnt;
     subsc_list_retry.TransNo = lpn_subsc_list.TransNo;
-    memset(subsc_list_retry.adr, 0, sizeof(subsc_list_retry.adr));
-    memcpy(subsc_list_retry.adr, adr_list, subsc_cnt * 2);
     subsc_list_retry.retry_cnt = lpn_get_poll_retry_max();
     subsc_list_retry.retry_type = type;
     
@@ -251,8 +314,6 @@ void friend_subsc_rmv(u16 *adr_list, u32 subsc_cnt)
 void mesh_friend_ship_set_st_lpn(u8 st)
 {
 	if(FRI_ST_REQUEST == st){
-		mesh_lpn_subsc_pending.op = 0;
-		friend_subsc_stop();		
 		mesh_friend_ship_proc_init_lpn(); // clear retry cnt
 	    mesh_friend_ship_clear_LPN();
 	}
@@ -261,7 +322,7 @@ void mesh_friend_ship_set_st_lpn(u8 st)
 	mesh_lpn_adv_interval_update(1);
 }
 
-int is_in_mesh_friend_st_lpn()
+int is_in_mesh_friend_st_lpn(void)
 {
 	if(is_lpn_support_and_en){
     	return (is_friend_ship_link_ok_lpn() && (mesh_lpn_par.FriAdr != 0));
@@ -270,12 +331,13 @@ int is_in_mesh_friend_st_lpn()
 	}
 }
 
-void mesh_friend_ship_proc_init_lpn()
+void mesh_friend_ship_proc_init_lpn(void)
 {
     memset(&fri_ship_proc_lpn, 0, sizeof(mesh_fri_ship_proc_lpn_t));
+	memset(&subsc_list_retry, 0, sizeof(subsc_list_retry));
 }
 
-void mesh_friend_ship_clear_LPN()
+void mesh_friend_ship_clear_LPN(void)
 {
     mesh_ctl_fri_req_t req_backup;
     memcpy(&req_backup, &mesh_lpn_par.req, sizeof(req_backup));
@@ -283,37 +345,37 @@ void mesh_friend_ship_clear_LPN()
     memcpy(&mesh_lpn_par.req, &req_backup, sizeof(req_backup));
 }
 
-int mesh_lpn_subsc_pending_add(u16 op, u16 *p_sublist, int sub_cnt, int overwrite_flag)
+int friend_subsc_list_retry_update(u8 type, u16 *p_sublist, int sub_cnt, int overwrite_flag)
 {
-	if(!overwrite_flag && mesh_lpn_subsc_pending.op && (op != mesh_lpn_subsc_pending.op)){
+	if(!overwrite_flag && subsc_list_retry.total_cnt && (type != subsc_list_retry.retry_type)){
 		return -1;
 	}
 
-	mesh_lpn_subsc_pending.op = op;
+	subsc_list_retry.retry_type = type;
 	if(overwrite_flag){
-		if(sub_cnt > ARRAY_SIZE(mesh_lpn_subsc_pending.sub_list)){
-			sub_cnt = ARRAY_SIZE(mesh_lpn_subsc_pending.sub_list);
+		if((u32)sub_cnt > ARRAY_SIZE(subsc_list_retry.adr)){
+			sub_cnt = ARRAY_SIZE(subsc_list_retry.adr);
 		}
 	
-		memcpy(mesh_lpn_subsc_pending.sub_list, p_sublist, sub_cnt << 1);
-		mesh_lpn_subsc_pending.cnt = sub_cnt;
+		memcpy(subsc_list_retry.adr, p_sublist, sub_cnt << 1);
+		subsc_list_retry.total_cnt = sub_cnt;
 	}
 	else{		
 		foreach(add_idx, sub_cnt){
-			if(mesh_lpn_subsc_pending.cnt >= ARRAY_SIZE(mesh_lpn_subsc_pending.sub_list)){
+			if(subsc_list_retry.total_cnt >= ARRAY_SIZE(subsc_list_retry.adr)){
 				return 0;
 			}
 			
 			int is_exist = 0;
-			foreach(list_idx, mesh_lpn_subsc_pending.cnt){
-				if(p_sublist[add_idx] == mesh_lpn_subsc_pending.sub_list[list_idx]){
+			foreach(list_idx, subsc_list_retry.total_cnt){
+				if(p_sublist[add_idx] == subsc_list_retry.adr[list_idx]){
 					is_exist = 1;
 					break;
 				}
 			}
 
 			if(0 == is_exist){
-				mesh_lpn_subsc_pending.sub_list[mesh_lpn_subsc_pending.cnt++] = p_sublist[add_idx];
+				subsc_list_retry.adr[subsc_list_retry.total_cnt++] = p_sublist[add_idx];
 			}
 		}
 	}
@@ -321,7 +383,7 @@ int mesh_lpn_subsc_pending_add(u16 op, u16 *p_sublist, int sub_cnt, int overwrit
 	return 0;
 }
 
-void mesh_lpn_gatt_adv_refresh()
+void mesh_lpn_gatt_adv_refresh(void)
 {
 #if (GATT_LPN_EN)
 	if(lpn_provision_ok && gatt_adv_send_flag){
@@ -333,7 +395,7 @@ void mesh_lpn_gatt_adv_refresh()
 }
 
 //------------softer timer cb function----------------------//
-int mesh_lpn_send_gatt_adv()
+int mesh_lpn_send_gatt_adv(void)
 {
 	if(gatt_adv_send_flag && (BLS_LINK_STATE_ADV == blc_ll_getCurrentState())){
 		lpn_quick_tx(1);
@@ -342,7 +404,7 @@ int mesh_lpn_send_gatt_adv()
 	return -1;
 }
 
-int mesh_lpn_send_mesh_cmd()
+int mesh_lpn_send_mesh_cmd(void)
 {
 	int ret = 0;
 	if(!is_mesh_adv_cmd_fifo_empty()){
@@ -352,20 +414,57 @@ int mesh_lpn_send_mesh_cmd()
 	return ret;
 }
 
-int mesh_lpn_poll_receive_timeout(void)
+/**
+ * @brief       This function serves to enable power management for lpn to enter sleep.
+ * @param[io]   void- 
+ * @return      
+ * @note        
+ */
+int mesh_lpn_pm_enable(void)
 {
 	ENABLE_SUSPEND_MASK;
-	blc_ll_setScanEnable (0, 0);    // disable scan function
-	rf_set_tx_rx_off();// disable tx rx in manual mode immediately, must 	
+	mesh_set_scan_enable(0, 1); // disable tx rx in manual mode immediately, must
 	CLEAR_ALL_RFIRQ_STATUS;
-	
+
 	return -1;
 }
 
+/**
+ * @brief       This function serves to check whether isnear to poll retry, otherwise it may poll retry in next poll interval
+ * @param[io]   void- 
+ * @return      
+ * @note        
+ */
+void mesh_lpn_poll_retry_check(void)
+{
+    if(fri_ship_proc_lpn.poll_retry && clock_time_exceed_ms(fri_ship_proc_lpn.poll_time_ms, mesh_lpn_par.offer.RecWin)){
+        lpn_set_poll_ready();
+        blt_soft_timer_add(&mesh_lpn_poll_md_wakeup, 10*1000); // wakeup for poll retry in mesh_friend_ship_proc_LPN().
+    }
+}
+
+/**
+ * @brief       This function indicates that the LPN did not receive a message from its Friend Node during the receive window, and will trigger poll retry.
+ * @param[io]   void- 
+ * @return      
+ * @note        
+ */
+int mesh_lpn_poll_receive_timeout(void)
+{
+    mesh_lpn_pm_enable();
+    mesh_lpn_poll_retry_check();
+	return -1;
+}
+
+/**
+ * @brief       This function server to enable scan for lpn receive window.
+ * @param[io]   void- 
+ * @return      
+ * @note        
+ */
 int mesh_lpn_rcv_delay_wakeup(void)
 {
-	app_enable_scan_all_device ();  // enable scan function
-	mesh_send_adv2scan_mode(0);     // enable rx immediately
+	mesh_set_scan_enable(1, 1); // enable rx immediately
 	bls_pm_setSuspendMask (SUSPEND_DISABLE); // not enter sleep to receive packets	
 	if(is_friend_ship_link_ok_lpn()){
 		
@@ -374,15 +473,25 @@ int mesh_lpn_rcv_delay_wakeup(void)
 	return -1;
 }
 
+static inline void lpn_set_poll_md_pending(void)
+{
+	fri_ship_proc_lpn.poll_md_pending = 1;
+}
+
+static inline void lpn_clear_poll_md_pending(void)
+{
+	fri_ship_proc_lpn.poll_md_pending = 0;
+}
+
+static inline u8 is_lpn_poll_md_pending(void)
+{
+	return fri_ship_proc_lpn.poll_md_pending;
+}
+
 int mesh_lpn_poll_md_wakeup(void)
 {
 	int ret = -1;	
-	if(!is_busy_tx_seg(0)){
-		#if (!BLE_MULTIPLE_CONNECTION_ENABLE)
-		set_sdk_mainLoop_run_flag(1); // single connection can sent adv immediately, not run mesh_loop_process in early wakeup to save time
-		#endif
-	}
-	else{
+	if(is_busy_tx_seg(0)){
 		ret = CMD_INTERVAL_MS * 1000; // for tx segment retry
 	}
 	
@@ -395,37 +504,37 @@ int mesh_lpn_poll_md_wakeup(void)
 			if(0 == p_buf){
 				ret = FRI_LPN_WAIT_SEG_ACK_MS * 1000; 
 				fri_ship_proc_lpn.poll_retry = 0;
-				mesh_lpn_poll_md_pending = 1; // poll for ack after one round
+				lpn_set_poll_md_pending(); // poll for ack after one round
 			}
 		}	
 	}
-	else if(mesh_lpn_poll_md_pending){
-		mesh_friend_ship_start_poll();
-	}
-	else if(mesh_lpn_subsc_pending.op){
+	else if(subsc_list_retry.total_cnt){
 		if(0 == subsc_list_retry.tick){
-			u16 op = mesh_lpn_subsc_pending.op;			
-			u16 sub_list[mesh_lpn_subsc_pending.cnt];
-			memcpy(sub_list, mesh_lpn_subsc_pending.sub_list, mesh_lpn_subsc_pending.cnt<<1);
-			if(CMD_CTL_SUBS_LIST_ADD == op){
-				friend_subsc_add(sub_list, mesh_lpn_subsc_pending.cnt);
+			if(SUBSC_ADD == subsc_list_retry.retry_type){
+				friend_subsc_add(subsc_list_retry.adr, subsc_list_retry.total_cnt);
 			}
-			else if(CMD_CTL_SUBS_LIST_REMOVE == op){
-				friend_subsc_rmv(sub_list, mesh_lpn_subsc_pending.cnt);
+			else if(SUBSC_REMOVE == subsc_list_retry.retry_type){
+				friend_subsc_rmv(subsc_list_retry.adr, subsc_list_retry.total_cnt);
+			}
+			else{ // unexpected
+				subsc_list_retry.total_cnt = 0;
 			}
 		}
+	}
+	else if(is_lpn_poll_md_pending()){ // must after subsc_list_retry!
+		lpn_set_poll_ready();
 	}
 	else{
 	}
 
-	if((-1 == ret) && (mesh_lpn_subsc_pending.op || mesh_lpn_poll_md_pending)){
+	if((-1 == ret) && (subsc_list_retry.total_cnt || is_lpn_poll_md_pending())){
 		ret = (mesh_lpn_par.req.RecDelay + FRI_POLL_DELAY_FOR_MD_MS) * 1000;
 	}
 	return ret;
 }
 
 #if (BLT_SOFTWARE_TIMER_ENABLE)
-void soft_timer_mesh_adv_proc()
+void soft_timer_mesh_adv_proc(void)
 {
 	if(my_fifo_data_cnt_get(&mesh_adv_cmd_fifo)){
 		if(!is_soft_timer_exist(&mesh_lpn_poll_md_wakeup)){
@@ -441,7 +550,7 @@ void mesh_friend_ship_proc_LPN(u8 *bear)
     if(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){	// at GATT connected state, not friendship state.
         return ;
     }
-    
+
     static u32 t_rec_delay_and_win = 0;
     u32 poll_retry_interval_ms = t_rec_delay_and_win;
 	u32 timeout_ms = (poll_retry_interval_ms*1000) * (2*2+1)/2;    // confirm later
@@ -456,7 +565,7 @@ void mesh_friend_ship_proc_LPN(u8 *bear)
     #endif
     
 	if(!bear && is_mesh_adv_cmd_fifo_empty()){
-	    if(fri_ship_proc_lpn.poll_retry && clock_time_exceed(fri_ship_proc_lpn.poll_tick, poll_retry_interval_ms*1000)){
+	    if(fri_ship_proc_lpn.poll_retry && clock_time_exceed_ms(fri_ship_proc_lpn.poll_time_ms, poll_retry_interval_ms)){
 	        fri_ship_proc_lpn.poll_retry--;
 	        if(0 == fri_ship_proc_lpn.poll_retry){
 	            if(FRI_ST_UPDATE == fri_ship_proc_lpn.status){
@@ -474,6 +583,7 @@ void mesh_friend_ship_proc_LPN(u8 *bear)
 					LOG_MSG_LIB(TL_LOG_FRIEND, 0, 0,"LPN flip FSN, then try again");
 	        	}
 	        	#endif
+                LOG_MSG_LIB(TL_LOG_FRIEND, 0, 0,"lpn poll retry:%d!!!", fri_ship_proc_lpn.poll_retry);
 	            friend_cmd_send_poll();  // retry
 	        }
 	    }
@@ -506,6 +616,14 @@ void mesh_friend_ship_proc_LPN(u8 *bear)
                     if(SUBSC_ADD == subsc_list_retry.retry_type){
                         friend_subsc_list_add_adr((lpn_adr_list_t *)(&lpn_subsc_list.adr), (lpn_adr_list_t *)(&subsc_list_retry.adr), subsc_list_retry.subsc_cnt);
                     }
+
+					if(subsc_list_retry.total_cnt > subsc_list_retry.subsc_cnt){						
+						friend_subsc_list_retry_update(subsc_list_retry.retry_type, &subsc_list_retry.adr[subsc_list_retry.subsc_cnt], subsc_list_retry.total_cnt - subsc_list_retry.subsc_cnt, 1);
+					}
+					else{
+						subsc_list_retry.total_cnt = 0;
+					}
+					
                     friend_subsc_stop();
                 }
             }else if(CMD_CTL_UPDATE == op){
@@ -515,16 +633,23 @@ void mesh_friend_ship_proc_LPN(u8 *bear)
 
             }
         }else{
-        	if(is_friend_ship_link_ok_lpn() && is_mesh_adv_cmd_fifo_empty()  && clock_time_exceed(fri_ship_proc_lpn.poll_tick, get_lpn_poll_interval_ms() * 1000)){ // send poll after mesh message and subscription list add done.
+        	if(is_friend_ship_link_ok_lpn() && is_mesh_adv_cmd_fifo_empty()  && is_lpn_poll_ready()){ // send poll after mesh message and subscription list add done.
 				if(!subsc_list_retry.tick){
-					if(mesh_lpn_subsc_pending.op){
-						mesh_lpn_sleep_prepare(CMD_ST_POLL_MD);					
+					if(subsc_list_retry.total_cnt){ // subscription list add pending.
+						mesh_lpn_sleep_prepare(CMD_ST_POLL_MD);
 					}
 					else{
 						mesh_friend_ship_start_poll();
 					}
 				}
 			}
+            #if LPN_PREPARE_NEXT_POLL_EN
+            else if(is_soft_timer_exist(mesh_lpn_poll_receive_timeout)){ // prepare next friend poll in receive window to save power
+                if(BEAR_TX_PAR_TYPE_NONE == mesh_friend_poll_cache.tx_head.par_type){
+                    mesh_next_fn_poll_prepare();
+				}
+			}
+            #endif
         }
     }else{
         switch(fri_ship_proc_lpn.status){   // Be true only during establishing friend ship.
@@ -591,7 +716,7 @@ void mesh_friend_ship_proc_LPN(u8 *bear)
                     }
                 }else{
                 	#if 0 // timeout checking in count down of poll retry. if not, sometimes will trigger retry request when poll retry is not 0.
-                    if(clock_time_exceed(fri_ship_proc_lpn.poll_tick, t_rec_delay_and_win*1000)){
+                    if(clock_time_exceed_ms(fri_ship_proc_lpn.poll_time_ms, t_rec_delay_and_win)){
                     	mesh_friend_ship_retry();
                     }
                     #endif
@@ -609,7 +734,7 @@ void mesh_friend_ship_proc_LPN(u8 *bear)
 
 
 
-u8 lpn_get_poll_retry_max()
+u8 lpn_get_poll_retry_max(void)
 {
     return FRI_POLL_RETRY_MAX;
 }
@@ -670,7 +795,7 @@ enum{
 
 static volatile u8 lpn_pts_test_cmd;
 
-void pts_test_case_lpn()
+void pts_test_case_lpn(void)
 {
 	u32 tick = clock_time();
 	LOG_MSG_LIB(TL_LOG_FRIEND,0, 0,"waiting for input pts case ID through BDT to send command ......");
@@ -705,7 +830,7 @@ void pts_test_case_lpn()
 }
 #endif
 
-void mesh_feature_set_lpn(){
+void mesh_feature_set_lpn(void){
     #if FRI_SAMPLE_EN
 	friend_ship_sample_message_test();
     #else
@@ -721,16 +846,20 @@ void mesh_feature_set_lpn(){
     #endif
 }
 
-void lpn_set_poll_ready()
+void lpn_set_poll_ready(void)
 {
-  	fri_ship_proc_lpn.poll_tick = fri_ship_proc_lpn.poll_tick - BIT(31);  
+  	fri_ship_proc_lpn.poll_time_ms = fri_ship_proc_lpn.poll_time_ms - BIT(31);  
 }
 
-void mesh_friend_ship_start_poll()
+int is_lpn_poll_ready(void)
+{
+	return clock_time_exceed_ms(fri_ship_proc_lpn.poll_time_ms, get_lpn_poll_interval_ms() - LPN_POLL_TIMING_MARGIN_MS);
+}
+
+void mesh_friend_ship_start_poll(void)
 {
     if(is_in_mesh_friend_st_lpn()){
         friend_cmd_send_poll();
-		mesh_lpn_poll_md_pending = 0;
 		#if RETRY_POLL_AGAIN_FLIP_FSN_EN
 		fri_ship_proc_lpn.poll_retry = PTS_TEST_EN ? 20 : (FRI_POLL_RETRY_MAX * 2);	// *2 means 2 rounds. change FSN to retry the 2nd round.
 		#else
@@ -739,10 +868,11 @@ void mesh_friend_ship_start_poll()
     }
 }
 
-void mesh_friend_ship_stop_poll()
+void mesh_friend_ship_stop_poll(void)
 {
 	blt_soft_timer_delete(&mesh_lpn_rcv_delay_wakeup);
 	fri_ship_proc_lpn.poll_retry = 0;
+	lpn_clear_poll_md_pending();
 }
 
 void subsc_add_rmv_test(int add)
@@ -762,15 +892,15 @@ void subsc_add_rmv_test(int add)
 void lpn_subsc_list_update_by_sub_set_cmd(u16 op, u16 sub_adr)
 {
     if((CFG_MODEL_SUB_ADD == op)||(CFG_MODEL_SUB_VIRTUAL_ADR_ADD == op)){
-		mesh_lpn_subsc_pending_add(CMD_CTL_SUBS_LIST_ADD, &sub_adr, 1, 0);
+		friend_subsc_list_retry_update(SUBSC_ADD, &sub_adr, 1, 0);
     }else if((CFG_MODEL_SUB_DEL == op)||(CFG_MODEL_SUB_VIRTUAL_ADR_DEL == op)){
-		mesh_lpn_subsc_pending_add(CMD_CTL_SUBS_LIST_REMOVE, &sub_adr, 1, 0);
+		friend_subsc_list_retry_update(SUBSC_REMOVE, &sub_adr, 1, 0);
     }else if(((CFG_MODEL_SUB_OVER_WRITE == op)||(CFG_MODEL_SUB_VIRTUAL_ADR_OVER_WRITE == op))
     	   ||(CFG_MODEL_SUB_DEL_ALL == op)){
     }
 }
 
-void friend_send_current_subsc_list()
+void friend_send_current_subsc_list(void)
 {
 #if MD_SERVER_EN 
     int j = 0;
@@ -781,7 +911,7 @@ void friend_send_current_subsc_list()
 		#endif
     };
 		
-	u16 adr_list[LPN_SUBSC_LIST_ADD_CNT_MAX]; // subsc_cnt will be trimmed to LPN_SUBSC_LIST_ADD_CNT_MAX in mesh_lpn_subsc_pending_add_().
+	u16 adr_list[SUB_LIST_MAX_LPN];
     foreach_arr(k, model_list){
 	    model_common_t *p_model_com = model_list[k]; 
 	    #if MD_MESH_OTA_EN
@@ -820,7 +950,7 @@ void friend_send_current_subsc_list()
 				}
 	        }
 			
-	        if(j >= ARRAY_SIZE(adr_list)){
+	        if((u32)j >= ARRAY_SIZE(adr_list)){
 	            break;
 	        }
 	    }
@@ -832,7 +962,7 @@ void friend_send_current_subsc_list()
 #endif
 }
 
-void lpn_node_io_init()
+void lpn_node_io_init(void)
 {
 #if ((!IS_VC_PROJECT) && FEATURE_LOWPOWER_EN)
     lpn_debug_set_current_pin(1);
@@ -846,11 +976,37 @@ void lpn_node_io_init()
 #endif
 }
 
+#if LPN_LONG_SLEEP_WAKEUP_EN
+/**
+ * @brief       This function serves to set lpn long sleep flag to enter long sleep
+ * @return      1: long sleep enable  0: long sleep disable
+ * @note        if poll interval larger than 40S, enable LPN_LONG_SLEEP_WAKEUP_EN first.
+ */
+int mesh_lpn_long_sleep_check(void)
+{
+    if(get_lpn_poll_interval_ms() > LPN_LONG_SLEEP_THRES_MS){
+        mesh_lpn_par.long_sleep_flag = 1;
+        bls_pm_setSuspendMask (SUSPEND_DISABLE); // disable ble pm, will enter long sleep in mesh_lpn_pm_proc()==>lpn_check_and_enter_sleep().
+    }
+    else{
+        mesh_lpn_par.long_sleep_flag = 0;
+    }
+
+    return mesh_lpn_par.long_sleep_flag;
+}
+#endif
+
+/**
+ * @brief       This function serves to enable power management and set soft timer task.
+ * @param[in]   op	- The executing opcode called this function.
+ * @return      none
+ * @note        
+ */
 void mesh_lpn_sleep_prepare(u16 op)
 {
 	if(is_lpn_support_and_en && (BLS_LINK_STATE_CONN != blc_ll_getCurrentState())){
 		if(CMD_ST_NORMAL_TX != op){  
-			mesh_lpn_poll_receive_timeout();
+			mesh_lpn_pm_enable();
 			blt_soft_timer_delete(&mesh_lpn_poll_receive_timeout);
 		}
 		
@@ -866,7 +1022,7 @@ void mesh_lpn_sleep_prepare(u16 op)
 			blt_soft_timer_add(&mesh_lpn_poll_md_wakeup, interval ? interval : 10*1000);
 		}
 		else if(CMD_ST_POLL_MD == op){ // message from friend is not friend update, poll more data. 
-			mesh_lpn_poll_md_pending = 1;
+			lpn_set_poll_md_pending();
 			u32 sleep_ms = FRI_POLL_DELAY_FOR_MD_MS;
 			#if MD_MESH_OTA_EN
 			if(is_blob_chunk_transfer_ready()){
@@ -874,15 +1030,14 @@ void mesh_lpn_sleep_prepare(u16 op)
 			}
 			#endif
 			blt_soft_timer_add(&mesh_lpn_poll_md_wakeup, sleep_ms * 1000);
-			#if (!WIN32 && !BLE_MULTIPLE_CONNECTION_ENABLE)
+			#if (!defined(WIN32) && !BLE_MULTIPLE_CONNECTION_ENABLE)
 			blt_rxfifo.rptr = blt_rxfifo.wptr - 1;// clear buf, blt_rxfifo.rptr will ++ in lib
 		    #endif
 		}
 		else if(CMD_CTL_UPDATE == op){
-			#if (!WIN32 && !BLE_MULTIPLE_CONNECTION_ENABLE)
+			#if (!defined(WIN32) && !BLE_MULTIPLE_CONNECTION_ENABLE)
 			blt_rxfifo.rptr = blt_rxfifo.wptr - 1;// clear buf, blt_rxfifo.rptr will ++ in lib
 		    #endif
-			blt_soft_timer_delete(&mesh_lpn_poll_receive_timeout);
 		}
 		else{//CMD_ST_SLEEP
 
@@ -892,6 +1047,12 @@ void mesh_lpn_sleep_prepare(u16 op)
 		int interval = get_mesh_adv_interval();
 		blt_soft_timer_add(&mesh_lpn_poll_md_wakeup, interval ? interval : 10*1000);
 	}
+
+    #if LPN_LONG_SLEEP_WAKEUP_EN
+    mesh_lpn_long_sleep_check();
+    #endif
+
+    fri_ship_proc_lpn.last_op = op;
 }
 
 void suspend_enter(u32 sleep_ms, int deep_retention_flag)
@@ -904,7 +1065,7 @@ void suspend_enter(u32 sleep_ms, int deep_retention_flag)
     sleep_mode = deep_retention_flag ? RETENTION_RAM_SIZE_USE : SUSPEND_MODE;
     #endif
 	
-    cpu_sleep_wakeup(sleep_mode, PM_WAKEUP_TIMER, clock_time() + sleep_ms*CLOCK_SYS_CLOCK_1MS);
+    cpu_sleep_wakeup(sleep_mode, PM_WAKEUP_TIMER, clock_time() + sleep_ms*CLOCK_SYS_TIMER_CLK_1MS);
 	lpn_wakeup_tick = clock_time();
 #endif
 }
@@ -934,23 +1095,6 @@ void deep_wakeup_proc(void)
 }
 
 /**
- * @brief       This function servers to set gpio wakeup source before sleep when key release.
- * @param[in]   e	- event code BLT_EV_FLAG_SUSPEND_ENTER
- * @param[in]   p	- NULL
- * @param[in]   n	- 0
- * @return      none
- * @note        
- */
-void  lpn_set_sleep_wakeup (u8 e, u8 *p, int n)
-{
-#if (UI_KEYBOARD_ENABLE)
-	if(key_released){
-		bls_pm_setWakeupSource(PM_WAKEUP_PAD);
-	}
-#endif
-}
-
-/**
  * @brief       This function servers to process keyboard event from deep_wakeup_proc().
  * @param[io]   *det_key - detect key flag. 0: no key detect, use deepback cache if exist. other: key had been detected.
  * @return      none
@@ -969,11 +1113,10 @@ void deepback_pre_proc(int *det_key)
 	return;
 }
 
-int soft_timer_key_scan()
+int soft_timer_key_scan(void)
 {	
 	return key_released ? -1 : 0;
 }
-#endif
 
 void lpn_proc_keyboard (u8 e, u8 *p, int n)
 {
@@ -1075,6 +1218,7 @@ void lpn_proc_keyboard (u8 e, u8 *p, int n)
 
 	return;
 }
+#endif
 
 int mesh_friend_offer_is_valid(mesh_ctl_fri_offer_t *p_offer)
 {
@@ -1126,7 +1270,7 @@ int lpn_rx_offer_handle(u8 *bear)
     return 0;
 }
 
-void mesh_friend_ship_retry()
+void mesh_friend_ship_retry(void)
 {
     if(fri_ship_proc_lpn.req_retrys++ < FRI_REQ_RETRY_MAX){      
     }else{
@@ -1136,11 +1280,11 @@ void mesh_friend_ship_retry()
 	mesh_friend_ship_set_st_lpn(FRI_ST_REQUEST);
 }
 
-void lpn_no_offer_handle()  // only call after send request message during establish friend ship
+void lpn_no_offer_handle(void)  // only call after send request message during establish friend ship
 {
     if(is_lpn_support_and_en){
         if(fri_ship_proc_lpn.req_retrys < FRI_REQ_RETRY_MAX){
-        #if WIN32
+        #ifdef WIN32
             u16 rand_ms = 0;
         #else
             //u16 rand_ms = (rand() & 0x7F);
@@ -1158,11 +1302,28 @@ void lpn_no_offer_handle()  // only call after send request message during estab
 }
 
 /**
+ * @brief       This function servers to check appkey bind finish and enter friend request state.
+ * @return      
+ * @note        
+ */
+void lpn_check_binding_and_start_friend(void)
+{
+    if((!lpn_provision_ok) && node_binding_tick && clock_time_exceed(node_binding_tick, LPN_START_REQUEST_AFTER_BIND_MS*1000)){
+		lpn_provision_ok = 1;// provison and key bind finish
+		gatt_adv_send_flag = GATT_LPN_EN;				
+		mesh_friend_ship_set_st_lpn(FRI_ST_REQUEST);
+		if(BLS_LINK_STATE_CONN == blc_ll_getCurrentState()){
+			bls_ll_terminateConnection(0x13); // disconnect to establish friendship
+		}
+    }
+}
+
+/**
  * @brief       This function server to manage LPN work state.
  * @return      none
  * @note        
  */
-void mesh_lpn_state_proc()
+void mesh_lpn_state_proc(void)
 {	
 	//static u32 A_req_tick;
 	static u8 fri_request_send = 1;
@@ -1187,6 +1348,8 @@ void mesh_lpn_state_proc()
                 }
             }
         }
+
+        lpn_check_binding_and_start_friend();
         return ;
     }
     
@@ -1210,14 +1373,7 @@ void mesh_lpn_state_proc()
     	        }
 	        }
 	    }else{
-    	    if((!lpn_provision_ok) && node_binding_tick && clock_time_exceed(node_binding_tick, LPN_START_REQUEST_AFTER_BIND_MS*1000)){
-				lpn_provision_ok = 1;// provison and key bind finish
-				gatt_adv_send_flag = GATT_LPN_EN;				
-				mesh_friend_ship_set_st_lpn(FRI_ST_REQUEST);
-				if(BLS_LINK_STATE_CONN == blc_ll_getCurrentState()){
-					bls_ll_terminateConnection(0x13); // disconnect to establish friendship
-				}
-    	    }
+            lpn_check_binding_and_start_friend();
 	    }
 	    return ;
 	}
@@ -1225,16 +1381,51 @@ void mesh_lpn_state_proc()
 	return;
 }
 
+void lpn_check_and_enter_sleep(void)
+{
+#if BLE_REMOTE_PM_ENABLE
+    if(my_fifo_data_cnt_get(&mesh_adv_cmd_fifo) || del_node_tick || is_busy_tx_segment_or_reliable_flow() || blt_soft_timer_cur_num()
+        #if BLE_MULTIPLE_CONNECTION_ENABLE
+        || is_ble_event_pending() 
+        #else
+        || blc_ll_isControllerEventPending()
+        #endif
+    ){
+        #if BLE_MULTIPLE_CONNECTION_ENABLE
+        mesh_set_adv_enable(1);
+        #endif
+        // wait pending event 
+    }
+    else{
+        #if UI_KEYBOARD_ENABLE
+        if(key_released)
+        #endif
+        {
+            u16 wakeup_src = (PM_WAKEUP_PAD | PM_WAKEUP_TIMER);
+            u32 sleep_ms =  min2(get_lpn_poll_interval_ms() - (clock_time_ms() - fri_ship_proc_lpn.poll_time_ms), get_lpn_poll_interval_ms());
+
+            #if BLE_MULTIPLE_CONNECTION_ENABLE
+            mesh_set_adv_enable(0);
+            if(blc_ll_isBleTaskIdle())
+            #endif
+            {
+                cpu_long_sleep_wakeup(RETENTION_RAM_SIZE_USE, wakeup_src, sleep_ms * 32);
+            }
+        }
+    }
+#endif
+}
+
 /**
  * @brief       This function server to manage LPN power management. 
  * @return      none
  * @note        
  */
-void mesh_lpn_pm_proc()
+void mesh_lpn_pm_proc(void)
 {
 	if((BLS_LINK_STATE_CONN != blc_ll_getCurrentState())){	    
 		#if (!BLE_MULTIPLE_CONNECTION_ENABLE)
-		set_blt_busy(0); 								// trigger pm in blt_sdk_main_loop to save power. (blt_busy will 1 after cpu_sleep_wakeup return STATUS_GPIO_ERR_NO_ENTER_PM while key pressing, and will not enter sleep in this interval.)
+		set_blt_busy(0); 								// trigger pm in blt_sdk_main_loop to save power. (blt_busy will 1 after cpu_sleep_wakeup return STATUS_GPIO_ERR_NO_ENTER_PM or wakeup from cpu_long_sleep_wakeup, and will not enter sleep in this interval.)
 		#endif
 	}
 	
@@ -1256,11 +1447,18 @@ void mesh_lpn_pm_proc()
 			lpn_key_wakeup_start_tick = 0;
 			ENABLE_SUSPEND_MASK;
 		}
+        return;
 	}
+#endif
+
+#if LPN_LONG_SLEEP_WAKEUP_EN
+    if(is_friend_ship_link_ok_lpn() && mesh_lpn_par.long_sleep_flag){
+        lpn_check_and_enter_sleep();
+    }
 #endif
 }
 
-void mesh_main_loop_LPN()
+void mesh_main_loop_LPN(void)
 {
 }
 
@@ -1284,7 +1482,28 @@ int lpn_quick_tx(u8 is_quick_tx)
 
 }
 
-u32 get_lpn_poll_interval_ms()
+/**
+ * @brief       This function server to set dynamic lpn poll interval
+ * @param[io]   poll_ms	- dynamic lpn poll interval
+ * @return      0: SUCCESS
+ * @note        if poll_ms larger than LPN_LONG_SLEEP_THRES_MS, must enable LPN_LONG_SLEEP_WAKEUP_EN.  
+ */
+int set_lpn_poll_interval(int poll_ms)
+{
+    g_lpn_poll_intvl_ms = poll_ms;
+
+    // update lpn poll timeout
+    mesh_ctl_fri_req_t *p_req = &mesh_lpn_par.req;
+    p_req->PollTimeout = ((poll_ms << 2) / (10*10));
+
+    #if LPN_LONG_SLEEP_WAKEUP_EN
+    mesh_lpn_long_sleep_check();
+    #endif
+
+    return 0;
+}
+
+u32 get_lpn_poll_interval_ms(void)
 {
 	#if (MD_MESH_OTA_EN && MESH_OTA_PULL_MODE_EN)
 	extern _align_4_ fw_update_srv_proc_t    fw_update_srv_proc;
@@ -1293,19 +1512,23 @@ u32 get_lpn_poll_interval_ms()
 	}
 	#endif
 	
-	return FRI_POLL_INTERVAL_MS;
+	return g_lpn_poll_intvl_ms;
 }
 
 int mesh_lpn_adv_interval_update(u8 adv_tick_refresh)
 {
 	int ret = 0;
 
+    if(is_friend_ship_link_ok_lpn() && (get_lpn_poll_interval_ms() > LPN_LONG_SLEEP_THRES_MS)){
+        return ret;
+    }
+
 	u16 interval = (LPN_MODE_GATT_OTA == lpn_mode) ? ADV_INTERVAL_MS:(is_lpn_support_and_en?(is_friend_ship_link_ok_lpn() ? get_lpn_poll_interval_ms() : (FRI_REQ_TIMEOUT_MS-FRI_ESTABLISH_PERIOD_MS)):GET_ADV_INTERVAL_MS(ADV_INTERVAL_UNIT));
 	ret = bls_ll_setAdvParam_interval(interval, 0);
 #if !BLE_MULTIPLE_CONNECTION_ENABLE
 	if(adv_tick_refresh){
 		extern u32 blt_advExpectTime;
-		blt_advExpectTime = clock_time() + blta.adv_interval;
+		blt_advExpectTime = clock_time() + (GET_ADV_INTERVAL_MS(blc_ll_getAdvInterval()) * 1000 * sys_tick_per_us); // blc_ll_getAdvInterval() unit is 0.625ms(100/160)
 	}
 #endif
 
@@ -1324,7 +1547,7 @@ void lpn_mode_set(int mode)
         lpn_mode_tick = clock_time();
 
 		if(lpn_provision_ok){
-			blc_ll_setScanEnable (0, 0);// disable scan to save power
+			mesh_set_scan_enable(0, 0);// disable scan to save power
 		}
     }else if(LPN_MODE_NORMAL == mode){
         LOG_MSG_LIB(TL_LOG_FRIEND,0, 0,"SW1:exit GATT OTA");

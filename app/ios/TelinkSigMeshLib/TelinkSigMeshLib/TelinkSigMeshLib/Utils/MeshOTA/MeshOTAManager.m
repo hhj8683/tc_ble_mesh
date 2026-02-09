@@ -357,6 +357,8 @@
                                     [weakSelf performSelector:@selector(connectMeshOTAByFirmwareUpdateProgress) onThread:weakSelf.meshOTAThread withObject:nil waitUntilDone:NO];
                                 });
                             });
+                        } else {
+                            [weakSelf firmwareUpdateFailAction];
                         }
                     }];
                 } else {
@@ -381,7 +383,7 @@
         self.BLOBPartialBlockReport = (SigBLOBPartialBlockReport *)message;
         if (self.isMeshOTAing && self.transferModeOfUpdateNodes == SigTransferModeState_pullBLOBTransferMode && self.firmwareUpdateProgress >= SigFirmwareUpdateProgressDistributorToUpdatingNodeBLOBBlockStart && self.firmwareUpdateProgress <= SigFirmwareUpdateProgressDistributorToUpdatingNodeBLOBBlockGet) {
             if (self.BLOBPartialBlockReport.encodedMissingChunks) {
-//                TelinkLogError(@"=====chunk，接收到地址%d需要发送的chunk=%@",source,self.BLOBPartialBlockReport.encodedMissingChunks);
+                TelinkLogVerbose(@"=====encodedMissingChunks，接收到地址%d需要发送的chunk=%@",source,self.BLOBPartialBlockReport.encodedMissingChunks);
                 self.losePacketsDict[@(source)] = self.BLOBPartialBlockReport.encodedMissingChunks;
                 [self stopLPNReachablleTimer];
                 [self handleLPNReportAction];
@@ -443,7 +445,7 @@
                         delta = 0;
                     }
                 }
-                TelinkLogInfo(@"延时时间=%lld", delta);
+                TelinkLogInfo(@"延时时间=%lld", delta / NSEC_PER_SEC);
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delta), dispatch_get_main_queue(), ^{
                     dispatch_semaphore_signal(weakSelf.semaphore);
                 });
@@ -2931,11 +2933,11 @@
                 if (model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_transferError || model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_verificationFailed || model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_transferCanceled || model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_applyFailed || model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_unknown) {
                     [self.failAddressArray addObject:@(model.address)];
                     needCheckNextIndex = YES;
-                } else if (model.transferProgress == 50 && (model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_idle || (self.updatePolicy == SigUpdatePolicyType_verifyAndApply && model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_applySuccess) || (self.updatePolicy == SigUpdatePolicyType_verifyOnly && (model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_verifyingUpdate || model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_verificationSuccess)))) {
+                } else if (model.transferProgress == 50 && (model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_idle || (self.updatePolicy == SigUpdatePolicyType_verifyAndApply && model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_applySuccess) || (self.updatePolicy == SigUpdatePolicyType_verifyOnly && model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_verificationSuccess))) {
                     needCheckNextIndex = YES;
                 } else if (model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_transferActive || (model.transferProgress == 0 && (model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_idle || model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_verifyingUpdate))) {
                     needReceiversGetAgain = YES;
-                } else if (model.transferProgress == 50 && model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_applyingUpdate) {
+                } else if (model.transferProgress == 50 && ((self.updatePolicy == SigUpdatePolicyType_verifyOnly && model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_verifyingUpdate) || (self.updatePolicy == SigUpdatePolicyType_verifyAndApply && (model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_verifyingUpdate || model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_verificationSuccess || model.retrievedUpdatePhase == SigFirmwareUpdatePhaseType_applyingUpdate)))) {
                     needReceiversGetAgain = YES;
                 }
             }

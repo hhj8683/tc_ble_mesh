@@ -36,7 +36,6 @@
 
 #include "vendor/common/user_config.h"
 #include "drivers.h"
-#include "../pm.h"
 
 #define PA_ENABLE	0
 
@@ -48,6 +47,8 @@
 #define		MY_RF_POWER_INDEX		RF_POWER_P0p04dBm
 		#elif(MCU_CORE_TYPE == MCU_CORE_8278)
 #define		MY_RF_POWER_INDEX		RF_POWER_N0p28dBm
+		#elif(MCU_CORE_TYPE == MCU_CORE_TC321X)
+#define		MY_RF_POWER_INDEX		RF_POWER_P0p00dBm
 		#endif
 	#else
 		#if(MCU_CORE_TYPE == MCU_CORE_8269)
@@ -55,8 +56,6 @@
 		#elif(MCU_CORE_TYPE == MCU_CORE_8258)
     		#if (MESH_USER_DEFINE_MODE == MESH_IRONMAN_MENLO_ENABLE || DUAL_MESH_ZB_BL_EN) // keep same with zb
 #define		MY_RF_POWER_INDEX		RF_POWER_P10p46dBm
-    		#elif MI_API_ENABLE
-#define 	MY_RF_POWER_INDEX		RF_POWER_P10p46dBm
     		#elif DU_ENABLE
 #define		MY_RF_POWER_INDEX		RF_POWER_P7p02dBm
 			#else
@@ -64,6 +63,8 @@
     		#endif
 		#elif(MCU_CORE_TYPE == MCU_CORE_8278)
 #define		MY_RF_POWER_INDEX		RF_POWER_P3p50dBm
+		#elif(MCU_CORE_TYPE == MCU_CORE_TC321X)
+#define		MY_RF_POWER_INDEX		RF_POWER_P3p25dBm
 		#endif
 	#endif
 #endif
@@ -142,10 +143,11 @@ typedef struct {
 #endif
 
 /** Calibration Information FLash Address Offset of  CFG_ADR_CALIBRATION_xx_FLASH ***/
-#define		CALIB_OFFSET_CAP_INFO								(0x0)
-#define		CALIB_OFFSET_TP_INFO								(0x40)
-#define		OFFSET_CUST_RC32K_CAP_INFO                          (0x80)
-#define     CALIB_OFFSET_FLASH_VREF								0x1c0
+#define		CALIB_OFFSET_CAP_INFO								0x0
+#define		CALIB_OFFSET_TP_INFO								0x40
+#define		CALIB_OFFSET_ADC_VREF								0xC0
+#define		CALIB_OFFSET_FIRMWARE_SIGNKEY						0x180
+#define     CALIB_OFFSET_FLASH_VREF								0x1C0
 
 /** Calibration Information end ***/
 
@@ -155,8 +157,13 @@ typedef struct {
 #define		CFG_ADR_CALIBRATION_128K_FLASH						0x1E000 // don't change
 #endif
 /**************************** 512 K Flash *****************************/
-#define		CFG_ADR_MAC_512K_FLASH								0x76000 // don't change
-#define		CFG_ADR_CALIBRATION_512K_FLASH						0x77000 // don't change
+#if (MCU_CORE_TYPE == MCU_CORE_TC321X)
+	#define		CFG_ADR_MAC_512K_FLASH								0x7F000
+	#define		CFG_ADR_CALIBRATION_512K_FLASH						0x7E000
+#else
+    #define		CFG_ADR_MAC_512K_FLASH								0x76000 // don't change
+    #define		CFG_ADR_CALIBRATION_512K_FLASH						0x77000 // don't change
+#endif
 
 /**************************** 1 M Flash *******************************/
 #define		CFG_ADR_MAC_1M_FLASH		   						0xFF000 // don't change
@@ -266,6 +273,10 @@ typedef struct {
 #endif
 #define			FLASH_ADR_AREA_1_END		0x40000
 
+#define         FLASH_ADR_UPDATE_NEW_FW     0x40000
+
+#define FLASH_ADR_PROTECT_END           0x70000     // must, for flash protection default area for firmware, not parameter address definition.
+
 /* Flash adr 0x40000 ~ 0x6ffff  is firmware(OTA) area*/
 #define			FLASH_ADR_AREA_2_START		0x70000
 #define			FLASH_ADR_MISC				FLASH_ADR_AREA_2_START // V4.1.0.0 or earlier version is vendor model
@@ -282,6 +293,14 @@ typedef struct {
 
 #define			FLASH_ADR_AREA_2_END		0x76000
 
+#if (MD_DF_CFG_SERVER_EN)
+#define 		FLASH_ADR_FIXED_FWD_TBL          0x78000		// fixed forwarding table
+#define 		FLASH_ADR_FIXED_FWD_TBL_END      0x79000		// not included
+    #if (CONFIG_ALWAYS_GET_ROUTE_FROM_FLASH)
+#define 		FLASH_ADR_NON_FIXED_FWD_TBL      0x79000		// non-fixed forwarding table
+#define 		FLASH_ADR_NON_FIXED_FWD_TBL_END  0x7a000		// not included
+    #endif
+#endif
 
 /*******vendor define here, from 0x7ffff ~ 0x78000 ...
 vendor use from 0x7ffff to 0x78000 should be better, because telink may use 0x78000,0x79000 later.
@@ -327,13 +346,16 @@ vendor use from 0x7ffff to 0x78000 should be better, because telink may use 0x78
 #define 		FLASH_ADR_SMP_PARA_START	0x79000 // 0x7A000 will be use also, smp para use 2 sequential sectors.
 #define 		FLASH_ADR_SMP_PARA_2		0x7a000 // 
 #endif
-#if MI_API_ENABLE
-#define         MI_BLE_MESH_CER_ADR 	    0x7E000// because the certify is stored in the 0x7e800
-#define 		FLASH_ADR_PAR_USER_MAX		MI_BLE_MESH_CER_ADR
-#else
+
+#if ENERGY_HARVEST_RX_EN
+#define         FLASH_ADR_EH_DEVICE_LIST    0x7b000
+#endif
+
+#if SAVE_SNO_CACHE_EN
+#define 		FLASH_ADR_SNO_CACHE			0x7c000 // this is a user function, address value can be redefined by user
+#endif
 
 #define			FLASH_ADR_PAR_USER_MAX		0x80000
-#endif
 
 #if FLASH_MAP_AUTO_EXCHANGE_SOME_SECTORS_EN // flash map legacy value of V4.1.0.0 or earlier versions(FW_VERSION_TELINK_RELEASE)
 #define FLASH_ADR_MISC_LEGACY_VERSION				(0x3d000) // exchange with vendor model
@@ -395,7 +417,8 @@ vendor use from 0x7ffff to 0x78000 should be better, because telink may use 0x78
 /* Firmware Run area 0x00000 ~ 0x59fff, Firmware OTA receive area 0x5a000 ~ 0xb3fff*/
     #else
 #define 		FLASH_ADR_AREA_FIRMWARE_END	0x3F000 // 252K
-/* Firmware Run area A: 0x00000 ~ 0x3efff, Firmware Run area A: 0x40000 ~ 0x7efff*/
+#define         FLASH_ADR_UPDATE_NEW_FW     0x40000
+/* Firmware Run area A: 0x00000 ~ 0x3efff, Firmware Run area B: 0x40000 ~ 0x7efff*/
     #endif
 /* Flash adr 0x00000 ~ 0xb3fff  is firmware area*/
 #define			FLASH_ADR_AREA_1_START		0xB4000 // should be greater than or equal to FLASH_ADR_AREA_FIRMWARE_END * 2, because use same address whether disable pingpong or not.
@@ -684,197 +707,27 @@ enum{
     GATT_OTA_START                      = 3,
 };
 
-enum{
-    FLD_OTA_REBOOT_FLAG                 = BIT(0),
-    FLD_LOW_BATT_FLG                   	= BIT(1),
-    FLD_LOW_BATT_LOOP_FLG             	= BIT(2),	// 0 means check by user_init, 1 means by main loop
-    FLD_MESH_OTA_100_FLAG               = BIT(3),	// for LPN: it is gatt connected flag before OTA reboot.
-};/*DEEP_ANA_REG0*/
-
-
-extern u32 flash_sector_mac_address;
-extern u32 flash_sector_calibration;
-
-#if AUTO_ADAPT_MAC_ADDR_TO_FLASH_TYPE_EN
-void blc_readFlashSize_autoConfigCustomFlashSector(void);
+#if(MCU_CORE_TYPE == MCU_CORE_TC321X)
+#define MESH_DEEP_ANA_REG               PM_ANA_REG_WD_CLR_BUF1
 #else
-#define blc_readFlashSize_autoConfigCustomFlashSector()     // null
+#define MESH_DEEP_ANA_REG               DEEP_ANA_REG0
 #endif
+
+enum{
+//  [Bit0-3] used by ble stack, reference the macro corresponding to MESH_DEEP_ANA_REG
+    FLD_OTA_REBOOT_FLAG                 = BIT(4),
+    FLD_LOW_BATT_FLG                   	= BIT(5),
+    FLD_LOW_BATT_LOOP_FLG             	= BIT(6),	// 0 means check by user_init, 1 means by main loop
+    FLD_MESH_OTA_100_FLAG               = BIT(7),	// for LPN: it is gatt connected flag before OTA reboot.
+};/*MESH_DEEP_ANA_REG*/
+
 
 #ifndef WIN32
-#if(__TL_LIB_8258__ || (MCU_CORE_TYPE == MCU_CORE_8258))
-#include "stack/ble/blt_config.h"
-#elif(MCU_CORE_TYPE == MCU_CORE_8278)
-#include "stack/ble_8278/blt_config.h"
-#elif(MCU_CORE_TYPE == MCU_CORE_9518)
-#include "vendor/common/blt_common.h"
-#else
-
-#define RAMCODE_OPTIMIZE_CONN_POWER_NEGLECT_ENABLE			0
-
-typedef struct{
-	u8 conn_mark;
-	u8 ext_crystal_en;
-}misc_para_t;
-
-misc_para_t blt_miscParam;
-static inline void blc_app_setExternalCrystalCapEnable(u8  en)
-{
-	blt_miscParam.ext_crystal_en = en;
-}
-
-static inline void blc_app_loadCustomizedParameters(void)
-{
-	 if(!blt_miscParam.ext_crystal_en)
-	 {
-		 //customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
-		 if( (*(unsigned char*) (CUST_CAP_INFO_ADDR)) != 0xff ){
-			 //ana_81<4:0> is cap value(0x00 - 0x1f)
-			 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) (CUST_CAP_INFO_ADDR))&0x1f) );
-		 }else if( (*(unsigned char*) (0x76010)) != 0xff ){ // no 1M flash for 8269
-			 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) (0x76010))&0x1f) );
-		 }
-	 }
-
-
-	 // customize TP0/TP1
-	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
-		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
-	 }else if( ((*(unsigned char*) (0x76011)) != 0xff) && ((*(unsigned char*) (0x76011+1)) != 0xff) ){
-		 rf_update_tp_value(*(unsigned char*) (0x76011), *(unsigned char*) (0x76011+1)); // no 1M flash for 8269
-	 }
-
-	  //customize 32k RC cap, if not customized, default ana_32 is 0x80
-	 if( (*(unsigned char*) (CUST_RC32K_CAP_INFO_ADDR)) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x32, *(unsigned char*) (CUST_RC32K_CAP_INFO_ADDR) );
-	 }
-}
+#include "vendor/common/ble_flash.h"
 #endif
-#endif
-
-
-
-
-
-
-
-
 
 
 /////////////////// Code Zise & Feature ////////////////////////////
-
-#if ( __TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) )
-	#define BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE		1
-	#define BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE		0
-#endif
-
-
-#ifndef BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE
-#define BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE			0
-#endif
-
-
-
-
-//for 8261 128k flash
-#if (BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE)
-	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
-#endif
-
-
-
-
-#ifndef BLE_P256_PUBLIC_KEY_ENABLE
-#define BLE_P256_PUBLIC_KEY_ENABLE								0
-#endif
-
-
-
-
-
-
-
-#ifndef BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE
-#define BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE			1
-#endif
-
-
-
-
-
-//default ll_master_multi connection
-#ifndef  LL_MASTER_SINGLE_CONNECTION
-#define  LL_MASTER_SINGLE_CONNECTION					0
-#endif
-
-#ifndef  LL_MASTER_MULTI_CONNECTION
-#define  LL_MASTER_MULTI_CONNECTION						0
-#endif
-
-//#if (LL_MASTER_SINGLE_CONNECTION )
-//	#define  LL_MASTER_MULTI_CONNECTION					0
-//#else
-//	#define  LL_MASTER_MULTI_CONNECTION					1
-//#endif
-
-
-
-
-
-
-
-
-
-
-
-#if (BLE_MODULE_LIB_ENABLE || BLE_MODULE_APPLICATION_ENABLE)  //for ble module
-	#define		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		1
-	#define		BLS_SEND_TLK_MODULE_EVENT_ENABLE				1
-	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
-#endif
-
-
-
-//when rf dma & uart dma work together
-#ifndef		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE
-#define		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		0
-#endif
-
-#ifndef		BLS_SEND_TLK_MODULE_EVENT_ENABLE
-#define 	BLS_SEND_TLK_MODULE_EVENT_ENABLE				0
-#endif
-
-
-
-#ifndef		BLS_ADV_INTERVAL_CHECK_ENABLE
-#define		BLS_ADV_INTERVAL_CHECK_ENABLE					1
-#endif
-
-#if (0 == __TLSR_RISCV_EN__)
-#if LIB_TELINK_MESH_SCAN_MODE_ENABLE
-#define		BLS_TELINK_MESH_SCAN_MODE_ENABLE				1
-#endif
-
-/////////////////  scan mode config  //////////////////////////
-#ifndef		BLS_TELINK_MESH_SCAN_MODE_ENABLE
-#define		BLS_TELINK_MESH_SCAN_MODE_ENABLE				0
-#endif
-
-#if(BLS_TELINK_MESH_SCAN_MODE_ENABLE)
-	#define		BLS_BT_STD_SCAN_MODE_ENABLE					0
-#else
-	#ifndef		BLS_BT_STD_SCAN_MODE_ENABLE
-	#define		BLS_BT_STD_SCAN_MODE_ENABLE					1
-	#endif
-#endif
-#endif
-
-
-
-#ifndef BLE_LL_ADV_IN_MAINLOOP_ENABLE
-#define BLE_LL_ADV_IN_MAINLOOP_ENABLE					1
-#endif
 
 #if FW_START_BY_BOOTLOADER_EN
 #define FW_SIZE_MAX_K			    (FW_SIZE_MAX_USER_K)
@@ -913,6 +766,10 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 #ifndef SWITCH_ALWAYS_MODE_GATT_EN
 #define SWITCH_ALWAYS_MODE_GATT_EN						0
+#endif
+
+#ifndef MESH_RESET_NETWORK_CAN_RESTORE_EN          
+#define MESH_RESET_NETWORK_CAN_RESTORE_EN   0
 #endif
 
 ///////////////////////////////////////dbg channels///////////////////////////////////////////

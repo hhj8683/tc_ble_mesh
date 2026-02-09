@@ -419,6 +419,7 @@
     SigNodeModel *model = [[SigNodeModel alloc] initEnOceanNodeWithEnOceanInfo:info];
     if (model) {
         [SigMeshLib.share.dataSource addAndSaveNodeToMeshNetworkWithDeviceModel:model];
+        info.deviceAddress = model.address;
         return YES;
     } else {
         return NO;

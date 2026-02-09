@@ -23,34 +23,19 @@
  *
  *******************************************************************************************************/
 #include "tl_common.h"
-#include "proj_lib/rf_drv.h"
-#include "proj_lib/pm.h"
-#include "proj_lib/ble/ll/ll.h"
-#include "proj_lib/ble/blt_config.h"
-#include "proj_lib/ble/ll/ll_whitelist.h"
-#include "proj_lib/ble/trace.h"
-#include "proj/mcu/pwm.h"
-#include "proj_lib/ble/service/ble_ll_ota.h"
-#include "proj/drivers/adc.h"
-#if(MCU_CORE_TYPE == MCU_CORE_8258)
 #include "stack/ble/ble.h"
-#elif(MCU_CORE_TYPE == MCU_CORE_8278)
-#include "stack/ble_8278/ble.h"
-#endif
+#include "drivers.h"
 #include "proj_lib/mesh_crypto/mesh_crypto.h"
 #include "proj_lib/mesh_crypto/mesh_md5.h"
-
 #include "proj_lib/sig_mesh/app_mesh.h"
 #include "../common/app_provison.h"
 #include "../common/app_beacon.h"
 #include "../common/app_proxy.h"
 #include "../common/app_health.h"
 #include "../common/mesh_ota.h"
-#include "proj/drivers/keyboard.h"
 #include "app.h"
 #include "app_ui.h"
 #include "vendor/common/blt_soft_timer.h"
-#include "proj/drivers/rf_pa.h"
 #include "../common/remote_prov.h"
 #include "../common/security_network_beacon.h"
 #include "../common/mesh_access_layer.h"
@@ -59,10 +44,6 @@
 #endif
 #if (MESH_CDTP_ENABLE)
 #include "mesh_cdtp.h"
-#endif
-
-#if (HCI_ACCESS==HCI_USE_UART)
-#include "proj/drivers/uart.h"
 #endif
 
 #if(MCU_CORE_TYPE == MCU_CORE_8269) // 8269 ram limited
@@ -176,9 +157,6 @@ int app_event_handler (u32 h, u8 *p, int n)
 		else if(pd->reason == HCI_ERR_REMOTE_USER_TERM_CONN){  //0x13
 
 		}
-		else if(pd->reason == SLAVE_TERMINATE_CONN_ACKED || pd->reason == SLAVE_TERMINATE_CONN_TIMEOUT){
-
-		}
 		#if DEBUG_BLE_EVENT_ENABLE
 		rf_link_light_event_callback(LGT_CMD_BLE_ADV);
 		#endif 
@@ -290,7 +268,7 @@ void gateway_ui_init()
 void  gateway_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
 	bls_pm_setWakeupSource(PM_WAKEUP_PAD);
-	blc_ll_setScanEnable (0, 0); // not scan after suspend wakeup
+	mesh_set_scan_enable(0, 0); // not scan after suspend wakeup
 }
 
 /**
@@ -305,7 +283,7 @@ int soft_timer_rcv_beacon_timeout()
 #endif
 	{
 		ENABLE_SUSPEND_MASK;
-		blc_ll_setScanEnable (0, 0);
+		mesh_set_scan_enable(0, 0);
 	}
 	return -1;
 }
@@ -436,7 +414,6 @@ void user_init()
 	
 #if (HCI_ACCESS==HCI_USE_USB)
 	usb_id_init();
-	usb_log_init ();
 	// need to have a simulate insert
 	usb_dp_pullup_en (0);  //open USB enum
 	gpio_set_func(GPIO_DP,AS_GPIO);
@@ -456,7 +433,7 @@ void user_init()
 	//	 is about to exceed the sector threshold, this sector must be erased, and all useful information
 	//	 should re_stored) , so it must be done after battery check
 #if (BLE_REMOTE_SECURITY_ENABLE)
-	bls_smp_configParingSecurityInfoStorageAddr(FLASH_ADR_SMP_PARA_START); // must before blc_smp_peripheral_init().
+	bls_smp_configPairingSecurityInfoStorageAddr(FLASH_ADR_SMP_PARA_START); // must before blc_smp_peripheral_init().
 
 	#if MESH_CDTP_ENABLE
 		#if (CDTP_SMP_LEVEL == 3)	// CDTP spec require SMP >= level 3
@@ -488,7 +465,6 @@ void user_init()
 	blc_gap_registerHostEventHandler(app_host_event_callback);
 #endif
 
-#if (MCU_CORE_TYPE != MCU_CORE_8269)
 	blc_gap_setEventMask(
 						#if MESH_CDTP_ENABLE
 						  GAP_EVT_MASK_L2CAP_COC_CONNECT			|  \
@@ -502,18 +478,18 @@ void user_init()
 						0
 						#endif
 	);
-#endif
 
-#if(MCU_CORE_TYPE == MCU_CORE_8269)
-	blc_ll_initBasicMCU(tbl_mac);   //mandatory
-#elif((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
 	blc_ll_initBasicMCU();                      //mandatory
 	blc_ll_initStandby_module(tbl_mac);				//mandatory
-#endif
 
 #if (EXTENDED_ADV_ENABLE)
 	mesh_blc_ll_initExtendedAdv();
 #endif
+
+#if BLE_GATT_CHANNEL_SELECTION_ALGORITHM2_ENABLE // enable as default, and need 222 byte ramcode.
+    blc_ll_initChannelSelectionAlgorithm_2_feature();
+#endif
+
 	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
 
@@ -522,7 +498,6 @@ void user_init()
 	bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
 	blc_pm_setDeepsleepRetentionThreshold(50, 30);
 	blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400);
-	bls_pm_registerFuncBeforeSuspend(app_func_before_suspend);
 	#if SMART_PROVISION_ENABLE
 	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &gateway_set_sleep_wakeup);
 	#endif
@@ -568,17 +543,21 @@ void user_init()
 	//blc_register_hci_handler(rx_from_uart_cb,tx_to_uart_cb);				//customized uart handler
 	#endif
 #endif
+
 #if ADC_ENABLE
 	adc_drv_init();	// still init even though BATT_CHECK_ENABLE is enable, because battery check may not be called in user init.
 #endif
+
+#if PA_ENABLE
 	rf_pa_init();
+#endif
+
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, (blt_event_callback_t)&mesh_ble_connect_cb);
 	blc_hci_registerControllerEventHandler(app_event_handler);		//register event callback
 	//bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 	bls_set_advertise_prepare (app_advertise_prepare_handler);
 	//bls_set_update_chn_cb(chn_conn_update_dispatch);	
-	bls_ota_registerStartCmdCb(entry_ota_mode);
-	bls_ota_registerResultIndicateCb(show_ota_result);
+
 #if BLE_REMOTE_PM_ENABLE
 	gateway_trigger_iv_search_mode(1);
 #endif
@@ -588,12 +567,18 @@ void user_init()
 	// mesh_mode and layer init
 	mesh_init_all();
 	// OTA init
-	bls_ota_clearNewFwDataArea(0); //must
+    #if (UART_PRINT_DEBUG_ENABLE)
+        blc_debug_addStackLog(STK_LOG_OTA_FLOW);
+    #endif
+    blc_ota_initOtaServer_module(); // call bls_ota_clearNewFwDataArea(0) in it
+
+    blc_ota_setOtaProcessTimeout(600);   //OTA process timeout:  600 seconds
+    //blc_ota_setOtaDataPacketTimeout(5);   //OTA data packet timeout: default 5 seconds
+    bls_ota_registerStartCmdCb(entry_ota_mode);
+    bls_ota_registerResultIndicateCb(show_ota_result);
 
 	//blc_ll_initScanning_module(tbl_mac);
-	#if((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
 	blc_gap_peripheral_init();    //gap initialization
-	#endif
 	
 	mesh_scan_rsp_init();
 	my_att_init (provision_mag.gatt_mode);
@@ -612,6 +597,7 @@ void user_init()
 #endif
 
 #if MESH_RX_TEST	
+    mesh_rx_test_rf_power_init();
 	mesh_register_upper_transport_layer_callback(mesh_upper_transport_layer_cb);
 #endif
 }
@@ -626,7 +612,7 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 
 	blc_ll_recoverDeepRetention();
 	if(blc_ll_getCurrentState() == BLS_LINK_STATE_ADV){
-		if(!(((blt_advExpectTime-clock_time())<blta.adv_interval) || ((clock_time()-blt_advExpectTime)<blta.adv_interval))){
+		if(!(((blt_advExpectTime-clock_time()) < (GET_ADV_INTERVAL_MS(blc_ll_getAdvInterval()) * 1000 * sys_tick_per_us)) || ((clock_time() - blt_advExpectTime) < (GET_ADV_INTERVAL_MS(blc_ll_getAdvInterval()) * 1000 * sys_tick_per_us)))){
 			blt_advExpectTime = clock_time();
 		}
 	}
