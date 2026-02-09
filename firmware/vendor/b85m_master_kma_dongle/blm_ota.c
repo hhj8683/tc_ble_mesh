@@ -364,7 +364,7 @@ void proc_ota (void)
 	}
 	else if (host_ota_start == 5)
 	{
-		if( clock_time_exceed(otaStart_cmd_tick, 600000) ){ // becasuse gatt lpn interval is 500ms and flash protection also need cost time
+		if( clock_time_exceed(otaStart_cmd_tick, 600000) ){ // because gatt lpn interval is 500ms and flash protection also need cost time
 			host_ota_start = 6;
 		}
 	}

@@ -203,7 +203,7 @@ typedef struct {
 /* for flash protection function, automatically move some sectors that require frequent write operations to after 0x70000(such as FLASH_LOCK_LOW_448K_MID1360C8),
  * include FLASH_ADR_RESET_CNT, FLASH_ADR_MISC, and FLASH_ADR_SW_LEVEL.
  */
-#define FLASH_MAP_AUTO_EXCHANGE_SOME_SECTORS_EN		    1 // If it is a new product development, there is no need to consider compatibity with previous versions, then FLASH_MAP_AUTO_EXCHANGE_SOME_SECTORS_EN can be disabled to save firmware size.
+#define FLASH_MAP_AUTO_EXCHANGE_SOME_SECTORS_EN		    1 // If it is a new product development, there is no need to consider compatibility with previous versions, then FLASH_MAP_AUTO_EXCHANGE_SOME_SECTORS_EN can be disabled to save firmware size.
 
 #define FLASH_MAP_AUTO_EXCHANGE_SOME_SECTORS_ASSERT_EN  1 // must enable to do checking.
 	#endif
