@@ -1104,14 +1104,14 @@
 }
 
 - (void)fixSequenceNumberCacheData {
-    NSNumber *oldSaveSequenceNumber = [[NSUserDefaults standardUserDefaults] objectForKey:kCurrenProvisionerSno_key];
+    NSNumber *oldSaveSequenceNumber = [NSUserDefaults.standardUserDefaults objectForKey:self.getCurrentProvisionerSequenceNumberKey];
     if (oldSaveSequenceNumber != nil) {
         if (self.meshUUID != nil && self.curProvisionerModel.UUID != nil && self.curLocationNodeModel.unicastAddress != nil) {
             UInt32 newSaveSequence = SigDataSource.share.getLocalSequenceNumberUInt32;
             if (newSaveSequence < oldSaveSequenceNumber.intValue) {
                 [self saveCurrentIvIndex:self.getIvIndexUInt32 sequenceNumber:oldSaveSequenceNumber.intValue];
             }
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:kCurrenProvisionerSno_key];
+            [NSUserDefaults.standardUserDefaults removeObjectForKey:self.getCurrentProvisionerSequenceNumberKey];
             [[NSUserDefaults standardUserDefaults] synchronize];
         }
     }
@@ -2939,6 +2939,10 @@
 /// Compatible with older versions of keys
 - (NSString *)getCurrentProvisionerUuidkey {
     return [kCurrentProvisionerUUID_key stringByReplacingCharactersInRange:NSMakeRange(6, 1) withString:@""];
+}
+
+- (NSString *)getCurrentProvisionerSequenceNumberKey {
+    return [kCurrentProvisionerSno_key stringByReplacingCharactersInRange:NSMakeRange(6, 1) withString:@""];
 }
 
 #pragma mark - deprecated API

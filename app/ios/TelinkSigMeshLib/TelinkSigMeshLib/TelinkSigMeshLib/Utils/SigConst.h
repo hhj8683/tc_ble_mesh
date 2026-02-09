@@ -70,7 +70,7 @@ UIKIT_EXTERN NSString * const kFirmwareRevisionCharacteristicsID;
 UIKIT_EXTERN NSString * const kScanList_key;
 UIKIT_EXTERN NSString * const kJsonMeshUUID_key;
 UIKIT_EXTERN NSString * const kCurrentProvisionerUUID_key;
-UIKIT_EXTERN NSString * const kCurrenProvisionerSno_key;//3.3.3.5之前版本使用的kCurrenProvisionerSno_key存SequenceNumber，3.3.3.6之后使用kLocationIvIndexAndSequenceNumberDictionary_key存SequenceNumber，SDK v4.2.0.3之后自动转换。
+UIKIT_EXTERN NSString * const kCurrentProvisionerSno_key;//3.3.3.5之前版本使用的kCurrentProvisionerSno_key存SequenceNumber，3.3.3.6之后使用kLocationIvIndexAndSequenceNumberDictionary_key存SequenceNumber，SDK v4.2.0.3之后自动转换。
 UIKIT_EXTERN NSString * const kLocationIvIndexAndSequenceNumberDictionary_key;//缓存当前首页的所有mesh的provisioner与ivIndex+sequenceNumber的映射字典。
 UIKIT_EXTERN NSString * const kLocalSolicitationSequenceNumberDictionary_key;//缓存当前首页的所有mesh的provisioner与Solicitation sequenceNumber的映射字典。
 UIKIT_EXTERN NSString * const kLocalNetworkPrivateBeaconDictionary_key;//缓存private beacon页面的数据。
